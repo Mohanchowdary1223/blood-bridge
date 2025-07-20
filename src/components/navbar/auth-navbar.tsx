@@ -25,7 +25,7 @@ const AuthNavbar = () => {
               width={30}
               height={30} />
             <button 
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/home')}
               className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors"
             >
               Bridge

@@ -10,7 +10,7 @@ const HomeComponent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b bg-white pt-">
+    <div className="min-h-screen bg-gradient-to-b bg-white">
       {/* Welcome Section */}
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-4">

@@ -19,6 +19,7 @@ interface FormData {
   country: string;
   state: string;
   city: string;
+  isAvailable: boolean | null;
 }
 
 interface FormErrors {
@@ -54,6 +55,7 @@ const Register = () => {
     country: '',
     state: '',
     city: '',
+    isAvailable: null,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -62,6 +64,7 @@ const Register = () => {
   const [cities, setCities] = useState<ICity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const allCountries = Country.getAllCountries();
@@ -101,9 +104,30 @@ const Register = () => {
     return age >= 18 && age <= 65;
   };
 
+  const getCountryCode = (countryIso: string) => {
+    if (!countryIso) return '';
+    const country = Country.getCountryByCode(countryIso);
+    return country ? country.phonecode : '';
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+    if (name === 'isAvailable') {
+      setFormData({
+        ...formData,
+        isAvailable: value === 'true',
+      });
+      return;
+    }
+    if (name === 'phone') {
+      // Only allow numbers and max 10 digits
+      const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setFormData({
+        ...formData,
+        [name]: numericValue,
+      });
+      return;
+    }
     if (name === 'dob') {
       const age = calculateAge(value);
       setFormData({
@@ -139,6 +163,8 @@ const Register = () => {
     }
     if (!formData.phone) {
       newErrors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
     }
     if (!formData.bloodType) {
       newErrors.bloodType = 'Blood type is required';
@@ -184,20 +210,29 @@ const Register = () => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        // Mock donor registration - store data in localStorage
-        const donorData = {
-          id: Date.now().toString(),
-          ...formData
-        };
-        
-        // Store donor data in localStorage
-        localStorage.setItem('donor', JSON.stringify(donorData));
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Registration failed');
+        }
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('isLoggedIn', 'true');
-        
-        // Redirect to home page
-        router.push('/home');
-      } catch {
-        setError('Registration failed. Please try again.');
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          router.push('/home');
+        }, 2000);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message || 'Registration failed. Please try again.');
+        } else {
+          setError('Registration failed. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -243,11 +278,6 @@ const Register = () => {
           </div>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="text-red-500 text-sm text-center">
-              {error}
-            </div>
-          )}
           <div className="rounded-md shadow-sm space-y-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -329,18 +359,24 @@ const Register = () => {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <FaPhone className="h-5 w-5 text-gray-400" />
               </div>
+              <div className="absolute inset-y-0 left-10 flex items-center text-gray-500 text-sm pl-1 pr-1">
+                {formData.country && `+${getCountryCode(formData.country)}`}
+              </div>
               <input
                 id="phone"
                 name="phone"
                 type="tel"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-2 pl-20 border ${
                   errors.phone ? 'border-primary' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Phone Number"
                 value={formData.phone}
                 onChange={handleChange}
               />
+              {errors.phone && (
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              )}
             </div>
 
             <div className="relative">
@@ -506,6 +542,34 @@ const Register = () => {
                 <option value="Other">Other</option>
               </select>
             </div>
+
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Are you currently available to donate blood?</label>
+              <div className="flex gap-4">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="isAvailable"
+                    value="true"
+                    checked={formData.isAvailable === true}
+                    onChange={handleChange}
+                    className="mr-2"
+                  />
+                  Yes
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="isAvailable"
+                    value="false"
+                    checked={formData.isAvailable === false}
+                    onChange={handleChange}
+                    className="mr-2"
+                  />
+                  No
+                </label>
+              </div>
+            </div>
           </div>
           <button
             type="submit"
@@ -516,8 +580,27 @@ const Register = () => {
           >
             {isLoading ? 'Registering...' : 'Register'}
           </button>
+          {/* Error message below the button */}
+          {Object.keys(errors).length > 0 && (
+            <div className="text-red-500 text-sm text-center mt-4">
+              Please fill out all required fields correctly.
+            </div>
+          )}
+          {(errors.dob || error) && (
+            <div className="text-red-500 text-sm text-center mt-4">
+              {errors.dob ? errors.dob : error}
+            </div>
+          )}
         </form>
       </div>
+      {/* Success Popup */}
+      {showSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-red-200/80 via-white/80 to-red-400/80 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded shadow text-green-600 text-lg font-semibold">
+            Registration successful!
+          </div>
+        </div>
+      )}
     </div>
   );
 };

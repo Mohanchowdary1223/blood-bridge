@@ -17,6 +17,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,21 +33,33 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Check if user exists in localStorage
-      const storedUser = localStorage.getItem('user');
-      const storedDonor = localStorage.getItem('donor');
-      
-      if (!storedUser && !storedDonor) {
-        throw new Error('No account found. Please sign up first.');
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
       }
-
-      // Set login status
+      // Store token and user info
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('isLoggedIn', 'true');
-      
-      // Redirect to home page
-      router.push('/home');
-    } catch {
-      setError('Login failed. Please check your credentials or sign up.');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        router.push('/home');
+      }, 2000);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'Login failed. Please check your credentials or sign up.');
+      } else {
+        setError('Login failed. Please check your credentials or sign up.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -81,11 +94,6 @@ const Login = () => {
           </div>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="text-red-500 text-sm text-center">
-              {error}
-            </div>
-          )}
           <div className="rounded-md shadow-sm space-y-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -158,9 +166,23 @@ const Login = () => {
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
+            {/* Error message below the button */}
+            {error && (
+              <div className="text-red-500 text-sm text-center mt-4">
+                {error}
+              </div>
+            )}
           </div>
         </form>
       </div>
+      {/* Success Popup */}
+      {showSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-red-200/80 via-white/80 to-red-400/80 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded shadow text-green-600 text-lg font-semibold">
+            Login successful!
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -11,6 +11,7 @@ interface FormData {
   phone: string;
   signupReason: string;
   dateOfBirth?: string;
+  currentAge?: string;
 }
 
 interface FormErrors {
@@ -38,13 +39,42 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      // Only allow numbers and max 10 digits
+      const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setFormData({
+        ...formData,
+        [name]: numericValue,
+      });
+      return;
+    }
     setFormData({
       ...formData,
       [name]: value,
     });
+
+    // Calculate age when date of birth changes
+    if (name === 'dateOfBirth' && value) {
+      const dobDate = new Date(value);
+      const now = new Date();
+      const age = now.getFullYear() - dobDate.getFullYear();
+      const monthDiff = now.getMonth() - dobDate.getMonth();
+      
+      // Adjust age if birthday hasn't occurred this year
+      const calculatedAge = monthDiff < 0 || (monthDiff === 0 && now.getDate() < dobDate.getDate()) 
+        ? age - 1 
+        : age;
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        currentAge: calculatedAge.toString()
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -67,12 +97,17 @@ const Signup = () => {
     }
     if (!formData.phone) {
       newErrors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
     }
     if (!formData.signupReason) {
       newErrors.signupReason = 'Please select a reason for signing up';
     }
-    if (formData.signupReason === 'ageRestriction' && !formData.dateOfBirth) {
-      newErrors.dateOfBirth = 'Date of birth is required for age restriction';
+    if (formData.signupReason === 'underAge' && !formData.dateOfBirth) {
+      newErrors.dateOfBirth = 'Date of birth is required for under age';
+    }
+    if (formData.signupReason === 'aboveAge' && !formData.dateOfBirth) {
+      newErrors.dateOfBirth = 'Date of birth is required for above age';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -85,29 +120,49 @@ const Signup = () => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        // Mock signup - store user data in localStorage
-        const userData = {
-          id: Date.now().toString(),
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          signupReason: formData.signupReason,
-          dateOfBirth: formData.dateOfBirth
-        };
-        
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(userData));
+        const response = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            name: formData.fullName,
+            phone: formData.phone,
+            signupReason: formData.signupReason,
+            dateOfBirth: formData.dateOfBirth,
+            currentAge: formData.currentAge
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Signup failed');
+        }
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('isLoggedIn', 'true');
-        
-        // Redirect to home page
-        router.push('/home');
-      } catch {
-        setError('Signup failed. Please try again.');
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          router.push('/home');
+        }, 2000);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message || 'Signup failed. Please try again.');
+        } else {
+          setError('Signup failed. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
     }
   };
+
+  const signupReasons = [
+    { value: 'donateLater', label: 'I will register and donate blood later' },
+    { value: 'healthIssue', label: 'Health issue or some bad habit' },
+    { value: 'underAge', label: 'Under age (below 18)' },
+    { value: 'aboveAge', label: 'Above age (over 65)' }
+  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -138,11 +193,6 @@ const Signup = () => {
           </div>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="text-red-500 text-sm text-center">
-              {error}
-            </div>
-          )}
           <div className="rounded-md shadow-sm space-y-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -258,86 +308,47 @@ const Signup = () => {
                 Reason for Sign Up
               </label>
               <div className="space-y-4">
-                <div className="flex items-start p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                  <input
-                    type="radio"
-                    id="donateLater"
-                    name="signupReason"
-                    value="donateLater"
-                    checked={formData.signupReason === 'donateLater'}
-                    onChange={handleChange}
-                    className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                  />
-                  <div className="ml-3">
-                    <label htmlFor="donateLater" className="block text-sm font-medium text-gray-900">
-                      I will register and donate blood later
-                    </label>
-                    <p className="text-sm text-gray-500">
-                      Choose this option if you plan to donate blood in the future but want to create an account now.
-                    </p>
+                {signupReasons.map((reason) => (
+                  <div key={reason.value} className="flex items-start p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                    <input
+                      type="radio"
+                      id={reason.value}
+                      name="signupReason"
+                      value={reason.value}
+                      checked={formData.signupReason === reason.value}
+                      onChange={handleChange}
+                      className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                    />
+                    <div className="ml-3">
+                      <label htmlFor={reason.value} className="block text-sm font-medium text-gray-900">
+                        {reason.label}
+                      </label>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-start p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                  <input
-                    type="radio"
-                    id="healthIssue"
-                    name="signupReason"
-                    value="healthIssue"
-                    checked={formData.signupReason === 'healthIssue'}
-                    onChange={handleChange}
-                    className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                  />
-                  <div className="ml-3">
-                    <label htmlFor="healthIssue" className="block text-sm font-medium text-gray-900">
-                      Health issue or some bad habit
-                    </label>
-                    <p className="text-sm text-gray-500">
-                      Select this if you have any medical conditions or habits that prevent you from donating blood.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                  <input
-                    type="radio"
-                    id="ageRestriction"
-                    name="signupReason"
-                    value="ageRestriction"
-                    checked={formData.signupReason === 'ageRestriction'}
-                    onChange={handleChange}
-                    className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                  />
-                  <div className="ml-3">
-                    <label htmlFor="ageRestriction" className="block text-sm font-medium text-gray-900">
-                      Under age or above age
-                    </label>
-                    <p className="text-sm text-gray-500">
-                      Choose this if you are either under 18 years old or above the maximum age limit for blood donation.
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
               {errors.signupReason && (
                 <p className="text-red-500 text-xs mt-1">{errors.signupReason}</p>
               )}
             </div>
 
-            {formData.signupReason === 'ageRestriction' && (
-              <div>
+            {(formData.signupReason === 'underAge' || formData.signupReason === 'aboveAge') && (
+              <div className="grid grid-cols-1 gap-2">
+                <label className="block text-sm font-medium text-gray-700">Date of Birth *</label>
                 <input
                   id="dateOfBirth"
                   name="dateOfBirth"
                   type="date"
                   required
-                  className={`appearance-none relative block w-full px-3 py-2 border ${
-                    errors.dateOfBirth ? 'border-primary' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                  className={`appearance-none relative block w-full px-3 py-2 border ${errors.dateOfBirth ? 'border-primary' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                   value={formData.dateOfBirth}
                   onChange={handleChange}
                 />
                 {errors.dateOfBirth && (
                   <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth}</p>
+                )}
+                {formData.dateOfBirth && (
+                  <div className="text-sm text-gray-700 mt-1">Current Age: <span className="font-semibold">{formData.currentAge || ''}</span></div>
                 )}
               </div>
             )}
@@ -353,9 +364,28 @@ const Signup = () => {
             >
               {isLoading ? 'Signing up...' : 'Sign up'}
             </button>
+            {/* Error message below the button */}
+            {Object.keys(errors).length > 0 && (
+              <div className="text-red-500 text-sm text-center mt-4">
+                Please fill out all required fields correctly.
+              </div>
+            )}
+            {error && (
+              <div className="text-red-500 text-sm text-center mt-4">
+                {error}
+              </div>
+            )}
           </div>
         </form>
       </div>
+      {/* Success Popup */}
+      {showSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-red-200/80 via-white/80 to-red-400/80 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded shadow text-green-600 text-lg font-semibold">
+            Signup successful!
+          </div>
+        </div>
+      )}
     </div>
   );
 };
