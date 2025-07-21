@@ -1,9 +1,18 @@
 import mongoose from 'mongoose';
 
-// Hardcoded MongoDB URI for the 'bloodbank' database
-const MONGODB_URI = 'mongodb://localhost:27017/bloodbank';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bloodbank';
 
-export async function connectMongo() {
-  if (mongoose.connection.readyState >= 1) return;
-  return mongoose.connect(MONGODB_URI);
-} 
+export async function connectToDatabase() {
+  try {
+    if (mongoose.connection.readyState >= 1) return;
+    
+    await mongoose.connect(MONGODB_URI);
+    console.log('Connected to MongoDB');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw new Error('Failed to connect to database');
+  }
+}
+
+// Alias for backward compatibility
+export const connectMongo = connectToDatabase; 

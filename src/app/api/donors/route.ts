@@ -1,15 +1,20 @@
 "use server"
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { connectMongo } from '@/lib/mongodb';
 import Donor from '@/models/Donor';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await connectMongo();
-    
-    const donors = await Donor.find({}).sort({ createdAt: -1 });
-    
+    const { searchParams } = new URL(req.url);
+    const filter: Record<string, unknown> = {};
+    if (searchParams.get('bloodType')) filter.bloodType = searchParams.get('bloodType');
+    if (searchParams.get('country')) filter.country = searchParams.get('country');
+    if (searchParams.get('state')) filter.state = searchParams.get('state');
+    if (searchParams.get('city')) filter.city = searchParams.get('city');
+    if (searchParams.get('isAvailable')) filter.isAvailable = searchParams.get('isAvailable') === 'true';
+    const donors = await Donor.find(filter).sort({ createdAt: -1 });
     return NextResponse.json({ donors }, { status: 200 });
   } catch (error) {
     console.error(error);

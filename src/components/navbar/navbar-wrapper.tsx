@@ -7,14 +7,15 @@ import AuthNavbar from './auth-navbar';
 const NavbarWrapper = () => {
   const pathname = usePathname();
   
-  // Don't show navbar on auth pages
+  // Don't show navbar on auth or admin pages
   const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/register';
-  if (isAuthPage) {
+  const isAdminPage = pathname.startsWith('/admin');
+  if (isAuthPage || isAdminPage) {
     return null;
   }
 
-  // Show default navbar on home page
-  if (pathname === '/') {
+  // Show default navbar on home and emergency-blood page
+  if (pathname === '/' || pathname === '/emergency-blood') {
     return <DefaultNavbar />;
   }
 

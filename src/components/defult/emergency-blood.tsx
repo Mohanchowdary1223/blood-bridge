@@ -1,8 +1,8 @@
-"use client"
-import React, { useState, useEffect, useCallback } from 'react'
-import { Country, State, City, ICountry, IState, ICity } from 'country-state-city'
-import { useRouter } from 'next/navigation'
-import { FaArrowLeft, FaCopy } from 'react-icons/fa'
+"use client";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
+import { useRouter } from 'next/navigation';
+import { FaArrowLeft, FaCopy } from 'react-icons/fa';
 
 interface Donor {
   _id: string;
@@ -15,57 +15,52 @@ interface Donor {
   isAvailable: boolean | null;
 }
 
-interface FindDonorPageProps {
-  hideNavbarAndTitle?: boolean;
-}
-
-const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
-  const router = useRouter()
+export default function EmergencyBlood() {
+  const router = useRouter();
   const [filters, setFilters] = useState({
     bloodGroup: '',
     country: '',
     state: '',
     city: ''
-  })
-
-  const [searchResults, setSearchResults] = useState<Donor[]>([])
-  const [countries, setCountries] = useState<ICountry[]>([])
-  const [states, setStates] = useState<IState[]>([])
-  const [cities, setCities] = useState<ICity[]>([])
-  const [hasSearched, setHasSearched] = useState(false)
+  });
+  const [searchResults, setSearchResults] = useState<Donor[]>([]);
+  const [countries, setCountries] = useState<ICountry[]>([]);
+  const [states, setStates] = useState<IState[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
 
-  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
   useEffect(() => {
-    const allCountries = Country.getAllCountries()
-    setCountries(allCountries)
-  }, [])
+    const allCountries = Country.getAllCountries();
+    setCountries(allCountries);
+  }, []);
 
   useEffect(() => {
     if (filters.country) {
-      const countryStates = State.getStatesOfCountry(filters.country)
-      setStates(countryStates)
-      setFilters(prev => ({ ...prev, state: '', city: '' }))
+      const countryStates = State.getStatesOfCountry(filters.country);
+      setStates(countryStates);
+      setFilters(prev => ({ ...prev, state: '', city: '' }));
     }
-  }, [filters.country])
+  }, [filters.country]);
 
   useEffect(() => {
     if (filters.state && filters.country) {
-      const stateCities = City.getCitiesOfState(filters.country, filters.state)
-      setCities(stateCities)
-      setFilters(prev => ({ ...prev, city: '' }))
+      const stateCities = City.getCitiesOfState(filters.country, filters.state);
+      setCities(stateCities);
+      setFilters(prev => ({ ...prev, city: '' }));
     }
-  }, [filters.state, filters.country])
+  }, [filters.state, filters.country]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFilters(prev => ({
       ...prev,
       [name]: value
-    }))
-    setHasSearched(false)
-  }
+    }));
+    setHasSearched(false);
+  };
 
   const handleCopy = (phone: string) => {
     navigator.clipboard.writeText(phone);
@@ -86,7 +81,6 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     setSearchResults(data.donors || []);
   }, [filters.bloodGroup, filters.country, filters.state, filters.city]);
 
-  // Fetch all donors on mount
   useEffect(() => {
     fetchDonors();
   }, [fetchDonors]);
@@ -94,30 +88,24 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
   const handleSearch = async () => {
     await fetchDonors();
     setHasSearched(true);
-  }
+  };
 
   const handleBack = () => {
-    if (hideNavbarAndTitle) {
-      router.push('/')
-    } else {
-      router.push('/home')
-    }
-  }
+    router.push('/');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-10 flex flex-col items-center justify-center">
-      {/* Fixed Back Button */}
-      <button
-        onClick={handleBack}
-        className="fixed left-4 top-4 md:top-28 md:transform md:-translate-y-1/2 bg-white p-3 cursor-pointer rounded-full shadow-lg hover:bg-gray-50 transition-colors z-50"
-        aria-label="Back"
-      >
-        <FaArrowLeft className="text-gray-600 text-xl" />
-      </button>
-      <div className="container mx-auto px-4 max-w-4xl">
-        {!hideNavbarAndTitle && (
-          <h1 className="text-3xl font-bold text-primary mb-8 text-center">Find Blood Donors</h1>
-        )}
+    <>
+      <div className="max-h-screen bg-gradient-to-b from-gray-50 to-white pt-10 flex flex-col items-center justify-center">
+        {/* Fixed Back Button */}
+        <button
+          onClick={handleBack}
+          className="fixed left-4 top-18 md:top-28 md:transform md:-translate-y-1/2 bg-white p-3 cursor-pointer rounded-full shadow-lg hover:bg-gray-50 transition-colors z-50"
+          aria-label="Back"
+        >
+          <FaArrowLeft className="text-gray-600 text-xl" />
+        </button>
+        <div className="container mx-auto px-4 pb-5 max-w-4xl">
           <div className="bg-white p-8 rounded-2xl shadow-2xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Blood Group Filter */}
@@ -221,7 +209,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                                   title="Copy phone number"
                                   onClick={() => handleCopy(donor.phone)}
                                 >
-                                  <FaCopy /> 
+                                  <FaCopy />
                                 </button>
                                 {copySuccess === donor.phone && (
                                   <span className="ml-1 text-green-600 text-xs">Copied!</span>
@@ -288,7 +276,6 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
           </div>
         </div>
       </div>
-  )
-} 
-
-export default FindDonorPage
+    </>
+  );
+}

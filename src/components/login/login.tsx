@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react';
-import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 interface FormData {
@@ -45,14 +45,20 @@ const Login = () => {
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
-      // Store token and user info
-      localStorage.setItem('token', data.token);
+
+      // Store user info
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('isLoggedIn', 'true');
       setShowSuccess(true);
+      
+      // Redirect based on user role
       setTimeout(() => {
         setShowSuccess(false);
-        router.push('/home');
+        if (data.user?.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/home');
+        }
       }, 2000);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -67,9 +73,16 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-2xl relative">
+        <button
+          onClick={() => router.push('/')}
+          className="absolute top-4 left-4 text-gray-600 hover:text-gray-800 cursor-pointer bg-white p-2 rounded-full shadow focus:outline-none focus:ring-2 focus:ring-primary/50"
+          aria-label="Go to home page"
+        >
+          <FaArrowLeft size={20} />
+        </button>
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-bold text-primary">
             Sign in to your account
           </h2>
           <div className="mt-2 text-center space-y-2">
@@ -77,7 +90,7 @@ const Login = () => {
               Don&apos;t have an account?{' '}
               <button
                 onClick={() => router.push('/signup')}
-                className="font-medium text-primary hover:text-primary/80 cursor-pointer"
+                className="font-semibold text-primary hover:text-primary/80 cursor-pointer"
               >
                 Sign up
               </button>
@@ -86,7 +99,7 @@ const Login = () => {
               Want to donate blood?{' '}
               <button
                 onClick={() => router.push('/register')}
-                className="font-medium text-green-500 hover:text-green-400 cursor-pointer"
+                className="font-semibold text-green-600 hover:text-green-500 cursor-pointer"
               >
                 Register as Donor
               </button>
@@ -105,7 +118,7 @@ const Login = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
@@ -121,7 +134,7 @@ const Login = () => {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
-                className="appearance-none relative block w-full px-3 py-2 pl-10 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-3 pl-10 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
@@ -138,29 +151,18 @@ const Login = () => {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 cursor-pointer">
                 Remember me
               </label>
             </div>
-
-            <div className="text-sm">
-              <button
-                type="button"
-                onClick={() => router.push('/')}
-                className="font-medium text-primary hover:text-primary/80 cursor-pointer"
-              >
-                Back to Home
-              </button>
-            </div>
           </div>
-
           <div>
             <button
               type="submit"
               disabled={isLoading}
-              className={`group relative cursor-pointer w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
+              className={`group relative cursor-pointer w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-full text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md transition-all duration-200 ${
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -178,7 +180,7 @@ const Login = () => {
       {/* Success Popup */}
       {showSuccess && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-red-200/80 via-white/80 to-red-400/80 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded shadow text-green-600 text-lg font-semibold">
+          <div className="bg-white p-6 rounded-2xl shadow text-green-600 text-lg font-semibold">
             Login successful!
           </div>
         </div>

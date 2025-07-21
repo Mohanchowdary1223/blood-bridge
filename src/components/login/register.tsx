@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaEnvelope, FaLock, FaPhone, FaTint, FaEye, FaEyeSlash, FaCalendar, FaWeight, FaRuler, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaPhone, FaTint, FaEye, FaEyeSlash, FaCalendar, FaWeight, FaRuler, FaMapMarkerAlt, FaArrowLeft } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
 
@@ -251,9 +251,16 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-2xl relative">
+        <button
+          onClick={() => router.push('/')}
+          className="absolute top-4 left-4 text-gray-600 hover:text-gray-800 cursor-pointer bg-white p-2 rounded-full shadow focus:outline-none focus:ring-2 focus:ring-primary/50"
+          aria-label="Go to home page"
+        >
+          <FaArrowLeft size={20} />
+        </button>
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-bold text-primary">
             Register as a Donor
           </h2>
           <div className="mt-2 text-center space-y-2">
@@ -261,7 +268,7 @@ const Register = () => {
               {getSignupMessage()}{' '}
               <button
                 onClick={() => router.push('/signup')}
-                className="font-medium text-primary hover:text-primary/80 cursor-pointer"
+                className="font-semibold text-primary hover:text-primary/80 cursor-pointer"
               >
                 Sign up
               </button>
@@ -270,7 +277,7 @@ const Register = () => {
               Already have an account?{' '}
               <button
                 onClick={() => router.push('/login')}
-                className="font-medium text-primary hover:text-primary/80 cursor-pointer"
+                className="font-semibold text-primary hover:text-primary/80 cursor-pointer"
               >
                 Login
               </button>
@@ -288,9 +295,9 @@ const Register = () => {
                 name="fullName"
                 type="text"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
                   errors.fullName ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Full Name"
                 value={formData.fullName}
                 onChange={handleChange}
@@ -307,9 +314,9 @@ const Register = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
                   errors.email ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
@@ -325,9 +332,9 @@ const Register = () => {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 pr-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 pr-10 border ${
                   errors.password ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
@@ -346,9 +353,9 @@ const Register = () => {
                 name="confirmPassword"
                 type="password"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
                   errors.confirmPassword ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -367,9 +374,9 @@ const Register = () => {
                 name="phone"
                 type="tel"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-20 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-20 border ${
                   errors.phone ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Phone Number"
                 value={formData.phone}
                 onChange={handleChange}
@@ -387,9 +394,9 @@ const Register = () => {
                 id="bloodType"
                 name="bloodType"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
                   errors.bloodType ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary cursor-pointer focus:z-10 sm:text-sm`}
                 value={formData.bloodType}
                 onChange={handleChange}
               >
@@ -414,9 +421,9 @@ const Register = () => {
                 name="dob"
                 type="date"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
                   errors.dob ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Date of Birth"
                 value={formData.dob}
                 onChange={handleChange}
@@ -432,9 +439,9 @@ const Register = () => {
                 name="weight"
                 type="text"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
                   errors.weight ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Weight (kg)"
                 value={formData.weight}
                 onChange={handleChange}
@@ -450,9 +457,9 @@ const Register = () => {
                 name="height"
                 type="text"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
                   errors.height ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 placeholder="Height (cm)"
                 value={formData.height}
                 onChange={handleChange}
@@ -467,9 +474,9 @@ const Register = () => {
                 id="country"
                 name="country"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border cursor-pointer ${
                   errors.country ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 value={formData.country}
                 onChange={handleChange}
               >
@@ -488,9 +495,9 @@ const Register = () => {
                 id="state"
                 name="state"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border cursor-pointer ${
                   errors.state ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 value={formData.state}
                 onChange={handleChange}
               >
@@ -509,9 +516,9 @@ const Register = () => {
                 id="city"
                 name="city"
                 required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border cursor-pointer ${
                   errors.city ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 value={formData.city}
                 onChange={handleChange}
               >
@@ -529,10 +536,10 @@ const Register = () => {
               <select
                 id="gender"
                 name="gender"
-                required
-                className={`appearance-none relative block w-full px-3 py-2 pl-10 border ${
+                required 
+                className={`appearance-none relative block w-full px-3 py-3 pl-10 border cursor-pointer ${
                   errors.gender ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
+                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
                 value={formData.gender}
                 onChange={handleChange}
               >
@@ -574,7 +581,7 @@ const Register = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
+            className={`w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-semibold rounded-full cursor-pointer text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md transition-all duration-200 ${
               isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -596,7 +603,7 @@ const Register = () => {
       {/* Success Popup */}
       {showSuccess && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-red-200/80 via-white/80 to-red-400/80 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded shadow text-green-600 text-lg font-semibold">
+          <div className="bg-white p-6 rounded-2xl shadow text-green-600 text-lg font-semibold">
             Registration successful!
           </div>
         </div>

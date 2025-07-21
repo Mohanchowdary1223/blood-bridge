@@ -4,7 +4,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectMongo } from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_CONFIG: SignOptions = { expiresIn: '7d' };
+const COOKIE_CONFIG = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  path: '/'
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,31 +21,58 @@ export async function POST(req: NextRequest) {
     const { email, password } = await req.json();
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
     }
 
     const token = jwt.sign(
-      { userId: user._id },
-      'your_jwt_secret', // Replace with your secret or use process.env.JWT_SECRET if set
-      { expiresIn: '7d' }
+      { userId: user._id, role: user.role },
+      JWT_SECRET,
+      JWT_CONFIG
     );
 
-    // Exclude password from response
-    const userObj = user.toObject();
-    userObj.password = '';
-    return NextResponse.json({ user: userObj, token }, { status: 200 });
+    // Create response with user data
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      signupReason: user.signupReason || ''
+    };
+
+    const response = NextResponse.json(
+      { user: userData },
+      { status: 200 }
+    );
+
+    // Set HTTP-only cookie with the token
+    response.cookies.set('token', token, COOKIE_CONFIG);
+
+    return response;
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+    console.error('Login error:', error);
+    return NextResponse.json(
+      { error: 'Login failed' },
+      { status: 500 }
+    );
   }
 }

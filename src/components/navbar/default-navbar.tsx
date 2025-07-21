@@ -9,19 +9,19 @@ const DefaultNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
+    <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
+      <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className='flex items-center'>
             <Image
               src="https://img.icons8.com/?size=100&id=26115&format=png&color=000000"
               alt="BloodBridge Logo"
-              width={30}
-              height={30} />
+              width={32}
+              height={32} />
             <button 
               onClick={() => router.push('/')}
-              className="text-2xl cursor-pointer font-bold text-primary hover:text-primary/80 transition-colors ml-2"
+              className="text-2xl cursor-pointer font-bold text-primary hover:text-primary/80 transition-colors"
             >
               Bridge
             </button>
@@ -30,7 +30,7 @@ const DefaultNavbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            className="md:hidden p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
             <svg
               className="w-6 h-6"
@@ -56,25 +56,23 @@ const DefaultNavbar = () => {
             </svg>
           </button>
 
-
-
           {/* Auth Buttons - Desktop */}
           <div className="hidden md:flex items-center gap-4">
             <button 
               onClick={() => router.push('/login')}
-              className="text-gray-700 cursor-pointer hover:text-primary transition-colors"
+              className="text-gray-700 cursor-pointer hover:text-primary transition-colors px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               Sign In
             </button>
             <button 
               onClick={() => router.push('/signup')}
-              className="text-gray-700 cursor-pointer hover:text-primary transition-colors"
+              className="text-gray-700 cursor-pointer hover:text-primary transition-colors px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               Sign Up
             </button>
             <button 
               onClick={() => router.push('/register')}
-              className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/80 transition-colors text-sm font-medium"
+              className="bg-primary text-white px-8 py-2 rounded-full hover:bg-primary/80 transition-all duration-200 text-sm font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               Save Lives
             </button>
@@ -90,7 +88,7 @@ const DefaultNavbar = () => {
                   router.push('/login');
                   setIsMenuOpen(false);
                 }}
-                className="block w-full text-center text-gray-700 hover:text-primary transition-colors mb-2"
+                className="block w-full text-center text-gray-700 hover:text-primary transition-colors mb-2 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 Sign In
               </button>
@@ -99,7 +97,7 @@ const DefaultNavbar = () => {
                   router.push('/signup');
                   setIsMenuOpen(false);
                 }}
-                className="block w-full text-center text-gray-700 hover:text-primary transition-colors mb-2"
+                className="block w-full text-center text-gray-700 hover:text-primary transition-colors mb-2 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 Sign Up
               </button>
@@ -108,7 +106,7 @@ const DefaultNavbar = () => {
                   router.push('/register');
                   setIsMenuOpen(false);
                 }}
-                className="w-full bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/80 transition-colors text-sm font-medium"
+                className="w-full bg-primary text-white px-8 py-2 rounded-full hover:bg-primary/80 transition-all duration-200 text-sm font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 Save Lives
               </button>

@@ -6,14 +6,14 @@ export interface IUser extends Document {
   password: string;
   name: string;
   phone: string;
-  role: 'user' | 'donor';
+  role: 'user' | 'donor' | 'admin';
   signupReason?: string;
   dateOfBirth?: string;
   canUpdateToDonor?: boolean;
   profileUpdatableAt?: Date | null;
-  // New fields for different profile types
   healthDetails?: string;
   currentAge?: number;
+  isAdmin(): boolean;
 }
 
 const UserSchema: Schema<IUser> = new Schema({
@@ -21,15 +21,19 @@ const UserSchema: Schema<IUser> = new Schema({
   password: { type: String, required: true },
   name: { type: String, required: true },
   phone: { type: String, required: true },
-  role: { type: String, enum: ['user', 'donor'], required: true },
+  role: { type: String, enum: ['user', 'donor', 'admin'], required: true },
   signupReason: { type: String },
   dateOfBirth: { type: String },
   canUpdateToDonor: { type: Boolean, default: false },
   profileUpdatableAt: { type: Date, default: null },
-  // New fields for different profile types
   healthDetails: { type: String },
   currentAge: { type: Number },
 });
+
+// Add method to check if user is admin
+UserSchema.methods.isAdmin = function(): boolean {
+  return this.role === 'admin';
+};
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 export default User; 

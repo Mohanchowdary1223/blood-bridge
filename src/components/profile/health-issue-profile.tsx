@@ -102,84 +102,82 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({ user, on
       >
         <FaArrowLeft className="text-gray-600 text-xl" />
       </button>
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-orange-600">Health Issue Profile</h2>
-          {!editMode && (
-            <button
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/80"
-              onClick={handleEdit}
-            >
-              Edit
-            </button>
+      <div className="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white py-8 px-2">
+        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl p-4 sm:p-8 mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-2xl font-bold text-orange-600 text-center sm:text-left w-full">{user.name}</h2>
+            {!editMode && (
+              <button
+                className="bg-primary text-white px-6 py-2 rounded-full hover:bg-primary/80 transition-all duration-200 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                onClick={handleEdit}
+              >
+                Edit
+              </button>
+            )}
+          </div>
+          {msg && <div className="text-green-600 mb-2 text-center">{msg}</div>}
+          {err && <div className="text-red-600 mb-2 text-center">{err}</div>}
+          <div className="mb-6 p-4 bg-orange-50 rounded-xl flex flex-col items-center justify-center">
+            <h3 className="font-semibold text-orange-800 mb-2">Health Information</h3>
+            <p className="text-orange-700">We understand that health conditions or bad habits may prevent blood donation. You can still support our mission by spreading awareness.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-gray-700 font-medium">Name</label>
+              {editMode ? (
+                <input name="name" value={editData.name} onChange={handleChange} className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary/50" />
+              ) : (
+                <div className="p-3">{user.name}</div>
+              )}
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium">Email</label>
+              <div className="p-3">{user.email}</div>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium">Phone</label>
+              {editMode ? (
+                <input name="phone" value={editData.phone} onChange={handleChange} className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary/50" />
+              ) : (
+                <div className="p-3">{user.phone}</div>
+              )}
+            </div>
+          </div>
+          {editMode && (
+            <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center items-center">
+              <button
+                className="bg-primary text-white px-8 py-3 rounded-full hover:bg-primary/80 transition-all duration-200 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                onClick={handleSave}
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                className="bg-gray-300 text-gray-800 px-8 py-3 rounded-full hover:bg-gray-400 transition-all duration-200 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400/50"
+                onClick={handleCancel}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            </div>
           )}
         </div>
-        {msg && <div className="text-green-600 mb-2">{msg}</div>}
-        {err && <div className="text-red-600 mb-2">{err}</div>}
-        
-        <div className="mb-6 p-4 bg-orange-50 rounded-lg">
-          <h3 className="font-semibold text-orange-800 mb-2">Health Information</h3>
-          <p className="text-orange-700">We understand that health conditions or bad habits may prevent blood donation. You can still support our mission by spreading awareness.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Signup Reason Section */}
+        <div className="mt-6 bg-white rounded-2xl shadow-2xl p-4 sm:p-8 mx-auto">
+          <h3 className="text-xl font-bold mb-4">Signup Information</h3>
           <div>
-            <label className="block text-gray-700 font-medium">Name</label>
-            {editMode ? (
-              <input name="name" value={editData.name} onChange={handleChange} className="w-full border rounded p-2" />
-            ) : (
-              <div className="p-2">{user.name}</div>
-            )}
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">Email</label>
-            <div className="p-2">{user.email}</div>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">Phone</label>
-            {editMode ? (
-              <input name="phone" value={editData.phone} onChange={handleChange} className="w-full border rounded p-2" />
-            ) : (
-              <div className="p-2">{user.phone}</div>
-            )}
-          </div>
-        </div>
-        
-        {editMode && (
-          <div className="flex gap-4 mt-6">
-            <button
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/80"
-              onClick={handleSave}
-              disabled={loading}
+            <label className="block text-gray-700 font-medium mb-2">Why are you signing in?</label>
+            <select
+              value={signupReason}
+              onChange={handleSignupReasonChange}
+              className="w-full border rounded-lg p-3 cursor-pointer focus:ring-2 focus:ring-primary/50"
+              disabled={editMode || loading}
             >
-              {loading ? 'Saving...' : 'Save'}
-            </button>
-            <button
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-              onClick={handleCancel}
-              disabled={loading}
-            >
-              Cancel
-            </button>
+              {signupReasons.map(r => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
           </div>
-        )}
-      </div>
-
-      {/* Signup Reason Section */}
-      <div className="mt-6 bg-white rounded-xl shadow-lg p-8">
-        <h3 className="text-xl font-bold mb-4">Signup Information</h3>
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Why are you signing in?</label>
-          <select
-            value={signupReason}
-            onChange={handleSignupReasonChange}
-            className="w-full border rounded p-2"
-            disabled={editMode || loading}
-          >
-            {signupReasons.map(r => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
         </div>
       </div>
     </>
