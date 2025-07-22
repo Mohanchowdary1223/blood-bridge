@@ -26,18 +26,18 @@ const HomeComponent = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-8 flex flex-col items-center justify-between">
       {/* Welcome Section */}
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full max-w-3xl pl-10 pr-10 mx-auto">
         <div className="text-center mb-4">
-          <h2 className="text-3xl md:text-4xl">
+          <h2 className="text-4xl md:text-5xl">
             <span className="text-primary font-bold">Hello</span>{" "}
-            <span className="text-black font-bold">{userName}</span>
+            <span className="text-black font-bold">{userName},</span>
           </h2>
         </div>
         <div className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl font-bold text-primary mb-4">
             Welcome to BloodBridge
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-sm text-gray-600">
             Your one-stop platform for blood donation and management
           </p>
         </div>
@@ -107,55 +107,46 @@ const HomeComponent = () => {
         </div>
       </div>
       {/* Footer */}
-      <footer className="bg-primary text-white py-8 md:py-12 mt-8 w-full">
-        <div className="container mx-auto px-2 md:px-4 max-w-5xl">
-          <div className="grid md:grid-cols-3 gap-4 md:gap-8 text-center md:text-left">
-            <div>
-              <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-4">Blood Bridge</h3>
-              <p className="text-white/80 text-xs md:text-base">
+      <footer className="bg-muted mt-16">
+        <div className="container mx-auto px-6 py-12">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-foreground">BloodBridge</h3>
+              <p className="text-muted-foreground">
                 Connecting blood donors with those in need, making a difference one donation at a time.
               </p>
             </div>
-            <div>
-              <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-4">Quick Links</h3>
-              <ul className="space-y-1 md:space-y-2">
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-foreground">Quick Links</h3>
+              <ul className="space-y-2">
                 <li>
-                  <button 
-                    onClick={() => router.push('/')} 
-                    className="text-white/80 hover:text-white cursor-pointer text-xs md:text-base"
-                  >
+                  <button className="text-muted-foreground hover:text-foreground transition-colors">
                     About Us
                   </button>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => router.push('/register')} 
-                    className="text-white/80 hover:text-white cursor-pointer text-xs md:text-base"
-                  >
+                  <button className="text-muted-foreground hover:text-foreground transition-colors">
                     Donate Blood
                   </button>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => router.push('/finddonor')} 
-                    className="text-white/80 hover:text-white cursor-pointer text-xs md:text-base"
-                  >
+                  <button className="text-muted-foreground hover:text-foreground transition-colors">
                     Find Donor
                   </button>
                 </li>
               </ul>
             </div>
-            <div>
-              <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-4">Contact Info</h3>
-              <ul className="space-y-1 md:space-y-2 text-white/80">
-                <li className="text-xs md:text-base">Email: info@bloodbridge.com</li>
-                <li className="text-xs md:text-base">Phone: +1 (555) 123-4567</li>
-                <li className="text-xs md:text-base">Address: 123 Health Street, Medical City</li>
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-foreground">Contact Info</h3>
+              <ul className="space-y-2 text-muted-foreground">
+                <li>Email: info@bloodbridge.com</li>
+                <li>Phone: +1 (555) 123-4567</li>
+                <li>Address: 123 Health Street, Medical City</li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-white/20 mt-4 md:mt-8 pt-4 md:pt-8 text-center text-white/60 text-xs md:text-base">
-            <p>&copy; {new Date().getFullYear()} Blood Bridge. All rights reserved.</p>
+          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
+            <p>&copy; {new Date().getFullYear()} BloodBridge. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
     "@react-google-maps/api": "^2.20.6",
     "@types/axios": "^0.9.36",
     "@types/bcryptjs": "^2.4.6",

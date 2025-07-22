@@ -27,26 +27,42 @@ export async function POST(req: NextRequest) {
       }
     }
     // If user is eligible, update donor fields
-    if (!password || !bloodType || !dob || !gender || !weight || !height || !country || !state || !city) {
+    if (!bloodType || !dob || !gender || !weight || !height || !country || !state || !city) {
       return NextResponse.json({ error: 'All donor fields are required' }, { status: 400 });
     }
-    const hashedPassword = password ? await bcrypt.hash(password, 10) : user.password;
-    user.password = hashedPassword;
-    user.role = 'donor';
-    user.bloodType = bloodType;
-    user.dob = dob;
-    user.gender = gender;
-    user.weight = weight;
-    user.height = height;
-    user.country = country;
-    user.state = state;
-    user.city = city;
-    user.canUpdateToDonor = true;
-    user.profileUpdatableAt = null;
+
+    // Validate inputs
+    if (weight < 0 || height < 0) {
+      return NextResponse.json({ error: 'Invalid weight or height values' }, { status: 400 });
+    }
+
+    // Only update password if provided
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+    }
+
+    // Update other fields
+    Object.assign(user, {
+      role: 'donor',
+      bloodType,
+      dob,
+      gender,
+      weight,
+      height,
+      country,
+      state,
+      city,
+      canUpdateToDonor: true,
+      profileUpdatableAt: null
+    });
+
     await user.save();
-    return NextResponse.json({ user }, { status: 200 });
+
+    // Return user without sensitive data
+    const { password: _, ...safeUser } = user.toObject();
+    return NextResponse.json({ user: safeUser }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Profile update failed' }, { status: 500 });
   }
-} 
+}

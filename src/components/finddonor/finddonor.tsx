@@ -105,11 +105,11 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-10 flex flex-col items-center justify-center">
+    <div className="min-h-screen mb-10 bg-gradient-to-b from-gray-50 to-white pt-10 flex flex-col items-center justify-center">
       {/* Fixed Back Button */}
       <button
         onClick={handleBack}
-        className="fixed left-4 top-4 md:top-28 md:transform md:-translate-y-1/2 bg-white p-3 cursor-pointer rounded-full shadow-lg hover:bg-gray-50 transition-colors z-50"
+        className="fixed left-1 md:left-4 top-18 md:top-28 md:transform md:-translate-y-1/2 bg-white p-3 cursor-pointer rounded-full shadow-lg hover:bg-gray-50 transition-colors z-50"
         aria-label="Back"
       >
         <FaArrowLeft className="text-gray-600 text-xl" />
@@ -189,7 +189,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
             <div className="mt-6 text-center">
               <button
                 onClick={handleSearch}
-                className="bg-primary text-white px-8 py-3 rounded-full hover:bg-primary/80 transition-all duration-200 font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="bg-primary cursor-pointer text-white px-8 py-3 rounded-full hover:bg-primary/80 transition-all duration-200 font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 Search Donors
               </button>
@@ -251,7 +251,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                                   <div className="flex items-center gap-2">
                                     <p className="text-gray-600 mb-0">Phone: {donor.phone}</p>
                                     <button
-                                      className="ml-2 text-primary hover:text-primary/80 focus:outline-none"
+                                      className="ml-2 cursor-pointer text-primary hover:text-primary/80 focus:outline-none"
                                       title="Copy phone number"
                                       onClick={() => handleCopy(donor.phone)}
                                     >
