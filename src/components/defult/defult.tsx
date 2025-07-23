@@ -1,9 +1,9 @@
 "use client"
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Heart, Search, BarChart3, ArrowUp, Droplets, Activity, LucideIcon } from 'lucide-react'
+import { Heart, Search, BarChart3, ArrowUp, Droplets, Activity, Share2, LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
 interface StatCardProps {
@@ -41,6 +41,38 @@ const BloodBridgeLanding: React.FC = () => {
     router.push('/signup')
   }
 
+  const handleShareClick = async () => {
+    const shareData = {
+      title: 'BloodBridge - Save Lives Through Blood Donation',
+      text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story.',
+      url: window.location.href,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        console.log('Share successful');
+      } catch (error) {
+        console.error('Share failed:', error);
+        fallbackCopy();
+      }
+    } else {
+      console.log('Web Share API not supported, using fallback');
+      fallbackCopy();
+    }
+  };
+
+  const fallbackCopy = () => {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => {
+        alert('Link copied to clipboard! Share it to help save more lives.');
+      })
+      .catch((error) => {
+        console.error('Clipboard copy failed:', error);
+        alert('Unable to copy link. Please copy the URL manually: ' + window.location.href);
+      });
+  };
+
   const StatCard: React.FC<StatCardProps> = ({ value, label }) => (
     <div className="group">
       <div className="text-3xl font-bold text-red-600 mb-2 group-hover:scale-105 transition-transform">
@@ -51,7 +83,7 @@ const BloodBridgeLanding: React.FC = () => {
   )
 
   const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => (
-    <Card className="border-0 shadow-md hover:shadow-lg transition-all bg-white group hover:-translate-y-1">
+    <Card className="border-0  transition-all bg-white group hover:-translate-y-1">
       <CardHeader className="pb-4">
         <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-200 transition-colors">
           <Icon className="w-6 h-6 text-red-500" />
@@ -108,7 +140,7 @@ const BloodBridgeLanding: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Button 
               size="lg" 
-              className="bg-red-500 hover:bg-red-600 px-8 py-3 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+              className="bg-red-500 hover:bg-red-600 px-8 py-3 transition-all cursor-pointer"
               onClick={handleRegisterClick}
             >
               <Heart className="w-5 h-5 mr-2" />
@@ -180,6 +212,37 @@ const BloodBridgeLanding: React.FC = () => {
         </div>
       </section>
 
+      {/* Share Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-6">
+          <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="w-16 h-16 md:w-16 md:h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <Share2 className="w-8 h-8 text-white" />
+                  </div>
+                  <div className='flex flex-col text-center md:text-left'>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Help Us Save More Lives</h3>
+                    <p className="text-gray-600 max-w-md">
+                      Share BloodBridge with your friends and family. Together, we can build a stronger community of life-savers.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleShareClick}
+                  size="lg"
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-3"
+                >
+                  <Share2 className="w-5 h-5" />
+                  Share BloodBridge
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-16 bg-primary text-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
@@ -189,7 +252,7 @@ const BloodBridgeLanding: React.FC = () => {
           </p>
           <Button 
             size="lg" 
-            className="bg-white text-red-500 hover:bg-gray-100 px-8 py-3 shadow-lg transition-all cursor-pointer"
+            className="bg-white text-red-500 hover:bg-gray-100 px-8 py-3 transition-all cursor-pointer"
             onClick={handleRegisterClick}
           >
             <Heart className="w-5 h-5 mr-2" />
@@ -248,7 +311,7 @@ const BloodBridgeLanding: React.FC = () => {
         <Button
           onClick={scrollToTop}
           size="icon"
-          className="fixed bottom-8 right-8 rounded-full shadow-lg hover:scale-110 transition-all z-50 bg-red-500 hover:bg-red-600 cursor-pointer"
+          className="fixed bottom-8 right-8 rounded-full hover:scale-110 transition-all z-50 bg-red-500 hover:bg-red-600 cursor-pointer"
         >
           <ArrowUp className="w-4 h-4" />
         </Button>

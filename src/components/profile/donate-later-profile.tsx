@@ -106,14 +106,14 @@ export const DonateLaterProfile: React.FC<DonateLaterProfileProps> = ({
         variant="ghost"
         size="icon"
         onClick={() => router.push('/home')}
-        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
       >
         <ArrowLeft className="h-5 w-5 text-gray-700" />
       </Button>
 
       <div className="container mx-auto max-w-4xl">
         {/* Main Profile Card */}
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm mb-6">
+        <Card className="border-0 bg-white/95 backdrop-blur-sm mb-6">
           <CardHeader className="pb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-2">
@@ -157,7 +157,7 @@ export const DonateLaterProfile: React.FC<DonateLaterProfileProps> = ({
               <CardContent className="p-6">
                 <div className="text-center space-y-4">
                   <div className="flex justify-center">
-                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
                       <Heart className="w-8 h-8 text-white" />
                     </div>
                   </div>
@@ -168,7 +168,7 @@ export const DonateLaterProfile: React.FC<DonateLaterProfileProps> = ({
                     </p>
                     <Button
                       onClick={() => router.push('/donorform')}
-                      className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                      className="bg-green-600 hover:bg-green-700 text-white font-semibold transition-all duration-300 cursor-pointer"
                     >
                       <Heart className="w-4 h-4 mr-2" />
                       Save Lives Now
@@ -271,7 +271,7 @@ export const DonateLaterProfile: React.FC<DonateLaterProfileProps> = ({
         </Card>
 
         {/* Signup Reason Card */}
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+        <Card className="border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-foreground">Signup Information</CardTitle>
             <CardDescription>

@@ -28,7 +28,7 @@ const DefaultNavbar = () => {
   }, [isMenuOpen]);
 
   return (
-    <nav className="bg-background shadow-sm sticky top-0 z-50 border-b border-border">
+    <nav className="bg-background sticky top-0 z-50 border-b border-border">
       <div className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           {/* Logo - Only visible element on mobile */}
@@ -61,7 +61,7 @@ const DefaultNavbar = () => {
 
             {/* Compact Dropdown Menu */}
             {isMenuOpen && (
-              <div className="absolute right-0 top-12 w-48 bg-background border border-border rounded-lg shadow-lg py-2 z-50">
+              <div className="absolute right-0 top-12 w-48 bg-background border border-border rounded-lg py-2 z-50">
                 <div className="flex flex-col">
                   <Button 
                     variant="ghost"
@@ -99,7 +99,7 @@ const DefaultNavbar = () => {
             </Button>
             <Button 
               onClick={() => router.push('/register')}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md cursor-pointer"
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold cursor-pointer"
             >
               Save Lives
             </Button>

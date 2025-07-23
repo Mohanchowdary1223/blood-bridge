@@ -2,7 +2,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets } from 'lucide-react';
+import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,38 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     router.push('/health-instructions')
   }
 
+  const handleShareClick = async () => {
+    const shareData = {
+      title: 'BloodBridge',
+      text: 'Check out BloodBridge, your platform for blood donation and management! Join me in making a difference.',
+      url: window.location.href,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        console.log('Share successful');
+      } catch (error) {
+        console.error('Share failed:', error);
+        fallbackCopy();
+      }
+    } else {
+      console.log('Web Share API not supported, using fallback');
+      fallbackCopy();
+    }
+  };
+
+  const fallbackCopy = () => {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => {
+        alert('Link copied to clipboard! You can now paste and share it manually.');
+      })
+      .catch((error) => {
+        console.error('Clipboard copy failed:', error);
+        alert('Unable to copy link. Please copy the URL manually: ' + window.location.href);
+      });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-8">
       <div className="container mx-auto px-6 max-w-6xl">
@@ -64,6 +96,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
             </p>
           </div>
         </div>
+        
         <div className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="group transition-all duration-300 border-0  hover:-translate-y-2">
@@ -148,8 +181,33 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
           </div>
         </div>
 
+        {/* Share Section */}
+        <div className="mb-12">
+          <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row items-center gap-4">
+                  <div className="w-12 h-12 md:w-12 md:h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <Share2 className="w-6 h-6 text-white" />
+                  </div>
+                  <div className='flex flex-col text-center md:text-left'>
+                    <h3 className="text-xl font-semibold text-foreground">Spread the Word</h3>
+                    <p className="text-muted-foreground">Help more people discover BloodBridge and save lives together</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleShareClick}
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share with Friends
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Recent Activity - Now Third */}
+        {/* Recent Activity */}
         {!hideRecentActivity && (
           <Card className="border-0 mb-12">
             <CardHeader>

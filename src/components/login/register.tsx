@@ -260,7 +260,7 @@ const Register = () => {
         setTimeout(() => {
           setShowSuccess(false);
           router.push('/home');
-        }, 2000);
+        }, 500);
       } catch (err: unknown) {
         if (err instanceof Error) {
           setError(err.message || 'Registration failed. Please try again.');
@@ -291,20 +291,20 @@ const Register = () => {
           variant="ghost"
           size="icon"
           onClick={() => router.push('/')}
-          className="fixed top-4 left-4 sm:top-6 sm:left-6 h-10 w-10 sm:h-12 sm:w-12 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+          className="fixed top-4 left-4 sm:top-6 sm:left-6 h-10 w-10 sm:h-12 sm:w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
         >
           <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
         </Button>
 
         {/* Main Card */}
-        <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm overflow-hidden">
+        <Card className="border-0 bg-white/90 backdrop-blur-sm overflow-hidden">
           <div className="bg-gradient-to-r from-red-500 via-red-600 to-red-700 h-2"></div>
           
           <CardHeader className="space-y-6 pb-8 pt-8">
             {/* Logo */}
             <div className="flex justify-center">
               <div className="relative">
-                <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-3xl flex items-center justify-center shadow-xl">
+                <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-3xl flex items-center justify-center">
                   <Droplets className="w-10 h-10 text-white" />
                 </div>
                 <div className="absolute -inset-1 bg-gradient-to-r from-red-400 to-red-600 rounded-3xl blur opacity-25"></div>
@@ -362,7 +362,7 @@ const Register = () => {
                         name="fullName"
                         type="text"
                         placeholder="Enter your full name"
-                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.fullName ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        className={`pl-10 h-12 transition-all duration-200 ${errors.fullName ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
                         value={formData.fullName}
                         onChange={handleChange}
                         required
@@ -384,7 +384,7 @@ const Register = () => {
                         name="email"
                         type="email"
                         placeholder="Enter your email"
-                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.email ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        className={`pl-10 h-12 transition-all duration-200 ${errors.email ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
                         value={formData.email}
                         onChange={handleChange}
                         required
@@ -412,7 +412,7 @@ const Register = () => {
                         name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="Create password"
-                        className={`pl-10 pr-12 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.password ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        className={`pl-10 pr-12 h-12 transition-all duration-200 ${errors.password ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
                         value={formData.password}
                         onChange={handleChange}
                         required
@@ -447,7 +447,7 @@ const Register = () => {
                         name="confirmPassword"
                         type="password"
                         placeholder="Confirm password"
-                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.confirmPassword ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        className={`pl-10 h-12 transition-all duration-200 ${errors.confirmPassword ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         required
@@ -478,7 +478,7 @@ const Register = () => {
                         name="phone"
                         type="tel"
                         placeholder="Phone Number"
-                        className={`pl-20 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.phone ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        className={`pl-20 h-12 transition-all duration-200 ${errors.phone ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
                         value={formData.phone}
                         onChange={handleChange}
                         required
@@ -496,10 +496,10 @@ const Register = () => {
                     <div className="relative group">
                       <Droplet className="absolute left-3 top-3 h-4 w-4 text-red-500 z-10" />
                       <Select value={formData.bloodType} onValueChange={(value) => handleSelectChange('bloodType', value)}>
-                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
+                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 ${errors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
                           <SelectValue placeholder="Select Blood Type" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white shadow-xl border-0">
+                        <SelectContent className="bg-white border-0">
                           {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
                             <SelectItem key={type} value={type} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
                               <span className="flex items-center gap-2">
@@ -532,7 +532,7 @@ const Register = () => {
       type="button"
       variant="outline"
       onClick={() => setShowCalendar(!showCalendar)}
-      className={`w-full justify-start text-left font-normal h-12 pl-10 pr-3 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${
+      className={`w-full justify-start text-left font-normal h-12 pl-10 pr-3 cursor-pointer transition-all duration-200  ${
         !formData.dob && "text-muted-foreground"
       } ${errors.dob ? 'border-red-500 bg-red-50/50' : 'border-gray-200 hover:border-red-300 focus:border-red-500'}`}
     >
@@ -548,7 +548,7 @@ const Register = () => {
     </Button>
     
     {showCalendar && (
-      <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg shadow-2xl border border-gray-200 p-4">
+      <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg border border-gray-200 p-4">
         <Calendar
           mode="single"
           selected={selectedDate}
@@ -580,7 +580,7 @@ const Register = () => {
                         name="weight"
                         type="text"
                         placeholder="Weight in kg"
-                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.weight ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        className={`pl-10 h-12 transition-all duration-200 ${errors.weight ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
                         value={formData.weight}
                         onChange={handleChange}
                         required
@@ -602,7 +602,7 @@ const Register = () => {
                         name="height"
                         type="text"
                         placeholder="Height in cm"
-                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.height ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        className={`pl-10 h-12 transition-all duration-200 ${errors.height ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
                         value={formData.height}
                         onChange={handleChange}
                         required
@@ -621,10 +621,10 @@ const Register = () => {
                   <div className="relative group">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                     <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
-                      <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.gender ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
+                      <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200  ${errors.gender ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
                         <SelectValue placeholder="Select Gender" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white shadow-xl border-0">
+                      <SelectContent className="bg-white border-0">
                         {['Male', 'Female', 'Other'].map((gender) => (
                           <SelectItem key={gender} value={gender} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
                             {gender}
@@ -650,10 +650,10 @@ const Register = () => {
                     <div className="relative group">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                       <Select value={formData.country} onValueChange={(value) => handleSelectChange('country', value)}>
-                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
+                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 ${errors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
                           <SelectValue placeholder="Select Country" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white shadow-xl border-0 max-h-60">
+                        <SelectContent className="bg-white border-0 max-h-60">
                           {countries.map(country => (
                             <SelectItem key={country.isoCode} value={country.isoCode} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
                               {country.name}
@@ -674,10 +674,10 @@ const Register = () => {
                     <div className="relative group">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                       <Select value={formData.state} onValueChange={(value) => handleSelectChange('state', value)} disabled={!formData.country}>
-                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.country ? 'opacity-50' : ''}`}>
+                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 ${errors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.country ? 'opacity-50' : ''}`}>
                           <SelectValue placeholder="Select State" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white shadow-xl border-0 max-h-60">
+                        <SelectContent className="bg-white border-0 max-h-60">
                           {states.map(state => (
                             <SelectItem key={state.isoCode} value={state.isoCode} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
                               {state.name}
@@ -698,10 +698,10 @@ const Register = () => {
                     <div className="relative group">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                       <Select value={formData.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={!formData.state}>
-                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.state ? 'opacity-50' : ''}`}>
+                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 ${errors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.state ? 'opacity-50' : ''}`}>
                           <SelectValue placeholder="Select City" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white shadow-xl border-0 max-h-60">
+                        <SelectContent className="bg-white border-0 max-h-60">
                           {cities.map(city => (
                             <SelectItem key={city.name} value={city.name} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
                               {city.name}
@@ -728,11 +728,11 @@ const Register = () => {
                     onValueChange={(value) => setFormData({...formData, isAvailable: value === 'true'})}
                     className="flex flex-col sm:flex-row gap-3 sm:gap-8"
                   >
-                    <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer w-full sm:w-auto">
+                    <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-3 border border-gray-100 transition-all cursor-pointer w-full sm:w-auto">
                       <RadioGroupItem value="true" id="yes" className="cursor-pointer text-green-600 flex-shrink-0" />
                       <Label htmlFor="yes" className="cursor-pointer text-sm font-medium text-gray-700 flex-1">Yes, I'm available</Label>
                     </div>
-                    <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer w-full sm:w-auto">
+                    <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-3 border border-gray-100 transition-all cursor-pointer w-full sm:w-auto">
                       <RadioGroupItem value="false" id="no" className="cursor-pointer text-gray-600 flex-shrink-0" />
                       <Label htmlFor="no" className="cursor-pointer text-sm font-medium text-gray-700 flex-1">Not available now</Label>
                     </div>
@@ -742,7 +742,7 @@ const Register = () => {
 
               {/* Error Alerts */}
               {Object.keys(errors).length > 0 && (
-                <Alert variant="destructive" className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50 shadow-sm">
+                <Alert variant="destructive" className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50 ">
                   <AlertDescription className="text-red-700 flex items-center gap-2">
                     <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                     Please fill out all required fields correctly to continue.
@@ -751,7 +751,7 @@ const Register = () => {
               )}
 
               {error && (
-                <Alert variant="destructive" className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50 shadow-sm">
+                <Alert variant="destructive" className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50 ">
                   <AlertDescription className="text-red-700 flex items-center gap-2">
                     <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                     {error}
@@ -764,7 +764,7 @@ const Register = () => {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-14 bg-gradient-to-r from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 text-white font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] disabled:hover:scale-100 disabled:opacity-50"
+                  className="w-full h-14 bg-gradient-to-r from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 text-white font-bold text-lg transition-all duration-300 cursor-pointer transform hover:scale-[1.02] disabled:hover:scale-100 disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="flex items-center space-x-3">
@@ -787,9 +787,9 @@ const Register = () => {
       {/* Success Popup */}
       {showSuccess && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm">
-          <Card className="p-8 shadow-2xl border-0 bg-white max-w-md w-full mx-4 rounded-2xl">
+          <Card className="p-8 border-0 bg-white max-w-md w-full mx-4 rounded-2xl">
             <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+              <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 ">
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />

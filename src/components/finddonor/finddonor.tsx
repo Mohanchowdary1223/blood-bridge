@@ -230,7 +230,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
         variant="ghost"
         size="icon"
         onClick={handleBack}
-        className="fixed top-14 md:top-24 left-1 md:left-2 h-8 md:h-10 w-8 md:w-10 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        className="fixed top-14 md:top-24 left-1 md:left-2 h-8 md:h-10 w-8 md:w-10 bg-white/90 backdrop-blur-smborder border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
       >
         <ArrowLeft className="h-5 w-5 text-gray-700" />
       </Button>
@@ -239,7 +239,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
         {!hideNavbarAndTitle && (
           <div className="text-center mb-8">
             <div className="flex justify-center items-center gap-3 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
                 <Heart className="w-8 h-8 text-white" />
               </div>
             </div>
@@ -249,7 +249,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
         )}
 
         {/* Search Filters Card */}
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm mb-8">
+        <Card className="border-0 bg-white/95 backdrop-blur-sm mb-8">
           <CardHeader className="pb-6">
             <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Search className="w-6 h-6 text-blue-500" />
@@ -349,7 +349,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
               <Button
                 onClick={handleSearch}
                 disabled={isLoading}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 h-12 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 h-12 font-semibold transition-all duration-300 cursor-pointer"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
@@ -368,7 +368,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
         </Card>
 
         {/* Results Section */}
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+        <Card className="border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="pb-6">
             <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Users className="w-6 h-6 text-blue-500" />

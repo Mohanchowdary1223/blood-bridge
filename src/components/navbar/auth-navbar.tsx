@@ -24,7 +24,7 @@ const AuthNavbar = () => {
       setTimeout(() => {
         setShowLogoutSuccess(false);
         router.push('/login');
-      }, 2000);
+      }, 500);
     } catch (error) {
       console.error('Logout failed:', error);
       // Still redirect even if API call fails
@@ -85,7 +85,7 @@ const AuthNavbar = () => {
 
               {/* Compact Dropdown Menu */}
               {isMenuOpen && (
-                <div className="absolute right-0 top-12 w-52 bg-background border border-border rounded-lg shadow-lg py-2 z-50">
+                <div className="absolute right-0 top-12 w-52 bg-background border border-border rounded-lg py-2 z-50">
                   <div className="flex flex-col">
                     <Button 
                       variant="ghost"
@@ -146,7 +146,7 @@ const AuthNavbar = () => {
               </Button>
               <Button 
                 onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md cursor-pointer"
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold cursor-pointer"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -159,7 +159,7 @@ const AuthNavbar = () => {
       {/* Logout Success Popup */}
       {showLogoutSuccess && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-          <Card className="p-6 shadow-2xl border-0 bg-white max-w-sm w-full mx-4">
+          <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">

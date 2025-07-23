@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Outfit, Dancing_Script } from "next/font/google";
 import "./globals.css";
 import NavbarWrapper from "@/components/navbar/navbar-wrapper";
+import { Suspense } from "react";
+import Loading from "./loading";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -30,7 +32,11 @@ export default function RootLayout({
       >
           <div className="relative flex min-h-screen flex-col">
             <NavbarWrapper />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1">
+              <Suspense fallback={<Loading/>}>
+                {children}
+              </Suspense>
+            </main>
           </div>
       </body>
     </html>

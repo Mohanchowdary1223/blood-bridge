@@ -64,7 +64,7 @@ const Login = () => {
         } else {
           router.push('/home');
         }
-      }, 2000);
+      }, 500);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || 'Login failed. Please check your credentials or sign up.');
@@ -84,18 +84,18 @@ const Login = () => {
   variant="ghost"
   size="icon"
   onClick={() => router.push('/')}
-  className="fixed top-4 left-4 sm:top-6 sm:left-6 h-10 w-10 sm:h-12 sm:w-12 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+  className="fixed top-4 left-4 sm:top-6 sm:left-6 h-10 w-10 sm:h-12 sm:w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
 >
   <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
 </Button>
 
 
         {/* Main Card */}
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+        <Card className="border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="space-y-4 pb-6">
             {/* Logo */}
             <div className="flex justify-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl flex items-center justify-center">
                 <Droplets className="w-8 h-8 text-white" />
               </div>
             </div>
@@ -209,7 +209,7 @@ const Login = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full cursor-pointer h-12 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full cursor-pointer h-12 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold transition-all duration-200"
               >
                 {isLoading ? (
                   <div className="flex  items-center space-x-2">
@@ -235,7 +235,7 @@ const Login = () => {
       {/* Success Popup */}
       {showSuccess && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-          <Card className="p-6 shadow-2xl border-0 bg-white max-w-sm w-full mx-4">
+          <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">

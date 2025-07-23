@@ -242,7 +242,7 @@ const DonorFormPage: React.FC = () => {
           </Alert>
         )}
 
-        <div className="space-y-8 bg-white pt-8 pb-10 px-6 rounded-xl shadow-2xl mb-8 border border-gray-100">
+        <div className="space-y-8 bg-white pt-8 pb-10 px-6 rounded-xl mb-8 border border-gray-100">
           {/* ------ Personal Info ------ */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-green-500 pl-3">Personal Information</h3>
@@ -342,7 +342,7 @@ const DonorFormPage: React.FC = () => {
                     type="button"
                     variant="outline"
                     onClick={() => setShowCalendar(!showCalendar)}
-                    className={`w-full justify-start text-left font-normal h-12 pl-10 pr-3 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${
+                    className={`w-full justify-start text-left font-normal h-12 pl-10 pr-3 cursor-pointer transition-all duration-200   ${
                       !donorFormData.dob && "text-muted-foreground"
                     } ${donorFormErrors.dob ? 'border-red-500 bg-red-50/50' : 'border-gray-200 hover:border-red-300 focus:border-red-500'}`}
                   >
@@ -357,7 +357,7 @@ const DonorFormPage: React.FC = () => {
                     )}
                   </Button>
                   {showCalendar && (
-                    <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg shadow-2xl border border-gray-200 p-4">
+                    <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg  border border-gray-200 p-4">
                       <Calendar
                         mode="single"
                         selected={selectedDate}
@@ -523,7 +523,7 @@ const DonorFormPage: React.FC = () => {
         </div>
 
         {/* Submit Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+        <div className="flex flex-col justify-center items-center sm:flex-row gap-4 pt-6">
           <Button
             onClick={handleDonorSubmit}
             disabled={loading}

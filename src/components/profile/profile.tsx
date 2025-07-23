@@ -229,13 +229,13 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
         variant="ghost"
         size="icon"
         onClick={() => router.push('/home')}
-        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
       >
         <ArrowLeft className="h-5 w-5 text-gray-700" />
       </Button>
 
       <div className="container mx-auto max-w-4xl">
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+        <Card className="border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="pb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-2">
@@ -676,14 +676,14 @@ export const UserProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUser
         variant="ghost"
         size="icon"
         onClick={() => router.push('/home')}
-        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
       >
         <ArrowLeft className="h-5 w-5 text-gray-700" />
       </Button>
 
       <div className="container mx-auto max-w-4xl pt-20 space-y-6">
         {/* Main Profile Card */}
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+        <Card className="border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-2">
@@ -815,7 +815,7 @@ export const UserProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUser
         </Card>
 
         {/* Signup Reason Card */}
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+        <Card className="border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-foreground">Signup Information</CardTitle>
             <CardDescription>
