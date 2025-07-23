@@ -244,7 +244,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                     <User className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-bold text-foreground">{user.name}</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-foreground">{user.name.slice(0, 1).toUpperCase()}{user.name.slice(1)}</CardTitle>
                     <CardDescription className="text-muted-foreground">Donor Profile</CardDescription>
                   </div>
                 </div>
@@ -293,7 +293,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                   />
                 ) : (
                   <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
-                    {user.name}
+                    {user.name.slice(0, 1).toUpperCase()}{user.name.slice(1)}
                   </div>
                 )}
               </div>

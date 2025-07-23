@@ -2,12 +2,16 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Users, Activity, TrendingUp } from 'lucide-react';
+import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-const HomeComponent = () => {
+interface HomeComponentProps {
+  hideRecentActivity?: boolean;
+}
+
+const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = false }) => {
   const router = useRouter()
 
   const [userName, setUserName] = useState('User');
@@ -47,7 +51,7 @@ const HomeComponent = () => {
           <div className="mb-6">
             <h2 className="text-4xl md:text-5xl font-bold mb-2">
               <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">Hello</span>{" "}
-              <span className="text-foreground">{userName.slice(0,1)},</span>
+              <span className="text-foreground">{userName.slice(0,1).toUpperCase()}{userName.slice(1)},</span>
             </h2>
           </div>
           <div className="space-y-4">
@@ -62,7 +66,7 @@ const HomeComponent = () => {
         </div>
         <div className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-2">
+            <Card className="group transition-all duration-300 border-0  hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Search className="w-8 h-8 text-white" />
@@ -82,7 +86,7 @@ const HomeComponent = () => {
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-2">
+            <Card className="group  transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Heart className="w-8 h-8 text-white" />
@@ -102,7 +106,7 @@ const HomeComponent = () => {
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-2">
+            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <BarChart3 className="w-8 h-8 text-white" />
@@ -122,7 +126,7 @@ const HomeComponent = () => {
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-2">
+            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <BookOpen className="w-8 h-8 text-white" />
@@ -144,97 +148,63 @@ const HomeComponent = () => {
           </div>
         </div>
 
-        {/* Quick Stats - Now Second */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Community Impact</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-red-100 hover:shadow-xl transition-shadow duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-3xl font-bold text-red-700 mb-2">50K+</h3>
-                <p className="text-red-600 font-semibold text-lg">Lives Saved</p>
-                <p className="text-red-500 text-sm mt-1">Through our platform</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-shadow duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Activity className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-3xl font-bold text-blue-700 mb-2">25K+</h3>
-                <p className="text-blue-600 font-semibold text-lg">Active Donors</p>
-                <p className="text-blue-500 text-sm mt-1">Ready to help</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-shadow duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <TrendingUp className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-3xl font-bold text-green-700 mb-2">100+</h3>
-                <p className="text-green-600 font-semibold text-lg">Cities Covered</p>
-                <p className="text-green-500 text-sm mt-1">Nationwide reach</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
 
         {/* Recent Activity - Now Third */}
-        <Card className="shadow-xl border-0 mb-12">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Clock className="w-6 h-6 text-primary" />
-              Recent Activity
-            </CardTitle>
-            <CardDescription>
-              Stay updated with your latest donation activities and impact
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-6 h-6 text-white" />
+        {!hideRecentActivity && (
+          <Card className="border-0 mb-12">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <Clock className="w-6 h-6 text-primary" />
+                Recent Activity
+              </CardTitle>
+              <CardDescription>
+                Stay updated with your latest donation activities and impact
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 ">
+                    <p className="font-semibold text-blue-900">Upcoming Donation</p>
+                    <p className="text-sm text-blue-700">Your next donation is scheduled for next week</p>
+                  </div>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
+                    Pending
+                  </Badge>
                 </div>
-                <div className="flex-1 ">
-                  <p className="font-semibold text-blue-900">Upcoming Donation</p>
-                  <p className="text-sm text-blue-700">Your next donation is scheduled for next week</p>
+                
+                <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-green-900">Donation Impact</p>
+                    <p className="text-sm text-green-700">Your last donation helped save 3 lives</p>
+                  </div>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-300">
+                    Completed
+                  </Badge>
                 </div>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
-                  Pending
-                </Badge>
-              </div>
-              
-              <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-green-900">Donation Impact</p>
-                  <p className="text-sm text-green-700">Your last donation helped save 3 lives</p>
-                </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-300">
-                  Completed
-                </Badge>
-              </div>
 
-              <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Heart className="w-6 h-6 text-white" />
+                <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                  <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-purple-900">Health Status</p>
+                    <p className="text-sm text-purple-700">You're eligible to donate again in 2 months</p>
+                  </div>
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-300">
+                    Good
+                  </Badge>
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-purple-900">Health Status</p>
-                  <p className="text-sm text-purple-700">You're eligible to donate again in 2 months</p>
-                </div>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-300">
-                  Good
-                </Badge>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Footer */}
