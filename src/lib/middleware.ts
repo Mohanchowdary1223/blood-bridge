@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verify } from 'jsonwebtoken';
@@ -18,7 +20,7 @@ interface AdminResult {
   error?: string;
 }
 
-export async function isAuthenticated(request: Request): Promise<AuthResult> {
+export async function isAuthenticated(): Promise<AuthResult> {
   try {
     const cookieStore = cookies();
     const token = (await cookieStore).get('token');
@@ -45,7 +47,7 @@ export async function isAuthenticated(request: Request): Promise<AuthResult> {
 }
 
 export async function isAdmin(request: Request): Promise<NextResponse | AdminResult> {
-  const authResult = await isAuthenticated(request);
+  const authResult = await isAuthenticated();
 
   if (!authResult.isAuth || !authResult.user) {
     return NextResponse.json(

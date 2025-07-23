@@ -1,121 +1,179 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { Droplets, Menu, X, User, Shield, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 const AuthNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
   const router = useRouter();
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
-    await fetch('/api/logout', { method: 'POST' });
-    localStorage.clear();
-    router.push('/login');
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      localStorage.clear();
+      
+      // Show success message
+      setShowLogoutSuccess(true);
+      
+      // Redirect after showing success message
+      setTimeout(() => {
+        setShowLogoutSuccess(false);
+        router.push('/login');
+      }, 2000);
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still redirect even if API call fails
+      localStorage.clear();
+      router.push('/login');
+    }
   };
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex justify-between items-center">
-          {/* Logo */}
-          <div className='flex items-center'>
-            <Image
-              src="https://img.icons8.com/?size=100&id=26115&format=png&color=000000"
-              alt="BloodBridge Logo"
-              width={32}
-              height={32} />
-            <button 
-              onClick={() => router.push('/home')}
-              className="text-2xl font-bold cursor-pointer text-primary hover:text-primary/80 transition-colors"
-            >
-              Bridge
-            </button>
-          </div>
+    <>
+      <nav className="bg-background sticky top-0 z-50 border-b border-border">
+        <div className="container mx-auto px-6 py-3">
+          <div className="flex justify-between items-center">
+            {/* Logo */}
+            <div className='flex items-center gap-2'>
+              <div className="w-7 h-7 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                <Droplets className="w-5 h-5 text-white" />
+              </div>
+              <button 
+                onClick={() => router.push('/home')}
+                className="text-xl cursor-pointer font-bold text-foreground hover:text-red-600 transition-colors"
+              >
+                BloodBridge
+              </button>
+            </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
-            <button 
-              onClick={() => router.push('/profile')}
-              className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-primary transition-colors px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Profile
-            </button>
-            <button 
-              onClick={() => router.push('/health-instructions')}
-              className="flex items-center cursor-pointer gap-2 text-gray-700 hover:text-primary transition-colors px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Health Instructions
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-8 py-2 rounded-full cursor-pointer hover:bg-red-600 transition-all duration-200 text-sm font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-red-400/50"
-            >
-              Logout
-            </button>
-          </div>
+            {/* Mobile Menu - Right Side Only */}
+            <div className="md:hidden relative" ref={menuRef}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-muted"
+              >
+                {isMenuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </Button>
 
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
-            <svg 
-              className="w-6 h-6 text-gray-600" 
-              fill="none" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth="2" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              {isMenuOpen ? (
-                <path d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" />
+              {/* Compact Dropdown Menu */}
+              {isMenuOpen && (
+                <div className="absolute right-0 top-12 w-52 bg-background border border-border rounded-lg shadow-lg py-2 z-50">
+                  <div className="flex flex-col">
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        router.push('/profile');
+                        setIsMenuOpen(false);
+                      }}
+                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Profile
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        router.push('/health-instructions');
+                        setIsMenuOpen(false);
+                      }}
+                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Health Instructions
+                    </Button>
+                    <div className="border-t border-border my-1" />
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="justify-start px-4 py-2 text-sm text-red-600 hover:text-red-700 cursor-pointer rounded-none hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </Button>
+                  </div>
+                </div>
               )}
-            </svg>
-          </button>
-        </div>
+            </div>
 
-        {/* Mobile Navigation */}
-        <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'} mt-4 pb-4`}> 
-          <div className="flex flex-col gap-3">
-            <button 
-              onClick={() => router.push('/profile')}
-              className="flex items-center cursor-pointer justify-center gap-2 text-gray-700 hover:text-primary transition-colors py-2.5 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Profile
-            </button>
-            <button 
-              onClick={() => router.push('/health-instructions')}
-              className="flex items-center cursor-pointer justify-center gap-2 text-gray-700 hover:text-primary transition-colors py-2.5 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Health Instructions
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-8 py-2 rounded-full hover:bg-red-600 transition-all duration-200 text-sm font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-red-400/50 text-center"
-            >
-              Logout
-            </button>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-3">
+              <Button 
+                variant="ghost"
+                onClick={() => router.push('/profile')}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
+              <Button 
+                variant="ghost"
+                onClick={() => router.push('/health-instructions')}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Health Instructions
+              </Button>
+              <Button 
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Logout Success Popup */}
+      {showLogoutSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
+          <Card className="p-6 shadow-2xl border-0 bg-white max-w-sm w-full mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <LogOut className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Logged Out Successfully!</h3>
+              <p className="text-sm text-muted-foreground">Thank you for using BloodBridge. Stay safe!</p>
+            </div>
+          </Card>
+        </div>
+      )}
+    </>
   );
 };
 
-export default AuthNavbar; 
+export default AuthNavbar;

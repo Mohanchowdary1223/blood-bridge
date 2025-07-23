@@ -1,8 +1,16 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaEnvelope, FaLock, FaPhone, FaTint, FaEye, FaEyeSlash, FaCalendar, FaWeight, FaRuler, FaMapMarkerAlt, FaArrowLeft } from 'react-icons/fa';
+import { User, Mail, Lock, Phone, Droplet, Eye, EyeOff, CalendarIcon, Weight, Ruler, MapPin, ArrowLeft, Droplets } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Calendar } from "@/components/ui/calendar"
 
 interface FormData {
   fullName: string;
@@ -38,6 +46,13 @@ interface FormErrors {
   city?: string;
 }
 
+function formatDate(date: Date | undefined) {
+  if (!date) {
+    return ""
+  }
+  return date.toLocaleDateString("en-CA") // YYYY-MM-DD format for input[type="date"]
+}
+
 const Register = () => {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
@@ -57,6 +72,11 @@ const Register = () => {
     city: '',
     isAvailable: null,
   });
+  
+  // Calendar state
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [countries, setCountries] = useState<ICountry[]>([]);
@@ -110,17 +130,9 @@ const Register = () => {
     return country ? country.phonecode : '';
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (name === 'isAvailable') {
-      setFormData({
-        ...formData,
-        isAvailable: value === 'true',
-      });
-      return;
-    }
     if (name === 'phone') {
-      // Only allow numbers and max 10 digits
       const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
       setFormData({
         ...formData,
@@ -135,12 +147,34 @@ const Register = () => {
         [name]: value,
         age: age
       });
+      // Update calendar date
+      if (value) {
+        setSelectedDate(new Date(value));
+      }
     } else {
       setFormData({
         ...formData,
         [name]: value,
       });
     }
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    const dateString = formatDate(date);
+    setFormData({
+      ...formData,
+      dob: dateString,
+      age: date ? calculateAge(dateString) : 0
+    });
+    setShowCalendar(false);
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
   const validateForm = () => {
@@ -250,362 +284,523 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-2xl relative">
-        <button
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-gray-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-3xl space-y-8">
+        {/* Back Button - Fixed Position */}
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => router.push('/')}
-          className="absolute top-4 left-4 text-gray-600 hover:text-gray-800 cursor-pointer bg-white p-2 rounded-full shadow focus:outline-none focus:ring-2 focus:ring-primary/50"
-          aria-label="Go to home page"
+          className="fixed top-4 left-4 sm:top-6 sm:left-6 h-10 w-10 sm:h-12 sm:w-12 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
         >
-          <FaArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-primary">
-            Register as a Donor
-          </h2>
-          <div className="mt-2 text-center space-y-2">
-            <p className="text-sm text-gray-600">
-              {getSignupMessage()}{' '}
-              <button
-                onClick={() => router.push('/signup')}
-                className="font-semibold text-primary hover:text-primary/80 cursor-pointer"
-              >
-                Sign up
-              </button>
-            </p>
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <button
-                onClick={() => router.push('/login')}
-                className="font-semibold text-primary hover:text-primary/80 cursor-pointer"
-              >
-                Login
-              </button>
-            </p>
-          </div>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser className="h-5 w-5 text-gray-400" />
+          <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+        </Button>
+
+        {/* Main Card */}
+        <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-red-500 via-red-600 to-red-700 h-2"></div>
+          
+          <CardHeader className="space-y-6 pb-8 pt-8">
+            {/* Logo */}
+            <div className="flex justify-center">
+              <div className="relative">
+                <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-3xl flex items-center justify-center shadow-xl">
+                  <Droplets className="w-10 h-10 text-white" />
+                </div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-red-400 to-red-600 rounded-3xl blur opacity-25"></div>
               </div>
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
-                  errors.fullName ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                placeholder="Full Name"
-                value={formData.fullName}
-                onChange={handleChange}
-              />
+            </div>
+            
+            <div className="text-center space-y-3">
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Become a Donor
+              </CardTitle>
+              <CardDescription className="text-lg text-muted-foreground">
+                Join our community and save lives together
+              </CardDescription>
             </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaEnvelope className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
-                  errors.email ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
+            {/* Navigation Links */}
+            <div className="text-center space-y-2 bg-gray-50/50 rounded-xl p-4">
+              <p className="text-sm text-muted-foreground">
+                {getSignupMessage()}{' '}
+                <Button
+                  variant="link"
+                  onClick={() => router.push('/signup')}
+                  className="p-0 h-auto text-red-600 hover:text-red-700 font-semibold cursor-pointer transition-colors"
+                >
+                  Sign up
+                </Button>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <Button
+                  variant="link"
+                  onClick={() => router.push('/login')}
+                  className="p-0 h-auto text-red-600 hover:text-red-700 font-semibold cursor-pointer transition-colors"
+                >
+                  Login
+                </Button>
+              </p>
             </div>
+          </CardHeader>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 pr-10 border ${
-                  errors.password ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer z-20" onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <FaEyeSlash className="h-5 w-5 text-gray-400" /> : <FaEye className="h-5 w-5 text-gray-400" />}
-              </div>
-            </div>
+          <CardContent className="space-y-8 px-8 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* Personal Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 border-l-4 border-red-500 pl-3">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Full Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">Full Name</Label>
+                    <div className="relative group">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
+                      <Input
+                        id="fullName"
+                        name="fullName"
+                        type="text"
+                        placeholder="Enter your full name"
+                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.fullName ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        value={formData.fullName}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.fullName && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.fullName}
+                    </p>}
+                  </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="h-5 w-5 text-gray-400" />
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
+                    <div className="relative group">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.email ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.email && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.email}
+                    </p>}
+                  </div>
+                </div>
               </div>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
-                  errors.confirmPassword ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaPhone className="h-5 w-5 text-gray-400" />
-              </div>
-              <div className="absolute inset-y-0 left-10 flex items-center text-gray-500 text-sm pl-1 pr-1">
-                {formData.country && `+${getCountryCode(formData.country)}`}
-              </div>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-20 border ${
-                  errors.phone ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                placeholder="Phone Number"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-              )}
-            </div>
+              {/* Security Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 border-l-4 border-blue-500 pl-3">Security</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+                    <div className="relative group">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Create password"
+                        className={`pl-10 pr-12 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.password ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1 h-10 w-10 cursor-pointer hover:bg-red-50"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    {errors.password && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.password}
+                    </p>}
+                  </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaTint className="h-5 w-5 text-gray-400" />
+                  {/* Confirm Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password</Label>
+                    <div className="relative group">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        placeholder="Confirm password"
+                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.confirmPassword ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.confirmPassword && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.confirmPassword}
+                    </p>}
+                  </div>
+                </div>
               </div>
-              <select
-                id="bloodType"
-                name="bloodType"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
-                  errors.bloodType ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary cursor-pointer focus:z-10 sm:text-sm`}
-                value={formData.bloodType}
-                onChange={handleChange}
-              >
-                <option value="">Select blood type</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-              </select>
-            </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaCalendar className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="dob"
-                name="dob"
-                type="date"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
-                  errors.dob ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                placeholder="Date of Birth"
-                value={formData.dob}
-                onChange={handleChange}
-              />
-            </div>
+              {/* Contact & Medical Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 border-l-4 border-green-500 pl-3">Contact & Medical</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone Number</Label>
+                    <div className="relative group">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
+                      <div className="absolute left-10 top-3 text-xs text-blue-600 font-medium">
+                        {formData.country && `+${getCountryCode(formData.country)}`}
+                      </div>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="Phone Number"
+                        className={`pl-20 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.phone ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.phone && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.phone}
+                    </p>}
+                  </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaWeight className="h-5 w-5 text-gray-400" />
+                  {/* Blood Type */}
+                  <div className="space-y-2">
+                    <Label htmlFor="bloodType" className="text-sm font-medium text-gray-700">Blood Type</Label>
+                    <div className="relative group">
+                      <Droplet className="absolute left-3 top-3 h-4 w-4 text-red-500 z-10" />
+                      <Select value={formData.bloodType} onValueChange={(value) => handleSelectChange('bloodType', value)}>
+                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
+                          <SelectValue placeholder="Select Blood Type" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white shadow-xl border-0">
+                          {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
+                            <SelectItem key={type} value={type} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
+                              <span className="flex items-center gap-2">
+                                <Droplet className="h-3 w-3 text-red-500" />
+                                {type}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {errors.bloodType && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.bloodType}
+                    </p>}
+                  </div>
+                </div>
               </div>
-              <input
-                id="weight"
-                name="weight"
-                type="text"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
-                  errors.weight ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                placeholder="Weight (kg)"
-                value={formData.weight}
-                onChange={handleChange}
-              />
-            </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaRuler className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="height"
-                name="height"
-                type="text"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border ${
-                  errors.height ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                placeholder="Height (cm)"
-                value={formData.height}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaMapMarkerAlt className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                id="country"
-                name="country"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border cursor-pointer ${
-                  errors.country ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                value={formData.country}
-                onChange={handleChange}
-              >
-                <option value="">Select country</option>
-                {countries.map(country => (
-                  <option key={country.isoCode} value={country.isoCode}>{country.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaMapMarkerAlt className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                id="state"
-                name="state"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border cursor-pointer ${
-                  errors.state ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                value={formData.state}
-                onChange={handleChange}
-              >
-                <option value="">Select state</option>
-                {states.map(state => (
-                  <option key={state.isoCode} value={state.isoCode}>{state.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaMapMarkerAlt className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                id="city"
-                name="city"
-                required
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border cursor-pointer ${
-                  errors.city ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                value={formData.city}
-                onChange={handleChange}
-              >
-                <option value="">Select city</option>
-                {cities.map(city => (
-                  <option key={city.name} value={city.name}>{city.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                id="gender"
-                name="gender"
-                required 
-                className={`appearance-none relative block w-full px-3 py-3 pl-10 border cursor-pointer ${
-                  errors.gender ? 'border-primary' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm`}
-                value={formData.gender}
-                onChange={handleChange}
-              >
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Are you currently available to donate blood?</label>
-              <div className="flex gap-4">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="isAvailable"
-                    value="true"
-                    checked={formData.isAvailable === true}
-                    onChange={handleChange}
-                    className="mr-2"
-                  />
-                  Yes
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="isAvailable"
-                    value="false"
-                    checked={formData.isAvailable === false}
-                    onChange={handleChange}
-                    className="mr-2"
-                  />
-                  No
-                </label>
-              </div>
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-semibold rounded-full cursor-pointer text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md transition-all duration-200 ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {isLoading ? 'Registering...' : 'Register'}
-          </button>
-          {/* Error message below the button */}
-          {Object.keys(errors).length > 0 && (
-            <div className="text-red-500 text-sm text-center mt-4">
-              Please fill out all required fields correctly.
-            </div>
-          )}
-          {(errors.dob || error) && (
-            <div className="text-red-500 text-sm text-center mt-4">
-              {errors.dob ? errors.dob : error}
-            </div>
-          )}
-        </form>
+              {/* Physical Details */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 border-l-4 border-purple-500 pl-3">Physical Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Date of Birth with Calendar */}
+<div className="space-y-2">
+  <Label htmlFor="dob" className="text-sm font-medium text-gray-700">Date of Birth</Label>
+  <div className="relative">
+    <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+    <Button
+      type="button"
+      variant="outline"
+      onClick={() => setShowCalendar(!showCalendar)}
+      className={`w-full justify-start text-left font-normal h-12 pl-10 pr-3 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${
+        !formData.dob && "text-muted-foreground"
+      } ${errors.dob ? 'border-red-500 bg-red-50/50' : 'border-gray-200 hover:border-red-300 focus:border-red-500'}`}
+    >
+      {formData.dob ? (
+        new Date(formData.dob).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      ) : (
+        "Select date of birth"
+      )}
+    </Button>
+    
+    {showCalendar && (
+      <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg shadow-2xl border border-gray-200 p-4">
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={handleDateSelect}
+          className="rounded-md bg-white border-0"
+          captionLayout="dropdown"
+          disabled={(date) =>
+            date > new Date() || date < new Date("1900-01-01")
+          }
+          initialFocus
+        />
       </div>
+    )}
+  </div>
+  {errors.dob && <p className="text-xs text-red-500 flex items-center gap-1">
+    <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+    {errors.dob}
+  </p>}
+</div>
+
+
+                  {/* Weight */}
+                  <div className="space-y-2">
+                    <Label htmlFor="weight" className="text-sm font-medium text-gray-700">Weight (kg)</Label>
+                    <div className="relative group">
+                      <Weight className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
+                      <Input
+                        id="weight"
+                        name="weight"
+                        type="text"
+                        placeholder="Weight in kg"
+                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.weight ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        value={formData.weight}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.weight && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.weight}
+                    </p>}
+                  </div>
+
+                  {/* Height */}
+                  <div className="space-y-2">
+                    <Label htmlFor="height" className="text-sm font-medium text-gray-700">Height (cm)</Label>
+                    <div className="relative group">
+                      <Ruler className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
+                      <Input
+                        id="height"
+                        name="height"
+                        type="text"
+                        placeholder="Height in cm"
+                        className={`pl-10 h-12 transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.height ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                        value={formData.height}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.height && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.height}
+                    </p>}
+                  </div>
+                </div>
+
+                {/* Gender */}
+                <div className="space-y-2">
+                  <Label htmlFor="gender" className="text-sm font-medium text-gray-700">Gender</Label>
+                  <div className="relative group">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                    <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
+                      <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.gender ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
+                        <SelectValue placeholder="Select Gender" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white shadow-xl border-0">
+                        {['Male', 'Female', 'Other'].map((gender) => (
+                          <SelectItem key={gender} value={gender} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
+                            {gender}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {errors.gender && <p className="text-xs text-red-500 flex items-center gap-1">
+                    <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                    {errors.gender}
+                  </p>}
+                </div>
+              </div>
+
+              {/* Location Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 border-l-4 border-orange-500 pl-3">Location</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Country */}
+                  <div className="space-y-2">
+                    <Label htmlFor="country" className="text-sm font-medium text-gray-700">Country</Label>
+                    <div className="relative group">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                      <Select value={formData.country} onValueChange={(value) => handleSelectChange('country', value)}>
+                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
+                          <SelectValue placeholder="Select Country" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white shadow-xl border-0 max-h-60">
+                          {countries.map(country => (
+                            <SelectItem key={country.isoCode} value={country.isoCode} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {errors.country && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.country}
+                    </p>}
+                  </div>
+
+                  {/* State */}
+                  <div className="space-y-2">
+                    <Label htmlFor="state" className="text-sm font-medium text-gray-700">State</Label>
+                    <div className="relative group">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                      <Select value={formData.state} onValueChange={(value) => handleSelectChange('state', value)} disabled={!formData.country}>
+                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.country ? 'opacity-50' : ''}`}>
+                          <SelectValue placeholder="Select State" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white shadow-xl border-0 max-h-60">
+                          {states.map(state => (
+                            <SelectItem key={state.isoCode} value={state.isoCode} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
+                              {state.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {errors.state && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.state}
+                    </p>}
+                  </div>
+
+                  {/* City */}
+                  <div className="space-y-2">
+                    <Label htmlFor="city" className="text-sm font-medium text-gray-700">City</Label>
+                    <div className="relative group">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                      <Select value={formData.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={!formData.state}>
+                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg ${errors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.state ? 'opacity-50' : ''}`}>
+                          <SelectValue placeholder="Select City" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white shadow-xl border-0 max-h-60">
+                          {cities.map(city => (
+                            <SelectItem key={city.name} value={city.name} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
+                              {city.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {errors.city && <p className="text-xs text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      {errors.city}
+                    </p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Availability */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 border-l-4 border-indigo-500 pl-3">Donation Availability</h3>
+                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-4 sm:p-6">
+                  <Label className="text-sm font-medium text-gray-700 mb-4 block">Are you currently available to donate blood?</Label>
+                  <RadioGroup 
+                    value={formData.isAvailable?.toString()} 
+                    onValueChange={(value) => setFormData({...formData, isAvailable: value === 'true'})}
+                    className="flex flex-col sm:flex-row gap-3 sm:gap-8"
+                  >
+                    <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer w-full sm:w-auto">
+                      <RadioGroupItem value="true" id="yes" className="cursor-pointer text-green-600 flex-shrink-0" />
+                      <Label htmlFor="yes" className="cursor-pointer text-sm font-medium text-gray-700 flex-1">Yes, I'm available</Label>
+                    </div>
+                    <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer w-full sm:w-auto">
+                      <RadioGroupItem value="false" id="no" className="cursor-pointer text-gray-600 flex-shrink-0" />
+                      <Label htmlFor="no" className="cursor-pointer text-sm font-medium text-gray-700 flex-1">Not available now</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </div>
+
+              {/* Error Alerts */}
+              {Object.keys(errors).length > 0 && (
+                <Alert variant="destructive" className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50 shadow-sm">
+                  <AlertDescription className="text-red-700 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    Please fill out all required fields correctly to continue.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {error && (
+                <Alert variant="destructive" className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50 shadow-sm">
+                  <AlertDescription className="text-red-700 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Submit Button */}
+              <div className="pt-4">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-14 bg-gradient-to-r from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 text-white font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] disabled:hover:scale-100 disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Creating your account...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <Droplets className="w-5 h-5" />
+                      <span>Register as Donor</span>
+                    </div>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Success Popup */}
       {showSuccess && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-red-200/80 via-white/80 to-red-400/80 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-2xl shadow text-green-600 text-lg font-semibold">
-            Registration successful!
-          </div>
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm">
+          <Card className="p-8 shadow-2xl border-0 bg-white max-w-md w-full mx-4 rounded-2xl">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Welcome to BloodBridge!</h3>
+              <p className="text-gray-600 text-lg mb-4">Registration successful!</p>
+              <p className="text-sm text-muted-foreground">Redirecting you to your dashboard...</p>
+            </div>
+          </Card>
         </div>
       )}
     </div>

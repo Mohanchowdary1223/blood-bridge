@@ -1,121 +1,113 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { Droplets, Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const DefaultNavbar = () => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
-      <div className="container mx-auto px-4 py-3">
+    <nav className="bg-background shadow-sm sticky top-0 z-50 border-b border-border">
+      <div className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
-          {/* Logo */}
-          <div className='flex items-center'>
-            <Image
-              src="https://img.icons8.com/?size=100&id=26115&format=png&color=000000"
-              alt="BloodBridge Logo"
-              width={32}
-              height={32} />
+          {/* Logo - Only visible element on mobile */}
+          <div className='flex items-center gap-2'>
+            <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+              <Droplets className="w-5 h-5 text-white" />
+            </div>
             <button 
               onClick={() => router.push('/')}
-              className="text-2xl cursor-pointer font-bold text-primary hover:text-primary/80 transition-colors"
+              className="text-2xl cursor-pointer font-bold text-foreground hover:text-red-600 transition-colors"
             >
-              Bridge
+              BloodBridge
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {/* Mobile Menu - Right Side Only */}
+          <div className="md:hidden relative" ref={menuRef}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="hover:bg-muted"
             >
               {isMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <X className="w-5 h-5" />
               ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
+                <Menu className="w-5 h-5" />
               )}
-            </svg>
-          </button>
+            </Button>
 
-          {/* Auth Buttons - Desktop */}
-          <div className="hidden md:flex items-center gap-4">
-            <button 
+            {/* Compact Dropdown Menu */}
+            {isMenuOpen && (
+              <div className="absolute right-0 top-12 w-48 bg-background border border-border rounded-lg shadow-lg py-2 z-50">
+                <div className="flex flex-col">
+                  <Button 
+                    variant="ghost"
+                    onClick={() => {
+                      router.push('/login');
+                      setIsMenuOpen(false);
+                    }}
+                    className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                  >
+                    Sign In
+                  </Button>
+                  <div className="border-t border-border my-1" />
+                  <Button 
+                    onClick={() => {
+                      router.push('/register');
+                      setIsMenuOpen(false);
+                    }}
+                    className="mx-2 my-1 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm cursor-pointer"
+                  >
+                    Save Lives
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Menu - Unchanged */}
+          <div className="hidden md:flex items-center gap-3">
+            <Button 
+              variant="ghost"
               onClick={() => router.push('/login')}
-              className="text-gray-700 cursor-pointer hover:text-primary transition-colors px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Sign In
-            </button>
-            <button 
-              onClick={() => router.push('/signup')}
-              className="text-gray-700 cursor-pointer hover:text-primary transition-colors px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              Sign Up
-            </button>
-            <button 
+            </Button>
+            <Button 
               onClick={() => router.push('/register')}
-              className="bg-primary text-white px-8 py-2 rounded-full hover:bg-primary/80 transition-all duration-200 text-sm font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md cursor-pointer"
             >
               Save Lives
-            </button>
+            </Button>
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4">
-            <div className="flex flex-col space-y-4">
-              <button 
-                onClick={() => {
-                  router.push('/login');
-                  setIsMenuOpen(false);
-                }}
-                className="block w-full text-center text-gray-700 hover:text-primary transition-colors mb-2 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                Sign In
-              </button>
-              <button 
-                onClick={() => {
-                  router.push('/signup');
-                  setIsMenuOpen(false);
-                }}
-                className="block w-full text-center text-gray-700 hover:text-primary transition-colors mb-2 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                Sign Up
-              </button>
-              <button 
-                onClick={() => {
-                  router.push('/register');
-                  setIsMenuOpen(false);
-                }}
-                className="w-full bg-primary text-white px-8 py-2 rounded-full hover:bg-primary/80 transition-all duration-200 text-sm font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                Save Lives
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   );
 };
 
-export default DefaultNavbar; 
+export default DefaultNavbar;

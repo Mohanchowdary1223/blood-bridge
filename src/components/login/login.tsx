@@ -1,7 +1,12 @@
 "use client"
 import React, { useState } from 'react';
-import { FaUser, FaLock, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
+import { User, Lock, Eye, EyeOff, ArrowLeft, Droplets } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface FormData {
   email: string;
@@ -72,117 +77,177 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-2xl relative">
-        <button
-          onClick={() => router.push('/')}
-          className="absolute top-4 left-4 text-gray-600 hover:text-gray-800 cursor-pointer bg-white p-2 rounded-full shadow focus:outline-none focus:ring-2 focus:ring-primary/50"
-          aria-label="Go to home page"
-        >
-          <FaArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-primary">
-            Sign in to your account
-          </h2>
-          <div className="mt-2 text-center space-y-2">
-            <p className="text-sm text-gray-600">
-              Don&apos;t have an account?{' '}
-              <button
-                onClick={() => router.push('/signup')}
-                className="font-semibold text-primary hover:text-primary/80 cursor-pointer"
-              >
-                Sign up
-              </button>
-            </p>
-            <p className="text-sm text-gray-600">
-              Want to donate blood?{' '}
-              <button
-                onClick={() => router.push('/register')}
-                className="font-semibold text-green-600 hover:text-green-500 cursor-pointer"
-              >
-                Register as Donor
-              </button>
-            </p>
-          </div>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                className="appearance-none relative block w-full px-3 py-3 pl-10 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-full focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer z-20" onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <FaEyeSlash className="h-5 w-5 text-gray-400" /> : <FaEye className="h-5 w-5 text-gray-400" />}
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+{/* Back Button - Fixed Position */}
+<Button
+  variant="ghost"
+  size="icon"
+  onClick={() => router.push('/')}
+  className="fixed top-4 left-4 sm:top-6 sm:left-6 h-10 w-10 sm:h-12 sm:w-12 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+>
+  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+</Button>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 cursor-pointer">
-                Remember me
-              </label>
-            </div>
-          </div>
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`group relative cursor-pointer w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-full text-white bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-md transition-all duration-200 ${
-                isLoading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {isLoading ? 'Signing in...' : 'Sign in'}
-            </button>
-            {/* Error message below the button */}
-            {error && (
-              <div className="text-red-500 text-sm text-center mt-4">
-                {error}
+
+        {/* Main Card */}
+        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <CardHeader className="space-y-4 pb-6">
+            {/* Logo */}
+            <div className="flex justify-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Droplets className="w-8 h-8 text-white" />
               </div>
-            )}
-          </div>
-        </form>
+            </div>
+            
+            <div className="text-center">
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Welcome Back
+              </CardTitle>
+              <CardDescription className="text-base text-muted-foreground mt-2">
+                Sign in to continue saving lives
+              </CardDescription>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Don&apos;t have an account?{' '}
+                <Button
+                  variant="link"
+                  onClick={() => router.push('/signup')}
+                  className="p-0 h-auto cursor-pointer text-red-600 hover:text-red-700 font-semibold"
+                >
+                  Sign up
+                </Button>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Want to donate blood?{' '}
+                <Button
+                  variant="link"
+                  onClick={() => router.push('/register')}
+                  className="p-0 h-auto cursor-pointer text-green-600 hover:text-green-700 font-semibold"
+                >
+                  Register as Donor
+                </Button>
+              </p>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email Field */}
+              <div className="space-y-2">
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className="pl-10 h-12 border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    placeholder="Email address"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-2">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    className="pl-10 pr-10 h-12 border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1 h-10 w-10"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Remember Me */}
+              <div className="flex items-center space-x-2 cursor-pointer">
+                <Checkbox id="remember" />
+                <label
+                  htmlFor="remember"
+                  className="text-sm cursor-pointer font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Remember me
+                </label>
+              </div>
+
+              {/* Error Alert */}
+              {error && (
+                <Alert variant="destructive" className="border-red-200 bg-red-50">
+                  <AlertDescription className="text-red-700">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full cursor-pointer h-12 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                {isLoading ? (
+                  <div className="flex  items-center space-x-2">
+                    <div className="w-4 h-4  border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span>Signing in...</span>
+                  </div>
+                ) : (
+                  'Sign in'
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Trust Indicators */}
+        <div className="text-center">
+          <p className="text-xs text-muted-foreground">
+            Trusted by 10,000+ blood donors worldwide
+          </p>
+        </div>
       </div>
+
       {/* Success Popup */}
       {showSuccess && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-red-200/80 via-white/80 to-red-400/80 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-2xl shadow text-green-600 text-lg font-semibold">
-            Login successful!
-          </div>
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
+          <Card className="p-6 shadow-2xl border-0 bg-white max-w-sm w-full mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Login Successful!</h3>
+              <p className="text-sm text-muted-foreground">Redirecting you to your dashboard...</p>
+            </div>
+          </Card>
         </div>
       )}
     </div>

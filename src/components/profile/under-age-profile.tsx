@@ -2,8 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { IUser } from '@/models/User';
-import { FaArrowLeft } from 'react-icons/fa';
+import { ArrowLeft, User, Mail, Phone, Calendar, Clock, Edit, Save, X, Info, Timer } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 const signupReasons = [
   { value: 'donateLater', label: 'I will register and donate blood later' },
@@ -20,7 +27,13 @@ interface UnderAgeProfileProps {
   onSignupReasonChange?: (newReason: string) => void;
 }
 
-export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({ user, onUserUpdate, editMode, setEditMode, onSignupReasonChange }) => {
+export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({ 
+  user, 
+  onUserUpdate, 
+  editMode, 
+  setEditMode, 
+  onSignupReasonChange 
+}) => {
   const [editData, setEditData] = useState({
     name: user.name,
     phone: user.phone,
@@ -32,6 +45,8 @@ export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({ user, onUserUp
   const [err, setErr] = useState('');
   const [currentAge, setCurrentAge] = useState<number | null>(null);
   const [eligibilityCountdown, setEligibilityCountdown] = useState<string>('');
+  const router = useRouter();
+
   useEffect(() => {
     if (user.dateOfBirth) {
       const dob = new Date(user.dateOfBirth);
@@ -40,10 +55,12 @@ export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({ user, onUserUp
       const m = now.getMonth() - dob.getMonth();
       if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
       setCurrentAge(age);
+      
       // Calculate eligibility date
       const eligibleDate = new Date(dob);
       eligibleDate.setFullYear(eligibleDate.getFullYear() + 18);
       const diff = eligibleDate.getTime() - now.getTime();
+      
       if (diff > 0) {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
@@ -59,10 +76,9 @@ export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({ user, onUserUp
     setEditData({ ...editData, [e.target.name]: e.target.value });
   };
 
-  const handleSignupReasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newReason = e.target.value;
-    if (newReason !== user.signupReason && onSignupReasonChange) {
-      onSignupReasonChange(newReason);
+  const handleSignupReasonChange = (value: string) => {
+    if (value !== user.signupReason && onSignupReasonChange) {
+      onSignupReasonChange(value);
     }
   };
 
@@ -92,7 +108,7 @@ export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({ user, onUserUp
       const updatePayload: Record<string, unknown> = { 
         userId: user._id, 
         ...editData,
-        signupReason: user.signupReason, // Ensure signupReason is included in payload
+        signupReason: user.signupReason,
         role: user.role
       };
       const res = await fetch('/api/profile/edit-under-age', {
@@ -119,143 +135,289 @@ export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({ user, onUserUp
       const dobDate = new Date(user.dateOfBirth);
       const eligibleDate = new Date(dobDate);
       eligibleDate.setFullYear(eligibleDate.getFullYear() + 18);
-      return eligibleDate.toLocaleDateString();
+      return eligibleDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     }
     return 'Not specified';
   };
 
-  const router = useRouter();
-
   return (
-    <>
-      {/* Fixed Back Button (like finddonor.tsx) */}
-      <button
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+      {/* Fixed Back Button */}
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => router.push('/home')}
-        className="fixed left-4 transform -translate-y-1/2 bg-white p-3 cursor-pointer rounded-full shadow-lg hover:bg-gray-50 transition-colors z-50"
-        aria-label="Back to home"
+        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
       >
-        <FaArrowLeft className="text-gray-600 text-xl" />
-      </button>
-      <div className="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white py-8 px-2">
-        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl p-4 sm:p-8 mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-            <h2 className="text-2xl font-bold text-blue-600 text-center sm:text-left w-full">{user.name}</h2>
-            {!editMode && (
-              <button
-                className="bg-primary text-white px-6 py-2 rounded-full hover:bg-primary/80 transition-all duration-200 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-                onClick={handleEdit}
-              >
-                Edit
-              </button>
+        <ArrowLeft className="h-5 w-5 text-gray-700" />
+      </Button>
+
+      <div className="container mx-auto max-w-4xl">
+        {/* Main Profile Card */}
+        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm mb-6">
+          <CardHeader className="pb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold text-foreground">{user.name}</CardTitle>
+                    <CardDescription className="text-muted-foreground">Young Supporter Profile</CardDescription>
+                  </div>
+                </div>
+              </div>
+              {!editMode && (
+                <Button
+                  onClick={handleEdit}
+                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            {/* Success/Error Messages */}
+            {msg && (
+              <Alert className="border-green-200 bg-green-50">
+                <AlertDescription className="text-green-700">{msg}</AlertDescription>
+              </Alert>
             )}
-          </div>
-          {msg && <div className="text-green-600 mb-2 text-center">{msg}</div>}
-          {err && <div className="text-red-600 mb-2 text-center">{err}</div>}
-          <div className="mb-6 p-4 bg-blue-50 rounded-xl flex flex-col justify-center items-center">
-            <h3 className="font-semibold text-blue-800 mb-2">Age Information</h3>
-            <p className="text-blue-700">You need to be 18 or older to donate blood. We&apos;ll notify you when you become eligible!</p>
+            {err && (
+              <Alert variant="destructive" className="border-red-200 bg-red-50">
+                <AlertDescription className="text-red-700">{err}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Age Information Notice */}
+            <Alert className="border-blue-200 bg-blue-50">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-700">
+                <span className="font-semibold">Age Information:</span> You need to be 18 or older to donate blood. 
+                We'll notify you when you become eligible!
+              </AlertDescription>
+            </Alert>
+
+            {/* Eligibility Countdown */}
             {user.dateOfBirth && (
-              <p className="text-blue-600 mt-2">
-                <strong>Eligible to donate from:</strong> {calculateEligibilityDate()}
-              </p>
+              <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Timer className="w-5 h-5 text-orange-600" />
+                    <h3 className="font-semibold text-orange-800">Donation Eligibility</h3>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-orange-700">
+                      <span className="font-medium">Eligible to donate from:</span> {calculateEligibilityDate()}
+                    </p>
+                    <p className="text-orange-700">
+                      <span className="font-medium">Time remaining:</span>{' '}
+                      <Badge variant="secondary" className="bg-orange-100 text-orange-800 font-mono">
+                        {eligibilityCountdown}
+                      </Badge>
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
-            {user.dateOfBirth && (
-              <p className="text-blue-600 mt-2">
-                <strong>Eligible to donate in:</strong> <span className="font-semibold">{eligibilityCountdown}</span>
-              </p>
+
+            {/* Profile Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Name Field */}
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Full Name
+                </Label>
+                {editMode ? (
+                  <Input
+                    id="name"
+                    name="name"
+                    value={editData.name}
+                    onChange={handleChange}
+                    className="h-12 border-gray-200 focus:border-blue-500"
+                    placeholder="Enter your full name"
+                  />
+                ) : (
+                  <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
+                    {user.name}
+                  </div>
+                )}
+              </div>
+
+              {/* Email Field (Read-only) */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Email Address
+                </Label>
+                <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
+                  {user.email}
+                </div>
+              </div>
+
+              {/* Phone Field */}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Phone Number
+                </Label>
+                {editMode ? (
+                  <Input
+                    id="phone"
+                    name="phone"
+                    value={editData.phone}
+                    onChange={handleChange}
+                    className="h-12 border-gray-200 focus:border-blue-500"
+                    placeholder="Enter your phone number"
+                  />
+                ) : (
+                  <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
+                    {user.phone}
+                  </div>
+                )}
+              </div>
+
+              {/* Current Age Field */}
+              <div className="space-y-2">
+                <Label htmlFor="currentAge" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Current Age
+                </Label>
+                {editMode ? (
+                  <Input
+                    id="currentAge"
+                    name="currentAge"
+                    type="number"
+                    value={editData.currentAge}
+                    onChange={handleChange}
+                    className="h-12 border-gray-200 focus:border-blue-500"
+                    placeholder="Enter your age"
+                    min="0"
+                    max="120"
+                  />
+                ) : (
+                  <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
+                    {currentAge !== null ? (
+                      <div className="flex items-center gap-2">
+                        <span>{currentAge} years</span>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                          {currentAge < 18 ? 'Future donor' : 'Eligible now'}
+                        </Badge>
+                      </div>
+                    ) : (
+                      'Not specified'
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Date of Birth Field */}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Date of Birth
+                </Label>
+                {editMode ? (
+                  <Input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    value={editData.dateOfBirth}
+                    onChange={handleChange}
+                    className="h-12 border-gray-200 focus:border-blue-500"
+                  />
+                ) : (
+                  <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
+                    {user.dateOfBirth ? (
+                      new Date(user.dateOfBirth).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    ) : (
+                      'Not specified'
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Edit Mode Action Buttons */}
+            {editMode && (
+              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+                <Button
+                  onClick={handleSave}
+                  disabled={loading}
+                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <span>Saving...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleCancel}
+                  variant="outline"
+                  disabled={loading}
+                  className="cursor-pointer"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+              </div>
             )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-700 font-medium">Name</label>
-              {editMode ? (
-                <input name="name" value={editData.name} onChange={handleChange} className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary/50" />
-              ) : (
-                <div className="p-3">{user.name}</div>
-              )}
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium">Email</label>
-              <div className="p-3">{user.email}</div>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium">Phone</label>
-              {editMode ? (
-                <input name="phone" value={editData.phone} onChange={handleChange} className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary/50" />
-              ) : (
-                <div className="p-3">{user.phone}</div>
-              )}
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium">Current Age</label>
-              {editMode ? (
-                <input 
-                  name="currentAge" 
-                  type="number" 
-                  value={editData.currentAge} 
-                  onChange={handleChange} 
-                  className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary/50" 
-                  min="0" 
-                  max="120"
-                />
-              ) : (
-                <div className="p-3">{currentAge !== null ? currentAge : 'Not specified'}</div>
-              )}
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium">Date of Birth</label>
-              {editMode ? (
-                <input 
-                  name="dateOfBirth" 
-                  type="date" 
-                  value={editData.dateOfBirth} 
-                  onChange={handleChange} 
-                  className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary/50" 
-                />
-              ) : (
-                <div className="p-3">{user.dateOfBirth || 'Not specified'}</div>
-              )}
-            </div>
-          </div>
-          {editMode && (
-            <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center items-center">
-              <button
-                className="bg-primary text-white px-8 py-3 rounded-full hover:bg-primary/80 transition-all duration-200 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-                onClick={handleSave}
-                disabled={loading}
+          </CardContent>
+        </Card>
+
+        {/* Signup Reason Card */}
+        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-foreground">Signup Information</CardTitle>
+            <CardDescription>
+              Your reason for joining BloodBridge community
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="signupReason" className="text-sm font-medium text-gray-700">
+                Why did you sign up?
+              </Label>
+              <Select
+                value={user.signupReason}
+                onValueChange={handleSignupReasonChange}
+                disabled={editMode || loading}
               >
-                {loading ? 'Saving...' : 'Save'}
-              </button>
-              <button
-                className="bg-gray-300 text-gray-800 px-8 py-3 rounded-full hover:bg-gray-400 transition-all duration-200 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400/50"
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Cancel
-              </button>
+                <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 cursor-pointer">
+                  <SelectValue placeholder="Select your reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  {signupReasons.map((reason) => (
+                    <SelectItem key={reason.value} value={reason.value} className="cursor-pointer">
+                      {reason.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </div>
-        {/* Signup Reason Section */}
-        <div className="mt-6 bg-white rounded-2xl shadow-2xl p-4 sm:p-8 mx-auto">
-          <div className='flex items-center justify-center'>
-            <h3 className="text-xl font-bold mb-4">Signup Information</h3>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">Why are you signing in?</label>
-            <select
-              value={user.signupReason}
-              onChange={handleSignupReasonChange}
-              className="w-full border rounded-lg p-3 cursor-pointer focus:ring-2 focus:ring-primary/50"
-              disabled={editMode}
-            >
-              {signupReasons.map(r => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   );
-}; 
+};
