@@ -2,7 +2,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Share2 } from 'lucide-react';
+import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Share2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,13 +15,21 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
   const router = useRouter()
 
   const [userName, setUserName] = useState('User');
+  const [bloodGroup, setBloodGroup] = useState('O+');
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const userStr = localStorage.getItem('user');
+      
       if (userStr) {
         try {
-          const user = JSON.parse(userStr);
-          if (user && user.name) setUserName(user.name);
+          const userData = JSON.parse(userStr);
+          if (userData && userData.name) {
+            setUserName(userData.name);
+          }
+          if (userData && userData.bloodType) {
+            setBloodGroup(userData.bloodType);
+          }
         } catch {}
       }
     }
@@ -75,6 +83,78 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
       });
   };
 
+  // Blood compatibility logic
+  type BloodType = 'O-' | 'O+' | 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+';
+  type CompatibilityInfo = {
+    canDonateTo: string[];
+    canReceiveFrom: string[];
+    donorType: string;
+    receiverType: string;
+  };
+  
+  const compatibilityMap: Record<BloodType, CompatibilityInfo> = {
+    'O-': {
+      canDonateTo: ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+      canReceiveFrom: ['O-'],
+      donorType: 'Universal Donor',
+      receiverType: 'Limited Receiver'
+    },
+    'O+': {
+      canDonateTo: ['O+', 'A+', 'B+', 'AB+'],
+      canReceiveFrom: ['O-', 'O+'],
+      donorType: 'Common Donor',
+      receiverType: 'Limited Receiver'
+    },
+    'A-': {
+      canDonateTo: ['A-', 'A+', 'AB-', 'AB+'],
+      canReceiveFrom: ['O-', 'A-'],
+      donorType: 'Selective Donor',
+      receiverType: 'Limited Receiver'
+    },
+    'A+': {
+      canDonateTo: ['A+', 'AB+'],
+      canReceiveFrom: ['O-', 'O+', 'A-', 'A+'],
+      donorType: 'Selective Donor',
+      receiverType: 'Common Receiver'
+    },
+    'B-': {
+      canDonateTo: ['B-', 'B+', 'AB-', 'AB+'],
+      canReceiveFrom: ['O-', 'B-'],
+      donorType: 'Selective Donor',
+      receiverType: 'Limited Receiver'
+    },
+    'B+': {
+      canDonateTo: ['B+', 'AB+'],
+      canReceiveFrom: ['O-', 'O+', 'B-', 'B+'],
+      donorType: 'Selective Donor',
+      receiverType: 'Common Receiver'
+    },
+    'AB-': {
+      canDonateTo: ['AB-', 'AB+'],
+      canReceiveFrom: ['O-', 'A-', 'B-', 'AB-'],
+      donorType: 'Rare Donor',
+      receiverType: 'Selective Receiver'
+    },
+    'AB+': {
+      canDonateTo: ['AB+'],
+      canReceiveFrom: ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+      donorType: 'Rare Donor',
+      receiverType: 'Universal Receiver'
+    }
+  };
+
+  const getBloodCompatibility = (bloodType: string): CompatibilityInfo | null => {
+    if (!bloodType || typeof bloodType !== 'string') {
+      return null;
+    }
+    if (Object.keys(compatibilityMap).includes(bloodType)) {
+      return compatibilityMap[bloodType as BloodType];
+    }
+    return null;
+  };
+
+  const compatibility = getBloodCompatibility(bloodGroup);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-8">
       <div className="container mx-auto px-6 max-w-6xl">
@@ -83,7 +163,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
           <div className="mb-6">
             <h2 className="text-4xl md:text-5xl font-bold mb-2">
               <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">Hello</span>{" "}
-              <span className="text-foreground">{userName.slice(0,1).toUpperCase()}{userName.slice(1)},</span>
+              <span className="text-foreground">{userName.slice(0, 1).toUpperCase()}{userName.slice(1)},</span>
             </h2>
           </div>
           <div className="space-y-4">
@@ -91,15 +171,16 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
               <Droplets className="w-4 h-4 mr-2" />
               BloodBridge Community
             </Badge>
-            <p className= "text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Your one-stop platform for blood donation and management. Make a difference today.
             </p>
           </div>
         </div>
-        
+
+        {/* Action Cards */}
         <div className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="group transition-all duration-300 border-0  hover:-translate-y-2">
+            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Search className="w-8 h-8 text-white" />
@@ -110,7 +191,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <Button 
+                <Button
                   onClick={handleSearchClick}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
                 >
@@ -119,7 +200,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
               </CardContent>
             </Card>
 
-            <Card className="group  transition-all duration-300 border-0 hover:-translate-y-2">
+            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Heart className="w-8 h-8 text-white" />
@@ -130,7 +211,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <Button 
+                <Button
                   onClick={handleScheduleClick}
                   className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
                 >
@@ -150,7 +231,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <Button 
+                <Button
                   onClick={handleStatsClick}
                   className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
                 >
@@ -170,7 +251,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <Button 
+                <Button
                   onClick={handleGuideClick}
                   className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
                 >
@@ -178,6 +259,75 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                 </Button>
               </CardContent>
             </Card>
+          </div>
+        </div>
+
+        {/* Blood Compatibility Section */}
+        <div className="mb-12">
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-foreground mb-2">Your Blood Type: {bloodGroup}</h3>
+              <div className="flex justify-center gap-4">
+                <Badge className="bg-blue-50 text-blue-600 border-blue-200">
+                  {compatibility?.donorType}
+                </Badge>
+                <Badge className="bg-green-50 text-green-600 border-green-200">
+                  {compatibility?.receiverType}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Can Donate To */}
+              <Card className="border-0 bg-gradient-to-br from-red-50 to-pink-50">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <ArrowRight className="w-6 h-6 text-white" />
+                  </div>
+                  <CardTitle className="text-lg text-foreground">You Can Donate To</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {compatibility?.canDonateTo?.map((type: string) => (
+                      <Badge 
+                        key={type} 
+                        className="bg-red-100 text-red-700 border-red-200 px-3 py-1"
+                      >
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center mt-3">
+                    Compatible blood types that can receive your blood
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Can Receive From */}
+              <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <ArrowLeft className="w-6 h-6 text-white" />
+                  </div>
+                  <CardTitle className="text-lg text-foreground">You Can Receive From</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {compatibility?.canReceiveFrom?.map((type: string) => (
+                      <Badge 
+                        key={type} 
+                        className="bg-green-100 text-green-700 border-green-200 px-3 py-1"
+                      >
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center mt-3">
+                    Compatible blood types you can safely receive
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
 
@@ -233,7 +383,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                     Pending
                   </Badge>
                 </div>
-                
+
                 <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                   <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-6 h-6 text-white" />
@@ -282,38 +432,81 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
             </div>
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Quick Links</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    About Us
-                  </Button>
-                </li>
-                <li>
-                  <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    Donate Blood
-                  </Button>
-                </li>
-                <li>
-                  <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    Find Donor
-                  </Button>
-                </li>
-              </ul>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
+                {/* Left Column */}
+                <ul className="space-y-2">
+                  <li>
+                    <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                      <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About Us</a>
+                    </Button>
+                  </li>
+                  <li>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push('/finddonor')}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Find Donor
+                    </Button>
+                  </li>
+                  <li>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push('/profile')}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Profile
+                    </Button>
+                  </li>
+                </ul>
+
+                {/* Right Column */}
+                <ul className="space-y-2">
+                  <li>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push('/schedule-donation')}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Schedule Donate
+                    </Button>
+                  </li>
+                  <li>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push('/health-instructions')}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Health Guide
+                    </Button>
+                  </li>
+                  <li>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push('/stats')}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      View Stats
+                    </Button>
+                  </li>
+                </ul>
+              </div>
             </div>
+
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Contact Info</h3>
               <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  Email: info@bloodbridge.com
+                  Email: mohanchowdary963@gmail.com
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  Phone: +1 (555) 123-4567
+                  Phone: +91 9182622919
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  Address: 123 Health Street, Medical City
+                  Linkedin: <a href="https://www.linkedin.com/in/mohan-chowdary-963" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Mohan Sunkara</a>
                 </li>
               </ul>
             </div>

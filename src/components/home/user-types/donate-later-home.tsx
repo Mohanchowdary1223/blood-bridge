@@ -4,20 +4,25 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Heart, Share2, Droplets } from 'lucide-react';
+import { Search, Heart, Share2, Droplets, ArrowRight, ArrowLeft, AlertCircle, User } from 'lucide-react';
 
 export default function DonateLaterHome() {
   const [userName, setUserName] = useState('User');
+  const [bloodGroup, setBloodGroup] = useState('');
   const router = useRouter();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const userStr = localStorage.getItem('user');
+      
       if (userStr) {
         try {
           const userData = JSON.parse(userStr);
           if (userData && userData.name) {
             setUserName(userData.name);
+          }
+          if (userData && userData.bloodType) {
+            setBloodGroup(userData.bloodType);
           }
         } catch {}
       }
@@ -60,6 +65,77 @@ export default function DonateLaterHome() {
       });
   };
 
+  // Blood compatibility logic
+  type BloodType = 'O-' | 'O+' | 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+';
+  type CompatibilityInfo = {
+    canDonateTo: string[];
+    canReceiveFrom: string[];
+    donorType: string;
+    receiverType: string;
+  };
+  const compatibilityMap: Record<BloodType, CompatibilityInfo> = {
+    'O-': {
+      canDonateTo: ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+      canReceiveFrom: ['O-'],
+      donorType: 'Universal Donor',
+      receiverType: 'Limited Receiver'
+    },
+    'O+': {
+      canDonateTo: ['O+', 'A+', 'B+', 'AB+'],
+      canReceiveFrom: ['O-', 'O+'],
+      donorType: 'Common Donor',
+      receiverType: 'Limited Receiver'
+    },
+    'A-': {
+      canDonateTo: ['A-', 'A+', 'AB-', 'AB+'],
+      canReceiveFrom: ['O-', 'A-'],
+      donorType: 'Selective Donor',
+      receiverType: 'Limited Receiver'
+    },
+    'A+': {
+      canDonateTo: ['A+', 'AB+'],
+      canReceiveFrom: ['O-', 'O+', 'A-', 'A+'],
+      donorType: 'Selective Donor',
+      receiverType: 'Common Receiver'
+    },
+    'B-': {
+      canDonateTo: ['B-', 'B+', 'AB-', 'AB+'],
+      canReceiveFrom: ['O-', 'B-'],
+      donorType: 'Selective Donor',
+      receiverType: 'Limited Receiver'
+    },
+    'B+': {
+      canDonateTo: ['B+', 'AB+'],
+      canReceiveFrom: ['O-', 'O+', 'B-', 'B+'],
+      donorType: 'Selective Donor',
+      receiverType: 'Common Receiver'
+    },
+    'AB-': {
+      canDonateTo: ['AB-', 'AB+'],
+      canReceiveFrom: ['O-', 'A-', 'B-', 'AB-'],
+      donorType: 'Rare Donor',
+      receiverType: 'Selective Receiver'
+    },
+    'AB+': {
+      canDonateTo: ['AB+'],
+      canReceiveFrom: ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+      donorType: 'Rare Donor',
+      receiverType: 'Universal Receiver'
+    }
+  };
+
+  const getBloodCompatibility = (bloodType: string): CompatibilityInfo | null => {
+    if (!bloodType || typeof bloodType !== 'string') {
+      return null;
+    }
+    if (Object.keys(compatibilityMap).includes(bloodType)) {
+      return compatibilityMap[bloodType as BloodType];
+    }
+    return null;
+  };
+
+  const compatibility = bloodGroup && bloodGroup !== "I don't know my blood type" ? getBloodCompatibility(bloodGroup) : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-8">
       <div className="container mx-auto px-6 max-w-6xl">
@@ -84,7 +160,7 @@ export default function DonateLaterHome() {
           </div>
         </div>
 
-        {/* Main Action Cards - Now 2 cards */}
+        {/* Main Action Cards */}
         <div className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* Find Donors Card */}
@@ -131,7 +207,103 @@ export default function DonateLaterHome() {
           </div>
         </div>
 
-        {/* New Share Section */}
+        {/* Blood Compatibility Section */}
+        <div className="mb-12">
+          {!bloodGroup || bloodGroup === "I don't know my blood type" ? (
+            // Card for unknown blood type
+            <Card className="border-0 bg-gradient-to-r from-orange-50 to-amber-50">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col md:flex-row items-center gap-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center">
+                      <AlertCircle className="w-8 h-8 text-white" />
+                    </div>
+                    <div className='flex flex-col text-center md:text-left'>
+                      <h3 className="text-xl font-semibold text-foreground">Know Your Blood Type</h3>
+                      <p className="text-muted-foreground text-md">Update your blood type to see compatibility information and help save lives more effectively</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => router.push('/profile')}
+                    className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold px-6 py-2 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    Update Profile
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            // Blood compatibility information
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-foreground mb-2">Your Blood Type: {bloodGroup}</h3>
+                <div className="flex justify-center gap-4">
+                  <Badge className="bg-blue-50 text-blue-600 border-blue-200">
+                    {compatibility?.donorType}
+                  </Badge>
+                  <Badge className="bg-green-50 text-green-600 border-green-200">
+                    {compatibility?.receiverType}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Can Donate To */}
+                <Card className="border-0 bg-gradient-to-br from-red-50 to-pink-50">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <ArrowRight className="w-6 h-6 text-white" />
+                    </div>
+                    <CardTitle className="text-lg text-foreground">You Can Donate To</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {compatibility?.canDonateTo?.map((type: string) => (
+                        <Badge 
+                          key={type} 
+                          className="bg-red-100 text-red-700 border-red-200 px-3 py-1"
+                        >
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center mt-3">
+                      Compatible blood types that can receive your blood
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Can Receive From */}
+                <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <ArrowLeft className="w-6 h-6 text-white" />
+                    </div>
+                    <CardTitle className="text-lg text-foreground">You Can Receive From</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {compatibility?.canReceiveFrom?.map((type: string) => (
+                        <Badge 
+                          key={type} 
+                          className="bg-green-100 text-green-700 border-green-200 px-3 py-1"
+                        >
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center mt-3">
+                      Compatible blood types you can safely receive
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Share Section */}
         <div className="mb-12">
           <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
             <CardContent className="p-6">
@@ -142,7 +314,7 @@ export default function DonateLaterHome() {
                   </div>
                   <div className='flex flex-col text-center md:text-left'>
                     <h3 className="text-xl font-semibold text-foreground">Spread the Word</h3>
-                    <p className="text-muted-foreground">Help more people discover BloodBridge and save lives together</p>
+                    <p className="text-muted-foreground text-md">Help more people discover BloodBridge and save lives together</p>
                   </div>
                 </div>
                 <Button
@@ -178,17 +350,31 @@ export default function DonateLaterHome() {
               <ul className="space-y-2">
                 <li>
                   <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    About Us
+                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About Us</a>
                   </Button>
                 </li>
                 <li>
-                  <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                  <Button variant="link" 
+                    onClick={() => {
+                        router.push('/donorform');
+                      }} className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                     Donate Blood
                   </Button>
                 </li>
                 <li>
-                  <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                  <Button variant="link"
+                    onClick={() => {
+                        router.push('/finddonor');
+                      }} className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                     Find Donor
+                  </Button>
+                </li>
+                <li>
+                  <Button variant="link" 
+                    onClick={() => {
+                        router.push('/profile');
+                      }} className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                    Profile 
                   </Button>
                 </li>
               </ul>
@@ -198,15 +384,15 @@ export default function DonateLaterHome() {
               <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  Email: info@bloodbridge.com
+                  Email: mohanchowdary963@gmail.com
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  Phone: +1 (555) 123-4567
+                  Phone: +91 9182622919
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  Address: 123 Health Street, Medical City
+                  Linkedin: <a href="https://www.linkedin.com/in/mohan-chowdary-963" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Mohan Sunkara</a>
                 </li>
               </ul>
             </div>

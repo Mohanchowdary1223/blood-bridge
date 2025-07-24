@@ -17,12 +17,13 @@ function calculateAge(dateOfBirth: string) {
   return age;
 }
 
+
 export async function POST(req: NextRequest) {
   try {
     await connectMongo();
-    const { email, password, name, phone, signupReason, dateOfBirth, currentAge } = await req.json();
+    const { email, password, name, phone, signupReason, dateOfBirth, currentAge, bloodType } = await req.json();
 
-    if (!email || !password || !name || !phone || !signupReason) {
+    if (!email || !password || !name || !phone || !signupReason || !bloodType) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -80,7 +81,8 @@ export async function POST(req: NextRequest) {
       currentAge: age || currentAge,
       role,
       canUpdateToDonor,
-      profileUpdatableAt
+      profileUpdatableAt,
+      bloodType
     });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '7d' });

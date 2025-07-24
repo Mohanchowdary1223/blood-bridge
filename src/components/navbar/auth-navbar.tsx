@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Menu, X, User, Shield, LogOut } from 'lucide-react';
+import { Droplets, Menu, X, User, LogOut, Info, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -89,6 +89,24 @@ const AuthNavbar = () => {
                   <div className="flex flex-col">
                     <Button 
                       variant="ghost"
+                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                    >
+                      <Info className="w-4 h-4 mr-2" />
+                      <a href="https://mohansunkara.vercel.app">About</a>
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        router.push('/finddonor');
+                        setIsMenuOpen(false);
+                      }}
+                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      Find Donor
+                    </Button>
+                    <Button 
+                      variant="ghost"
                       onClick={() => {
                         router.push('/profile');
                         setIsMenuOpen(false);
@@ -97,17 +115,6 @@ const AuthNavbar = () => {
                     >
                       <User className="w-4 h-4 mr-2" />
                       Profile
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        router.push('/health-instructions');
-                        setIsMenuOpen(false);
-                      }}
-                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Health Instructions
                     </Button>
                     <div className="border-t border-border my-1" />
                     <Button 
@@ -130,19 +137,26 @@ const AuthNavbar = () => {
             <div className="hidden md:flex items-center gap-3">
               <Button 
                 variant="ghost"
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <Info className="w-4 h-4 mr-2" />
+                <a href="https://mohansunkara.vercel.app">About</a>
+              </Button>
+              <Button 
+                variant="ghost"
+                onClick={() => router.push('/finddonor')}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Find Donor
+              </Button>
+              <Button 
+                variant="ghost"
                 onClick={() => router.push('/profile')}
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <User className="w-4 h-4 mr-2" />
                 Profile
-              </Button>
-              <Button 
-                variant="ghost"
-                onClick={() => router.push('/health-instructions')}
-                className="text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Health Instructions
               </Button>
               <Button 
                 onClick={handleLogout}

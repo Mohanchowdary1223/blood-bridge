@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { IUser } from '@/models/User';
-import { ArrowLeft, User, Mail, Phone, Edit, Save, X, Heart, AlertCircle } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Edit, Save, X, Heart, AlertCircle, Droplet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,18 @@ const signupReasons = [
   { value: 'healthIssue', label: 'Health issue or some bad habit' },
   { value: 'underAge', label: 'Under age (below 18)' },
   { value: 'aboveAge', label: 'Above age (over 65)' }
+];
+
+const bloodGroups = [
+  'A+',
+  'A-',
+  'B+',
+  'B-',
+  'AB+',
+  'AB-',
+  'O+',
+  'O-',
+  "I don't know my blood type",
 ];
 
 interface HealthIssueProfileProps {
@@ -36,7 +48,8 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
 }) => {
   const [editData, setEditData] = useState({
     name: user.name,
-    phone: user.phone
+    phone: user.phone,
+    bloodType: user.bloodType || ''
   });
   const [signupReason, setSignupReason] = useState(user.signupReason || 'healthIssue');
   const [loading, setLoading] = useState(false);
@@ -46,6 +59,10 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
+  };
+
+  const handleBloodTypeChange = (value: string) => {
+    setEditData({ ...editData, bloodType: value === 'not-specified' ? '' : value });
   };
 
   const handleSignupReasonChange = (value: string) => {
@@ -68,7 +85,8 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
     setEditMode(false);
     setEditData({
       name: user.name,
-      phone: user.phone
+      phone: user.phone,
+      bloodType: user.bloodType || ''
     });
     setMsg('');
     setErr('');
@@ -212,7 +230,7 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
                   />
                 ) : (
                   <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
-                   {user.name.slice(0, 1).toUpperCase()}{user.name.slice(1)}
+                    {user.name.slice(0, 1).toUpperCase()}{user.name.slice(1)}
                   </div>
                 )}
               </div>
@@ -229,7 +247,7 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
               </div>
 
               {/* Phone Field */}
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <Phone className="w-4 h-4" />
                   Phone Number
@@ -249,11 +267,41 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Blood Type Field */}
+              <div className="space-y-2">
+                <Label htmlFor="bloodType" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Droplet className="w-4 h-4" />
+                  Blood Group
+                </Label>
+                {editMode ? (
+                  <Select
+                    value={editData.bloodType || 'not-specified'}
+                    onValueChange={handleBloodTypeChange}
+                  >
+                    <SelectTrigger className="h-12 border-gray-200 focus:border-orange-500 cursor-pointer">
+                      <SelectValue placeholder="Select your blood group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not-specified">Not specified</SelectItem>
+                      {bloodGroups.map((group) => (
+                        <SelectItem key={group} value={group} className="cursor-pointer">
+                          {group}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
+                    {user.bloodType || 'Not specified'}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Edit Mode Action Buttons */}
             {editMode && (
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t items-center justify-center">
                 <Button
                   onClick={handleSave}
                   disabled={loading}

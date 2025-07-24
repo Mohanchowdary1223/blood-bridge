@@ -7,8 +7,8 @@ import User from '@/models/User';
 export async function POST(req: NextRequest) {
   try {
     await connectMongo();
-    const { userId, name, phone, signupReason, healthDetails, role } = await req.json();
-    
+    const { userId, name, phone, signupReason, bloodType, healthDetails, role } = await req.json();
+
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
@@ -43,6 +43,10 @@ export async function POST(req: NextRequest) {
     // Store health details if provided
     if (healthDetails !== undefined) {
       user.healthDetails = healthDetails;
+    }
+    // Update blood type if provided
+    if (bloodType !== undefined) {
+      user.bloodType = bloodType;
     }
 
     await user.save();

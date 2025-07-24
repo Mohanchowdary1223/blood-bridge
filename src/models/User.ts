@@ -13,6 +13,7 @@ export interface IUser extends Document {
   profileUpdatableAt?: Date | null;
   healthDetails?: string;
   currentAge?: number;
+  bloodType?: string;
   isAdmin(): boolean;
 }
 
@@ -28,6 +29,7 @@ const UserSchema: Schema<IUser> = new Schema({
   profileUpdatableAt: { type: Date, default: null },
   healthDetails: { type: String },
   currentAge: { type: Number },
+  bloodType: { type: String },
 });
 
 // Add method to check if user is admin

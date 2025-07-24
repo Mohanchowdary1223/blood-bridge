@@ -19,6 +19,7 @@ interface FormData {
   signupReason: string;
   dateOfBirth?: string;
   currentAge?: string;
+  bloodType: string;
 }
 
 interface FormErrors {
@@ -29,6 +30,7 @@ interface FormErrors {
   phone?: string;
   signupReason?: string;
   dateOfBirth?: string;
+  bloodType?: string;
 }
 
 function formatDate(date: Date | undefined) {
@@ -48,6 +50,7 @@ const Signup = () => {
     phone: '',
     signupReason: '',
     dateOfBirth: '',
+    bloodType: '',
   });
   
   // Calendar state
@@ -151,6 +154,12 @@ const Signup = () => {
     if (!formData.signupReason) {
       newErrors.signupReason = 'Please select a reason for signing up';
     }
+    if (!formData.bloodType) {
+      newErrors.bloodType = 'Please select your blood group';
+    } else if (formData.bloodType === "I don't know my blood type" || formData.bloodType === 'unknown') {
+      // Allow 'Don't know' as a valid option
+      delete newErrors.bloodType;
+    }
     if (formData.signupReason === 'underAge' && !formData.dateOfBirth) {
       newErrors.dateOfBirth = 'Date of birth is required for under age';
     }
@@ -171,15 +180,16 @@ const Signup = () => {
         const response = await fetch('/api/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-            name: formData.fullName,
-            phone: formData.phone,
-            signupReason: formData.signupReason,
-            dateOfBirth: formData.dateOfBirth,
-            currentAge: formData.currentAge
-          })
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password,
+              name: formData.fullName,
+              phone: formData.phone,
+              signupReason: formData.signupReason,
+              dateOfBirth: formData.dateOfBirth,
+              currentAge: formData.currentAge,
+              bloodType: formData.bloodType
+            })
         });
         const data = await response.json();
         if (!response.ok) {
@@ -398,6 +408,35 @@ const Signup = () => {
                     {errors.phone}
                   </p>}
                 </div>
+              </div>
+
+
+              {/* Blood Group */}
+              <div className="space-y-2">
+                <Label htmlFor="bloodType" className="text-sm font-medium text-gray-700">Blood Group</Label>
+                <select
+                  id="bloodType"
+                  name="bloodType"
+                  className={`h-12 w-full border rounded-md px-3 ${errors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} focus:ring-red-500/20`}
+                  value={formData.bloodType}
+                  onChange={e => setFormData({ ...formData, bloodType: e.target.value })}
+                  required
+                >
+                  <option value="">Select your blood group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="unknown">Don't know</option>
+                </select>
+                {errors.bloodType && <p className="text-xs text-red-500 flex items-center gap-1">
+                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                  {errors.bloodType}
+                </p>}
               </div>
 
               {/* Signup Reason */}

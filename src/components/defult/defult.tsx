@@ -266,42 +266,68 @@ const BloodBridgeLanding: React.FC = () => {
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="space-y-4">
-              <h3 className="text-xl font-bold text-foreground">BloodBridge</h3>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                  <Droplets className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">BloodBridge</h3>
+              </div>
               <p className="text-muted-foreground">
-                Connecting donors with those in need, one donation at a time.
+                Connecting blood donors with those in need, making a difference one donation at a time.
               </p>
             </div>
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Quick Links</h3>
-              <ul className="space-y-2">
-                <li>
-                  <button className="text-muted-foreground hover:text-foreground transition-colors">
-                    About Us
-                  </button>
-                </li>
-                <li>
-                  <button className="text-muted-foreground hover:text-foreground transition-colors">
-                    Donate Blood
-                  </button>
-                </li>
-                <li>
-                  <button className="text-muted-foreground hover:text-foreground transition-colors">
-                    Find Donor
-                  </button>
-                </li>
-              </ul>
+              <div>
+                <ul className="space-y-2">
+                  <li>
+                    <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                      <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About Us</a>
+                    </Button>
+                  </li>
+                  <li>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push('/register')}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Become a Donor
+                    </Button>
+                  </li>
+                  <li>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push('/login')}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Login
+                    </Button>
+                  </li>
+                </ul>
+
+              </div>
             </div>
+
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Contact Info</h3>
               <ul className="space-y-2 text-muted-foreground">
-                <li>Email: info@bloodbridge.com</li>
-                <li>Phone: +1 (555) 123-4567</li>
-                <li>Address: 123 Health Street, Medical City</li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                  Email: mohanchowdary963@gmail.com
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                  Phone: +91 9182622919
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                  Linkedin: <a href="https://www.linkedin.com/in/mohan-chowdary-963" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Mohan Sunkara</a>
+                </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} BloodBridge. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} BloodBridge. All rights reserved. Made with ❤️ for humanity.</p>
           </div>
         </div>
       </footer>

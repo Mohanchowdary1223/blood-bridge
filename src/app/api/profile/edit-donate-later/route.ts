@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (name !== undefined) user.name = name;
     if (phone !== undefined) user.phone = phone;
     if (role !== undefined) user.role = role;
-    
+    if (bloodType !== undefined) user.bloodType = bloodType;
     // Handle signup reason change
     if (signupReason !== undefined) {
       user.signupReason = signupReason;
