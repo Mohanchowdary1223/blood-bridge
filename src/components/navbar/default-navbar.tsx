@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Menu, X } from 'lucide-react';
+import { Droplets, Menu, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const DefaultNavbar = () => {
@@ -36,7 +36,7 @@ const DefaultNavbar = () => {
             <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
               <Droplets className="w-5 h-5 text-white" />
             </div>
-            <button 
+            <button
               onClick={() => router.push('/')}
               className="text-2xl cursor-pointer font-bold text-foreground hover:text-red-600 transition-colors"
             >
@@ -63,7 +63,15 @@ const DefaultNavbar = () => {
             {isMenuOpen && (
               <div className="absolute right-0 top-12 w-48 bg-background border border-border rounded-lg py-2 z-50">
                 <div className="flex flex-col">
-                  <Button 
+
+                  <Button
+                    variant="ghost"
+                    className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                  >
+                    <Info className="w-4 h-4 mr-2" />
+                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+                  </Button>
+                  <Button
                     variant="ghost"
                     onClick={() => {
                       router.push('/login');
@@ -74,7 +82,7 @@ const DefaultNavbar = () => {
                     Sign In
                   </Button>
                   <div className="border-t border-border my-1" />
-                  <Button 
+                  <Button
                     onClick={() => {
                       router.push('/register');
                       setIsMenuOpen(false);
@@ -90,14 +98,21 @@ const DefaultNavbar = () => {
 
           {/* Desktop Menu - Unchanged */}
           <div className="hidden md:flex items-center gap-3">
-            <Button 
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <Info className="w-4 h-4 mr-2" />
+              <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+            </Button>
+            <Button
               variant="ghost"
               onClick={() => router.push('/login')}
               className="text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Sign In
             </Button>
-            <Button 
+            <Button
               onClick={() => router.push('/register')}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold cursor-pointer"
             >

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
-import { User, Mail, Phone, Heart, Droplet, CalendarIcon, Weight, Ruler, MapPin } from 'lucide-react';
+import { User, Mail, Phone, Heart, Droplet, CalendarIcon, Weight, Ruler, MapPin, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +23,7 @@ const DonorFormPage: React.FC = () => {
   const [err, setErr] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Add access control state
   const [accessAllowed, setAccessAllowed] = useState<boolean | null>(null);
@@ -60,7 +61,6 @@ const DonorFormPage: React.FC = () => {
   const [cities, setCities] = useState<ICity[]>([]);
 
   const router = useRouter();
-
 
   // Load countries and user details on mount, restrict access to donateLater users
   useEffect(() => {
@@ -193,9 +193,17 @@ const DonorFormPage: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Update failed');
-      setMsg('Congratulations! You are now a registered donor!');
+      
+      // Update localStorage
       localStorage.setItem('user', JSON.stringify(data.user));
-      setTimeout(() => router.push('/home'), 2000); // Redirect after success
+      
+      // Show success modal for 1 second
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        router.push('/home');
+      }, 1000);
+      
     } catch (error) {
       setErr(error instanceof Error ? error.message : 'Update failed');
     } finally {
@@ -221,6 +229,19 @@ const DonorFormPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-12">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 text-center shadow-2xl transform animate-pulse">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-green-700 mb-2">Registration Successful!</h2>
+            <p className="text-gray-600">Welcome to the BloodBridge donor community!</p>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-2 text-green-700 mb-2">

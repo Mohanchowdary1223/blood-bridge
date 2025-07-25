@@ -51,7 +51,7 @@ export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({
     phone: user.phone,
     currentAge: user.currentAge || '',
     dateOfBirth: user.dateOfBirth || '',
-    bloodType: user.bloodType || ''
+    bloodType: user.bloodType === 'unknown' ? "I don't know my blood type" : user.bloodType || ''
   });
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
@@ -401,7 +401,7 @@ export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({
 
             {/* Edit Mode Action Buttons */}
             {editMode && (
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t justify-center items-center">
+              <div className="flex gap-4 pt-6 border-t justify-center items-center">
                 <Button
                   onClick={handleSave}
                   disabled={loading}

@@ -4,11 +4,21 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Share2, Droplets, AlertCircle, User, Heart, ArrowLeft } from 'lucide-react';
+import { Search, Share2, Droplets, User, Heart, ArrowLeft, Copy, Instagram, Mail, Check } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { FaWhatsapp } from 'react-icons/fa'
 
 export default function HealthIssueHome() {
   const [userName, setUserName] = useState('User');
   const [bloodGroup, setBloodGroup] = useState('Unknown');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const router = useRouter();
 
   useEffect(() => {
@@ -33,36 +43,70 @@ export default function HealthIssueHome() {
     router.push('/finddonor')
   }
 
-  const handleShareClick = async () => {
-    const shareData = {
-      title: 'BloodBridge',
-      text: 'Check out BloodBridge, your platform for blood donation and management! Join me in making a difference.',
-      url: window.location.href,
-    };
+  // Share data
+  const shareData = {
+    title: 'BloodBridge - Save Lives Through Blood Donation',
+    text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story. You can also find donors near you when needed.',
+    url: typeof window !== 'undefined' ? window.location.href : '',
+  };
 
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-        console.log('Share successful');
-      } catch (error) {
-        console.error('Share failed:', error);
-        fallbackCopy();
+  // Copy to clipboard function that prevents dropdown closing
+  const handleCopyLink = async () => {
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareData.url);
+        setCopyStatus('copied');
+        setTimeout(() => setCopyStatus('idle'), 3000);
+        return;
       }
-    } else {
-      console.log('Web Share API not supported, using fallback');
-      fallbackCopy();
+
+      // Fallback to execCommand
+      const textArea = document.createElement('textarea');
+      textArea.value = shareData.url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        setCopyStatus('copied');
+        setTimeout(() => setCopyStatus('idle'), 3000);
+      } else {
+        throw new Error('Copy failed');
+      }
+    } catch (error) {
+      console.error('Copy failed:', error);
+      // Final fallback - show prompt
+      prompt('Copy this link:', shareData.url);
     }
   };
 
-  const fallbackCopy = () => {
-    navigator.clipboard.writeText(window.location.href)
-      .then(() => {
-        alert('Link copied to clipboard! You can now paste and share it manually.');
-      })
-      .catch((error) => {
-        console.error('Clipboard copy failed:', error);
-        alert('Unable to copy link. Please copy the URL manually: ' + window.location.href);
-      });
+  // Enhanced WhatsApp share with better messaging
+  const handleWhatsAppShare = () => {
+    const enhancedText = `${shareData.text}\n\n🔍 Find donors instantly\n❤️ Save up to 3 lives per donation\n🌟 Join our life-saving community`;
+    const encodedText = encodeURIComponent(`${enhancedText}\n\n${shareData.url}`);
+    const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  // Instagram share
+  const handleInstagramShare = () => {
+    window.open('https://www.instagram.com/', '_blank');
+    handleCopyLink();
+  };
+
+  // Email share
+  const handleEmailShare = () => {
+    const subject = encodeURIComponent(shareData.title);
+    const body = encodeURIComponent(`${shareData.text}\n\nCheck it out: ${shareData.url}`);
+    const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+    window.location.href = mailtoUrl;
   };
 
   // Blood compatibility logic - receive only
@@ -85,9 +129,33 @@ export default function HealthIssueHome() {
     return compatibilityMap[bloodType] || null;
   };
 
-  const compatibility = bloodGroup && bloodGroup !== 'Unknown' && bloodGroup !== "I don't know my blood type" 
+  // Function to get blood type classification
+  const getBloodTypeClassification = (bloodType: string): string => {
+    switch (bloodType) {
+      case 'O-':
+        return 'Universal Donor';
+      case 'AB+':
+        return 'Universal Receiver';
+      case 'O+':
+        return 'Common Donor';
+      case 'AB-':
+        return 'Rare Receiver';
+      case 'A-':
+      case 'B-':
+        return 'Rare Donor';
+      case 'A+':
+      case 'B+':
+        return 'Common Type';
+      default:
+        return 'Focus on Recovery';
+    }
+  };
+
+  const compatibility = bloodGroup && bloodGroup !== 'Unknown' && bloodGroup !== 'unknown' && bloodGroup !== "I don't know my blood type" 
     ? getBloodCompatibility(bloodGroup) 
     : null;
+
+  const isUnknownBloodType = !bloodGroup || bloodGroup === 'Unknown' || bloodGroup === 'unknown' || bloodGroup === "I don't know my blood type";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-10">
@@ -136,114 +204,212 @@ export default function HealthIssueHome() {
           </div>
         </div>
 
-        {/* Blood Compatibility Section - Receive Only */}
-<div className="mb-12">
-  {!bloodGroup || bloodGroup === 'Unknown' || bloodGroup === "I don't know my blood type" ? (
-    // Card for unknown blood type
-    <Card className="border-0 bg-gradient-to-r from-orange-50 to-amber-50">
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-white" />
-            </div>
-            <div className='flex flex-col text-center md:text-left'>
-              <h3 className="text-xl font-semibold text-foreground">Know Your Blood Type</h3>
-              <p className="text-muted-foreground text-md">Update your blood type to see which donors can help you if needed</p>
-            </div>
-          </div>
-          <Button
-            onClick={() => router.push('/profile')}
-            className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold px-6 py-2 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-2"
-          >
-            <User className="w-4 h-4" />
-            Update Profile
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  ) : (
-    // Health-focused compatibility information
-    <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-2xl font-bold text-foreground mb-2">Your Blood Type: {bloodGroup}</h3>
-        <Badge className="bg-blue-50 text-blue-600 border-blue-200">
-          Focus on Recovery
-        </Badge>
-      </div>
-
-      {/* Side by Side Layout for Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Health Issue Message */}
-        <Card className="border-0 bg-gradient-to-r from-yellow-50 to-orange-50">
-          <CardContent className="p-6">
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mx-auto">
-                <Heart className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground">About Blood Donation</h3>
-              <p className="text-muted-foreground">
-                Due to health issues or certain habits, you may not be eligible to donate blood right now. 
-                Focus on your recovery and well-being first. You can still help save lives by connecting others with donors!
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Compatible Donors Section */}
-        <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
-          <CardHeader className="text-center pb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
-              <ArrowLeft className="w-6 h-6 text-white" />
-            </div>
-            <CardTitle className="text-lg text-foreground">Compatible Donors for You</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              If you ever need blood, these types are safe for you to receive
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {compatibility?.canReceiveFrom?.map((type) => (
-                <Badge 
-                  key={type} 
-                  className="bg-green-100 text-green-700 border-green-200 px-3 py-1"
-                >
-                  {type}
+        {/* Blood Compatibility Section */}
+        <div className="mb-12">
+          {isUnknownBloodType ? (
+            // Side by side layout for unknown blood type
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-foreground mb-2">Blood Type: Unknown</h3>
+                <Badge className="bg-orange-50 text-orange-600 border-orange-200">
+                  Update Required
                 </Badge>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Health Issue Message */}
+                <Card className="border-0 bg-gradient-to-r from-yellow-50 to-orange-50">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mx-auto">
+                        <Heart className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground">About Blood Donation</h3>
+                      <p className="text-muted-foreground">
+                        Due to health issues or certain habits, you may not be eligible to donate blood right now. 
+                        Focus on your recovery and well-being first. You can still help save lives by connecting others with donors!
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Update Profile Card */}
+                <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                    <CardTitle className="text-lg text-foreground">Update Your Profile</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Add your blood type to see compatibility information and help others find you if needed
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Knowing your blood type helps us:
+                      </p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Show compatible donors for you</li>
+                        <li>• Display your blood type classification</li>
+                        <li>• Help others find you in emergencies</li>
+                      </ul>
+                      <Button
+                        onClick={() => router.push('/profile')}
+                        className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold py-2 rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <User className="w-4 h-4" />
+                        Update Profile
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground text-center mt-3">
-              These blood types are compatible and safe for you to receive
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )}
-</div>
+          ) : (
+            // Health-focused compatibility information for known blood type
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-foreground mb-2">Your Blood Type: {bloodGroup}</h3>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Badge className="bg-blue-50 text-blue-600 border-blue-200">
+                    Focus on Recovery
+                  </Badge>
+                  <Badge className="bg-purple-50 text-purple-600 border-purple-200">
+                    {getBloodTypeClassification(bloodGroup)}
+                  </Badge>
+                </div>
+              </div>
 
+              {/* Side by Side Layout for Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Health Issue Message */}
+                <Card className="border-0 bg-gradient-to-r from-yellow-50 to-orange-50">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mx-auto">
+                        <Heart className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground">About Blood Donation</h3>
+                      <p className="text-muted-foreground">
+                        Due to health issues or certain habits, you may not be eligible to donate blood right now. 
+                        Focus on your recovery and well-being first. You can still help save lives by connecting others with donors!
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-        {/* Share Section */}
+                {/* Compatible Donors Section */}
+                <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <ArrowLeft className="w-6 h-6 text-white" />
+                    </div>
+                    <CardTitle className="text-lg text-foreground">Compatible Donors for You</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      If you ever need blood, these types are safe for you to receive
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {compatibility?.canReceiveFrom?.map((type) => (
+                        <Badge 
+                          key={type} 
+                          className="bg-green-100 text-green-700 border-green-200 px-3 py-1"
+                        >
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center mt-3">
+                      These blood types are compatible and safe for you to receive
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Enhanced Share Section with Dropdown Menu */}
         <div className="mb-12">
           <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                  <div className="w-12 h-12 md:w-12 md:h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="w-16 h-16 md:w-14 md:h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                     <Share2 className="w-6 h-6 text-white" />
                   </div>
                   <div className='flex flex-col text-center md:text-left'>
-                    <h3 className="text-xl font-semibold text-foreground">Spread the Word</h3>
-                    <p className="text-muted-foreground">Help more people discover BloodBridge and save lives together</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Help Us Save More Lives</h3>
+                    <p className="text-gray-600 max-w-md text-sm">
+                      Share BloodBridge with your friends and family. Together, we can build a stronger community of life-savers.
+                    </p>
                   </div>
                 </div>
-                <Button
-                  onClick={handleShareClick}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-2"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share with Friends
-                </Button>
+                
+                {/* Share Dropdown Menu with Manual Control */}
+                <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="lg"
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-3"
+                    >
+                      <Share2 className="w-5 h-5" />
+                      Share BloodBridge
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-auto p-2">
+                   
+                    {/* Social Media Icons Row */}
+                    <div className='flex flex-row gap-2'>
+                      {/* WhatsApp */}
+                      <DropdownMenuItem 
+                        onClick={handleWhatsAppShare} 
+                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                        aria-label="Share via WhatsApp"
+                      >
+                        <FaWhatsapp className="w-5 h-5 text-green-600" />
+                      </DropdownMenuItem>
+                      
+                      {/* Instagram */}
+                      <DropdownMenuItem 
+                        onClick={handleInstagramShare} 
+                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                        aria-label="Share via Instagram"
+                      >
+                        <Instagram className="w-5 h-5 text-pink-600" />
+                      </DropdownMenuItem>
+                      
+                      {/* Email */}
+                      <DropdownMenuItem 
+                        onClick={handleEmailShare} 
+                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                        aria-label="Share via Email"
+                      >
+                        <Mail className="w-5 h-5 text-blue-600" />
+                      </DropdownMenuItem>
+                    </div>
+               
+                    <DropdownMenuSeparator />
+                    
+                    {/* Copy Link - Updated to prevent dropdown closing */}
+                    <DropdownMenuItem 
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        handleCopyLink();
+                      }}
+                      className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2 justify-center"
+                    >
+                      {copyStatus === 'copied' ? (
+                        <Check className="w-5 h-5 text-green-600" /> 
+                      ) : (
+                        <Copy className="w-5 h-5" />
+                      )}
+                      <span>{copyStatus === 'copied' ? 'Copied!' : 'Copy Link'}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardContent>
           </Card>
@@ -270,7 +436,7 @@ export default function HealthIssueHome() {
               <ul className="space-y-2">
                 <li>
                   <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    <a href="https://mohansunkara.vercel.app/">About Us</a>
+                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
                   </Button>
                 </li>
                 <li>

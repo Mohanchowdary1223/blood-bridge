@@ -431,7 +431,7 @@ const Signup = () => {
                   <option value="AB-">AB-</option>
                   <option value="O+">O+</option>
                   <option value="O-">O-</option>
-                  <option value="unknown">Don't know</option>
+                  <option value="unknown">I don't know my blood type</option>
                 </select>
                 {errors.bloodType && <p className="text-xs text-red-500 flex items-center gap-1">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>

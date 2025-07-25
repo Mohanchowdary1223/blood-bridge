@@ -61,7 +61,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
   }>({
     name: user.name,
     phone: user.phone,
-    bloodType: '',
+    bloodType: user.bloodType === 'unknown' ? "I don't know my blood type" : user.bloodType || '',
     dob: '',
     gender: '',
     weight: '',
@@ -560,7 +560,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
 
             {/* Edit Mode Action Buttons */}
             {editMode && (
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t justify-center items-center">
+              <div className="flex flex-row  gap-4 pt-6 border-t justify-center items-center">
                 <Button
                   onClick={handleSave}
                   disabled={loading}

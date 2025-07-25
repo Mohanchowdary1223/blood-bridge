@@ -49,7 +49,7 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
   const [editData, setEditData] = useState({
     name: user.name,
     phone: user.phone,
-    bloodType: user.bloodType || ''
+    bloodType: user.bloodType === 'unknown' ? "I don't know my blood type" : user.bloodType || ''
   });
   const [signupReason, setSignupReason] = useState(user.signupReason || 'healthIssue');
   const [loading, setLoading] = useState(false);
@@ -301,7 +301,7 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
 
             {/* Edit Mode Action Buttons */}
             {editMode && (
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t items-center justify-center">
+              <div className="flex gap-4 pt-6 border-t items-center justify-center">
                 <Button
                   onClick={handleSave}
                   disabled={loading}

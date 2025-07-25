@@ -92,7 +92,7 @@ const AuthNavbar = () => {
                       className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
                     >
                       <Info className="w-4 h-4 mr-2" />
-                      <a href="https://mohansunkara.vercel.app">About</a>
+                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
                     </Button>
                     <Button 
                       variant="ghost"
@@ -140,7 +140,7 @@ const AuthNavbar = () => {
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <Info className="w-4 h-4 mr-2" />
-                <a href="https://mohansunkara.vercel.app">About</a>
+                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
               </Button>
               <Button 
                 variant="ghost"

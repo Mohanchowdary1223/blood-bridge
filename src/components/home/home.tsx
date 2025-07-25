@@ -2,10 +2,18 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Share2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Share2, ArrowRight, ArrowLeft, Copy, Instagram, Mail, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { FaWhatsapp } from 'react-icons/fa'
 
 interface HomeComponentProps {
   hideRecentActivity?: boolean;
@@ -16,6 +24,8 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
 
   const [userName, setUserName] = useState('User');
   const [bloodGroup, setBloodGroup] = useState('O+');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -51,36 +61,70 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     router.push('/health-instructions')
   }
 
-  const handleShareClick = async () => {
-    const shareData = {
-      title: 'BloodBridge',
-      text: 'Check out BloodBridge, your platform for blood donation and management! Join me in making a difference.',
-      url: window.location.href,
-    };
+  // Share data
+  const shareData = {
+    title: 'BloodBridge - Save Lives Through Blood Donation',
+    text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story. You can also find donors near you when needed.',
+    url: typeof window !== 'undefined' ? window.location.href : '',
+  };
 
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-        console.log('Share successful');
-      } catch (error) {
-        console.error('Share failed:', error);
-        fallbackCopy();
+  // Copy to clipboard function that prevents dropdown closing
+  const handleCopyLink = async () => {
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareData.url);
+        setCopyStatus('copied');
+        setTimeout(() => setCopyStatus('idle'), 3000);
+        return;
       }
-    } else {
-      console.log('Web Share API not supported, using fallback');
-      fallbackCopy();
+
+      // Fallback to execCommand
+      const textArea = document.createElement('textarea');
+      textArea.value = shareData.url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        setCopyStatus('copied');
+        setTimeout(() => setCopyStatus('idle'), 3000);
+      } else {
+        throw new Error('Copy failed');
+      }
+    } catch (error) {
+      console.error('Copy failed:', error);
+      // Final fallback - show prompt
+      prompt('Copy this link:', shareData.url);
     }
   };
 
-  const fallbackCopy = () => {
-    navigator.clipboard.writeText(window.location.href)
-      .then(() => {
-        alert('Link copied to clipboard! You can now paste and share it manually.');
-      })
-      .catch((error) => {
-        console.error('Clipboard copy failed:', error);
-        alert('Unable to copy link. Please copy the URL manually: ' + window.location.href);
-      });
+  // Enhanced WhatsApp share with better messaging
+  const handleWhatsAppShare = () => {
+    const enhancedText = `${shareData.text}\n\n🔍 Find donors instantly\n❤️ Save up to 3 lives per donation\n🌟 Join our life-saving community`;
+    const encodedText = encodeURIComponent(`${enhancedText}\n\n${shareData.url}`);
+    const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  // Instagram share
+  const handleInstagramShare = () => {
+    window.open('https://www.instagram.com/', '_blank');
+    handleCopyLink();
+  };
+
+  // Email share
+  const handleEmailShare = () => {
+    const subject = encodeURIComponent(shareData.title);
+    const body = encodeURIComponent(`${shareData.text}\n\nCheck it out: ${shareData.url}`);
+    const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+    window.location.href = mailtoUrl;
   };
 
   // Blood compatibility logic
@@ -331,27 +375,85 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
           </div>
         </div>
 
-        {/* Share Section */}
+        {/* Enhanced Share Section with Dropdown Menu */}
         <div className="mb-12">
           <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                  <div className="w-12 h-12 md:w-12 md:h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="w-16 h-16 md:w-14 md:h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                     <Share2 className="w-6 h-6 text-white" />
                   </div>
                   <div className='flex flex-col text-center md:text-left'>
-                    <h3 className="text-xl font-semibold text-foreground">Spread the Word</h3>
-                    <p className="text-muted-foreground">Help more people discover BloodBridge and save lives together</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Help Us Save More Lives</h3>
+                    <p className="text-gray-600 max-w-md text-sm">
+                      Share BloodBridge with your friends and family. Together, we can build a stronger community of life-savers.
+                    </p>
                   </div>
                 </div>
-                <Button
-                  onClick={handleShareClick}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-2"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share with Friends
-                </Button>
+                
+                {/* Share Dropdown Menu with Manual Control */}
+                <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="lg"
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-3"
+                    >
+                      <Share2 className="w-5 h-5" />
+                      Share BloodBridge
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-auto p-2">
+                   
+                    {/* Social Media Icons Row */}
+                    <div className='flex flex-row gap-2'>
+                      {/* WhatsApp */}
+                      <DropdownMenuItem 
+                        onClick={handleWhatsAppShare} 
+                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                        aria-label="Share via WhatsApp"
+                      >
+                        <FaWhatsapp className="w-5 h-5 text-green-600" />
+                      </DropdownMenuItem>
+                      
+                      {/* Instagram */}
+                      <DropdownMenuItem 
+                        onClick={handleInstagramShare} 
+                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                        aria-label="Share via Instagram"
+                      >
+                        <Instagram className="w-5 h-5 text-pink-600" />
+                      </DropdownMenuItem>
+                      
+                      {/* Email */}
+                      <DropdownMenuItem 
+                        onClick={handleEmailShare} 
+                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                        aria-label="Share via Email"
+                      >
+                        <Mail className="w-5 h-5 text-blue-600" />
+                      </DropdownMenuItem>
+                    </div>
+               
+                    <DropdownMenuSeparator />
+                    
+                    {/* Copy Link - Updated to prevent dropdown closing */}
+                    <DropdownMenuItem 
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        handleCopyLink();
+                      }}
+                      className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2 justify-center"
+                    >
+                      {copyStatus === 'copied' ? (
+                        <Check className="w-5 h-5 text-green-600" /> 
+                      ) : (
+                        <Copy className="w-5 h-5" />
+                      )}
+                      <span>{copyStatus === 'copied' ? 'Copied!' : 'Copy Link'}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardContent>
           </Card>
@@ -437,7 +539,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                 <ul className="space-y-2">
                   <li>
                     <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                      <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About Us</a>
+                      <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
                     </Button>
                   </li>
                   <li>
