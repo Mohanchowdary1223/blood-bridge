@@ -15,8 +15,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
+
 interface Donor {
   _id: string;
+  userId?: string; // Add userId for correct notification delivery
   name: string;
   phone: string;
   bloodType: string;
@@ -27,9 +29,11 @@ interface Donor {
   gender?: string; // Added gender field
 }
 
+
 interface FindDonorPageProps {
   hideNavbarAndTitle?: boolean;
 }
+
 
 const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
   const router = useRouter()
@@ -39,6 +43,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     state: '',
     city: ''
   })
+
 
   const [searchResults, setSearchResults] = useState<Donor[]>([])
   const [countries, setCountries] = useState<ICountry[]>([])
@@ -55,6 +60,10 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
   const [thanksMessage, setThanksMessage] = useState('')
   const [reportReason, setReportReason] = useState('')
   const [reportDetails, setReportDetails] = useState('')
+  
+  // New state for success messages
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
   const reportReasons = [
@@ -65,10 +74,12 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     'Other'
   ]
 
+
   useEffect(() => {
     const allCountries = Country.getAllCountries()
     setCountries(allCountries)
   }, [])
+
 
   useEffect(() => {
     if (filters.country) {
@@ -78,6 +89,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     }
   }, [filters.country])
 
+
   useEffect(() => {
     if (filters.state && filters.country) {
       const stateCities = City.getCitiesOfState(filters.country, filters.state)
@@ -85,6 +97,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
       setFilters(prev => ({ ...prev, city: '' }))
     }
   }, [filters.state, filters.country])
+
 
   const handleFilterChange = (name: string, value: string) => {
     setFilters(prev => ({
@@ -94,11 +107,19 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     setHasSearched(false)
   }
 
+
   const handleCopy = (phone: string) => {
     navigator.clipboard.writeText(phone)
     setCopySuccess(phone)
     setTimeout(() => setCopySuccess(null), 1200)
   }
+
+  // Show success message function
+  const showSuccessMessage = (message: string) => {
+    setSuccessMessage(message)
+    setTimeout(() => setSuccessMessage(null), 3000)
+  }
+
 
   const fetchDonors = useCallback(async () => {
     setIsLoading(true)
@@ -121,14 +142,17 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     }
   }, [filters.bloodGroup, filters.country, filters.state, filters.city])
 
+
   useEffect(() => {
     fetchDonors()
   }, [fetchDonors])
+
 
   const handleSearch = async () => {
     await fetchDonors()
     setHasSearched(true)
   }
+
 
   const handleBack = () => {
     if (hideNavbarAndTitle) {
@@ -138,72 +162,107 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     }
   }
 
+
   const handleThanks = (donor: Donor) => {
     setSelectedDonor(donor)
     setThanksModalOpen(true)
   }
+
 
   const handleReport = (donor: Donor) => {
     setSelectedDonor(donor)
     setReportModalOpen(true)
   }
 
-  const submitThanks = async () => {
-    try {
-      // API call to send thanks message
-      const response = await fetch('/api/thanks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          donorId: selectedDonor?._id,
-          message: thanksMessage
-        })
-      })
-      
-      if (response.ok) {
-        setThanksModalOpen(false)
-        setThanksMessage('')
-        setSelectedDonor(null)
-        // Show success message
-      }
-    } catch (error) {
-      console.error('Failed to send thanks:', error)
-    }
-  }
 
-  const submitReport = async () => {
-    try {
-      // API call to submit report
-      const response = await fetch('/api/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          donorId: selectedDonor?._id,
-          reason: reportReason,
-          details: reportDetails
-        })
+ const submitThanks = async () => {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const now = new Date();
+    
+    const response = await fetch('/api/thanks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        donorId: selectedDonor?.userId || selectedDonor?._id, // Use userId if available
+        message: thanksMessage,
+        senderName: currentUser.name || 'Anonymous User',
+        senderUserId: currentUser._id || currentUser.userId,
+        timestamp: now.toISOString(), // Pass timestamp
+        title: 'Vote of Thanks' // Set a user-friendly title
       })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      setThanksModalOpen(false);
+      setThanksMessage('');
+      setSelectedDonor(null);
       
-      if (response.ok) {
-        setReportModalOpen(false)
-        setReportReason('')
-        setReportDetails('')
-        setSelectedDonor(null)
-        // Show success message
-      }
-    } catch (error) {
-      console.error('Failed to submit report:', error)
+      // Show success message
+      showSuccessMessage('Vote of Thanks sent successfully! 🎉');
+    } else {
+      alert(result.error || 'Failed to send thank you message');
     }
+  } catch (error) {
+    console.error('Failed to send thanks:', error);
+    alert('Failed to send thank you message');
   }
+};
+
+
+
+const submitReport = async () => {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const now = new Date();
+    
+    const response = await fetch('/api/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        donorId: selectedDonor?.userId || selectedDonor?._id, // Use userId if available
+        reason: reportReason,
+        details: reportDetails,
+        reporterName: currentUser.name || 'Anonymous User',
+        reporterUserId: currentUser._id || currentUser.userId,
+        timestamp: now.toISOString(), // Pass timestamp
+        title: reportReason // Set the report reason as the title
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      setReportModalOpen(false);
+      setReportReason('');
+      setReportDetails('');
+      setSelectedDonor(null);
+      
+      // Show success message
+      showSuccessMessage('Report sent successfully! ✅');
+    } else {
+      alert(result.error || 'Failed to submit report');
+    }
+  } catch (error) {
+    console.error('Failed to submit report:', error);
+    alert('Failed to submit report');
+  }
+};
+
+
 
   const availableDonors = searchResults.filter(d => d.isAvailable === true)
   const unavailableDonors = searchResults.filter(d => d.isAvailable === false)
+
 
   const getLocationString = (donor: Donor) => {
     const stateName = State.getStateByCodeAndCountry(donor.state, donor.country)?.name
     const countryName = Country.getCountryByCode(donor.country)?.name
     return `${donor.city}, ${stateName}, ${countryName}`
   }
+
 
   const DonorTable = ({ donors, title, bgColor, textColor }: { 
     donors: Donor[], 
@@ -337,6 +396,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     </div>
   )
 
+
   return (
     <div className="min-h-screen  bg-gradient-to-br from-blue-50 to-indigo-50 px-4">
       {/* Fixed Back Button */}
@@ -348,6 +408,17 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
       >
         <ArrowLeft className="h-5 w-5 text-gray-700" />
       </Button>
+
+      {/* Success Message Toast */}
+      {successMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-300 animate-in slide-in-from-right">
+          <div className="flex items-center gap-2">
+            <Check className="w-5 h-5" />
+            <span className="font-medium">{successMessage}</span>
+          </div>
+        </div>
+      )}
+
 
       <div className="container mx-auto max-w-5xl pt-5 pb-10">
         {!hideNavbarAndTitle && (
@@ -361,6 +432,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
             <p className="text-lg text-muted-foreground">Connect with donors in your area and save lives</p>
           </div>
         )}
+
 
         {/* Search Filters Card */}
         <Card className="border-0 bg-white/95 backdrop-blur-sm mb-8">
@@ -395,6 +467,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                 </Select>
               </div>
 
+
               {/* Country Filter */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -414,6 +487,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                   </SelectContent>
                 </Select>
               </div>
+
 
               {/* State Filter */}
               <div className="space-y-2">
@@ -436,6 +510,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                 </Select>
               </div>
 
+
               {/* City Filter */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">City</Label>
@@ -457,6 +532,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                 </Select>
               </div>
             </div>
+
 
             {/* Search Button */}
             <div className="flex justify-center pt-4">
@@ -481,6 +557,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
           </CardContent>
         </Card>
 
+
         {/* Report Donor Note */}
         <Card className="border-0 bg-amber-50/50 backdrop-blur-sm mb-8">
           <CardContent className="p-4">
@@ -497,6 +574,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
             </div>
           </CardContent>
         </Card>
+
 
         {/* Results Section */}
         <Card className="border-0 bg-white/95 backdrop-blur-sm">
@@ -532,10 +610,12 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                   />
                 )}
 
+
                 {/* Separator */}
                 {availableDonors.length > 0 && unavailableDonors.length > 0 && (
                   <Separator className="my-8" />
                 )}
+
 
                 {/* Unavailable Donors Table */}
                 {unavailableDonors.length > 0 && (
@@ -559,6 +639,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
           </CardContent>
         </Card>
       </div>
+
 
       {/* Vote of Thanks Modal */}
       <Dialog open={thanksModalOpen} onOpenChange={setThanksModalOpen}>
@@ -587,13 +668,14 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
               <Button 
                 variant="outline" 
                 onClick={() => setThanksModalOpen(false)}
+                className="cursor-pointer"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={submitThanks}
                 disabled={!thanksMessage.trim()}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 cursor-pointer"
               >
                 <Send className="w-4 h-4 mr-2" />
                 Send Thanks
@@ -602,6 +684,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
           </div>
         </DialogContent>
       </Dialog>
+
 
       {/* Report Donor Modal */}
       <Dialog open={reportModalOpen} onOpenChange={setReportModalOpen}>
@@ -621,7 +704,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
               <RadioGroup value={reportReason} onValueChange={setReportReason}>
                 {reportReasons.map((reason) => (
                   <div key={reason} className="flex items-center space-x-2">
-                    <RadioGroupItem value={reason} id={reason} />
+                    <RadioGroupItem value={reason} id={reason} className="cursor-pointer" />
                     <Label htmlFor={reason} className="text-sm cursor-pointer">
                       {reason}
                     </Label>
@@ -643,13 +726,14 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
               <Button 
                 variant="outline" 
                 onClick={() => setReportModalOpen(false)}
+                className="cursor-pointer"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={submitReport}
                 disabled={!reportReason}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-red-600 hover:bg-red-700 cursor-pointer"
               >
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Submit Report
@@ -661,5 +745,6 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     </div>
   )
 } 
+
 
 export default FindDonorPage

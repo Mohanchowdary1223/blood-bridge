@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Menu, X, Info } from 'lucide-react';
+import { Droplets, Menu, X, Info, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const DefaultNavbar = () => {
@@ -74,6 +74,17 @@ const DefaultNavbar = () => {
                   <Button
                     variant="ghost"
                     onClick={() => {
+                      router.push('/healthbotai');
+                      setIsMenuOpen(false);
+                    }}
+                    className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                  >
+                    <Bot className="w-4 h-4 mr-2" />
+                    Health Assistant
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
                       router.push('/login');
                       setIsMenuOpen(false);
                     }}
@@ -104,6 +115,14 @@ const DefaultNavbar = () => {
             >
               <Info className="w-4 h-4 mr-2" />
               <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground cursor-pointer"
+              onClick={() => router.push('/healthbotai')}
+            >
+              <Bot className="w-4 h-4 mr-2" />
+              Health Assistant
             </Button>
             <Button
               variant="ghost"

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { IUser as ImportedIUser } from '@/models/User';
-import { ArrowLeft, User, Mail, Phone, Droplet, Calendar, Weight, Ruler, MapPin, Edit, Save, X } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Droplet, Calendar, Weight, Ruler, MapPin, Edit, Save, X, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+
+// Add interface for donation records
+interface DonationRecord {
+  units: number;
+  [key: string]: unknown; // Allow other properties
+}
 
 // Extend IUser locally to include isAvailable
 interface IUser extends ImportedIUser {
@@ -79,6 +85,13 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
   const [cities, setCities] = useState<ICity[]>([]);
   const [prevCountry, setPrevCountry] = useState('');
   const [prevState, setPrevState] = useState('');
+  
+  // NEW: Donation statistics state
+  const [donationStats, setDonationStats] = useState({
+    totalDonations: 0,
+    totalLivesSaved: 0,
+    totalUnits: 0
+  });
 
   useEffect(() => {
     setCountries(Country.getAllCountries());
@@ -134,6 +147,34 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
       fetchDonorData();
     }
   }, [user._id, user.role]);
+
+  // NEW: Fetch donation statistics
+  useEffect(() => {
+    const fetchDonationStats = async () => {
+      try {
+        const response = await fetch(`/api/donoralltypedata/stackdata?userId=${user._id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const donations = data.records || [];
+          const totalDonations = donations.length;
+          const totalUnits = donations.reduce((sum: number, d: DonationRecord) => sum + d.units, 0);
+          const totalLivesSaved = totalUnits * 3;
+          
+          setDonationStats({
+            totalDonations,
+            totalLivesSaved,
+            totalUnits
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch donation stats:', error);
+      }
+    };
+
+    if (user._id) {
+      fetchDonationStats();
+    }
+  }, [user._id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -235,6 +276,43 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
       </Button>
 
       <div className="container mx-auto max-w-4xl">
+        {/* Save Lives Section */}
+        <Card className="border-0 bg-gradient-to-r from-red-50 to-pink-50 mb-6">
+          <CardContent className="p-6">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
+                  <Heart className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-red-800 mb-2">Life Saver Achievement!</h3>
+                <p className="text-red-700 mb-4">
+                  You've made {donationStats.totalDonations} donation{donationStats.totalDonations !== 1 ? 's' : ''} and potentially saved {donationStats.totalLivesSaved} lives!
+                </p>
+                
+                {/* Statistics Grid */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">{donationStats.totalDonations}</div>
+                    <div className="text-sm text-red-700">Donations</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{donationStats.totalLivesSaved}</div>
+                    <div className="text-sm text-green-700">Lives Saved</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{donationStats.totalUnits}</div>
+                    <div className="text-sm text-blue-700">Units</div>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Data Section */}
         <Card className="border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="pb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

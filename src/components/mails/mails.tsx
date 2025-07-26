@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ColumnDef,
@@ -18,7 +18,6 @@ import {
   ThumbsUp, 
   Bell,
   Filter,
-  Clock,
   MoreHorizontal,
   Eye,
   Trash2,
@@ -53,7 +52,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+// Move interfaces outside of component
+interface BackendNotification {
+  _id: string;
+  type: 'vote' | 'report';
+  title: string;
+  description: string;
+  sender: string;
+  senderAvatar?: string;
+  timestamp: string;
+  status: 'read' | 'unread';
+  priority: 'low' | 'medium' | 'high';
+  content?: string;
+  isStarred?: boolean;
+}
 
 interface NotificationItem {
   id: string;
@@ -77,85 +90,74 @@ const NotificationsPage: React.FC = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  
-  // New state for selected type filter
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample data with only vote and report types
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: '1',
-      type: 'vote',
-      title: 'Best Blood Donor Award Voting',
-      description: 'Vote for the most impactful blood donor in your community',
-      sender: 'BloodBridge Community',
-      timestamp: '2024-01-15T10:30:00Z',
-      status: 'unread',
-      priority: 'high',
-      content: 'We are excited to announce our annual Best Blood Donor Award voting is now open! Your participation helps us recognize outstanding donors who have made significant contributions to saving lives.',
-      isStarred: false
-    },
-    {
-      id: '2',
-      type: 'report',
-      title: 'Inappropriate Behavior Report',
-      description: 'Report about donor conduct during blood drive',
-      sender: 'Anonymous User',
-      timestamp: '2024-01-13T09:00:00Z',
-      status: 'read',
-      priority: 'high',
-      content: 'I want to report inappropriate behavior from a donor during the blood drive at City Hospital. The person was being disruptive and making other donors uncomfortable.',
-      isStarred: true
-    },
-    {
-      id: '3',
-      type: 'report',
-      title: 'System Bug Report',
-      description: 'Technical issue with donation scheduling system',
-      sender: 'John Smith',
-      timestamp: '2024-01-10T08:15:00Z',
-      status: 'read',
-      priority: 'medium',
-      content: 'There seems to be a bug in the donation scheduling system. When I try to book an appointment, the calendar shows incorrect available dates.',
-      isStarred: false
-    },
-    {
-      id: '4',
-      type: 'vote',
-      title: 'Community Policy Changes',
-      description: 'Vote on proposed changes to donation policies',
-      sender: 'Policy Committee',
-      timestamp: '2024-01-08T14:20:00Z',
-      status: 'unread',
-      priority: 'low',
-      content: 'We are proposing several policy changes to improve the donation process and need community feedback through voting.',
-      isStarred: true
-    },
-    {
-      id: '5',
-      type: 'report',
-      title: 'Blood Drive Location Issue',
-      description: 'Report about accessibility problems at donation center',
-      sender: 'Community Member',
-      timestamp: '2024-01-07T14:30:00Z',
-      status: 'unread',
-      priority: 'medium',
-      content: 'The blood drive location at City Center has accessibility issues that prevent wheelchair users from donating comfortably.',
-      isStarred: false
-    },
-    {
-      id: '6',
-      type: 'vote',
-      title: 'New Donation Guidelines',
-      description: 'Vote on updated donation safety guidelines',
-      sender: 'Medical Committee',
-      timestamp: '2024-01-05T12:00:00Z',
-      status: 'read',
-      priority: 'high',
-      content: 'We need your input on new safety guidelines for blood donation procedures to ensure the highest standards of donor care.',
-      isStarred: false
+  // Get userId from localStorage
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
+
+  useEffect(() => {
+    if (!userId) {
+      console.log('No userId found in localStorage');
+      setIsLoading(false);
+      return;
     }
-  ]);
+    
+    const fetchNotifications = async () => {
+      try {
+        console.log('Fetching notifications for userId:', userId);
+        setIsLoading(true);
+        
+        const res = await fetch(`/api/reportvotedata?userId=${userId}`);
+        console.log('Response status:', res.status);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        console.log('Received data:', data);
+        
+        if (data.notifications && Array.isArray(data.notifications)) {
+          const transformedNotifications = data.notifications.map((n: BackendNotification) => ({
+            id: n._id,
+            type: n.type,
+            title: n.title,
+            description: n.description,
+            sender: n.sender,
+            senderAvatar: n.senderAvatar,
+            timestamp: n.timestamp,
+            status: n.status,
+            priority: n.priority,
+            content: n.content,
+            isStarred: n.isStarred || false
+          }));
+          
+          console.log('Transformed notifications:', transformedNotifications);
+          setNotifications(transformedNotifications);
+        } else {
+          console.log('No notifications array in response');
+          setNotifications([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+        setNotifications([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchNotifications();
+  }, [userId]);
+
+  // Debug logging
+  console.log('Current state:', {
+    userId,
+    notificationsCount: notifications.length,
+    isLoading,
+    notifications: notifications.slice(0, 2) // First 2 notifications for debugging
+  });
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -168,37 +170,123 @@ const NotificationsPage: React.FC = () => {
     return date.toLocaleDateString();
   };
 
+  // Format notification summary for display
+  const formatNotificationSummary = (item: NotificationItem) => {
+    // If description contains 'from', extract the name after 'from'
+    if (item.type === 'vote' && item.description?.includes('from')) {
+      return item.description;
+    }
+    if (item.type === 'report' && item.description?.includes('from')) {
+      return item.description;
+    }
+    // Fallback: show sender as is (should be user name if backend is correct)
+    if (item.type === 'vote') {
+      return `Vote of Thanks from ${item.sender}`;
+    } else {
+      return `Report from ${item.sender}`;
+    }
+  };
+
+  // API functions
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const response = await fetch('/api/reportvotedata', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notificationId,
+          updates: { status: 'read' }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to mark as read');
+      }
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
+  };
+
+  const toggleStar = async (notificationId: string, isStarred: boolean) => {
+    try {
+      const response = await fetch('/api/reportvotedata', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notificationId,
+          updates: { isStarred: !isStarred }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update star status');
+      }
+    } catch (error) {
+      console.error('Failed to update star status:', error);
+    }
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const response = await fetch(`/api/reportvotedata?notificationId=${notificationId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete notification');
+      }
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+    }
+  };
+
+  // Handler functions
   const handleView = (item: NotificationItem) => {
     setSelectedItem(item);
     setIsDialogOpen(true);
     
-    // Mark as read
+    // Mark as read in database
+    if (item.status === 'unread') {
+      markAsRead(item.id);
+    }
+    
+    // Update local state
     setNotifications(prev => 
       prev.map(n => n.id === item.id ? { ...n, status: 'read' as const } : n)
     );
   };
 
-  const handleDelete = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
   const handleStar = (id: string) => {
+    const notification = notifications.find(n => n.id === id);
+    if (notification) {
+      toggleStar(id, notification.isStarred || false);
+    }
+    
+    // Update local state
     setNotifications(prev => 
       prev.map(n => n.id === id ? { ...n, isStarred: !n.isStarred } : n)
     );
   };
 
-  // Updated handle type filter function to include star filter
+  const handleDelete = (id: string) => {
+    deleteNotification(id);
+    
+    // Update local state
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  // Type filter function
   const handleTypeFilter = (type: string) => {
     setSelectedTypeFilter(type);
     if (type === 'all') {
       table.getColumn("type")?.setFilterValue("");
-      // Clear any custom filter
       table.setGlobalFilter("");
     } else if (type === 'starred') {
-      // For starred messages, we need to use a custom filter
       table.getColumn("type")?.setFilterValue("");
       table.setGlobalFilter("starred");
+    } else if (type === 'unread') {
+      table.getColumn("type")?.setFilterValue("");
+      table.setGlobalFilter("unread");
     } else {
       table.getColumn("type")?.setFilterValue(type);
       table.setGlobalFilter("");
@@ -209,11 +297,13 @@ const NotificationsPage: React.FC = () => {
   const getSelectedFilterDisplay = () => {
     switch (selectedTypeFilter) {
       case 'vote':
-        return { text: 'Votes', icon: <ThumbsUp className="w-4 h-4 text-blue-600" /> };
+        return { text: 'Vote of Thanks', icon: <ThumbsUp className="w-4 h-4 text-blue-600" /> };
       case 'report':
         return { text: 'Reports', icon: <Bell className="w-4 h-4 text-red-600" /> };
       case 'starred':
         return { text: 'Starred', icon: <Star className="w-4 h-4 text-yellow-500" /> };
+      case 'unread':
+        return { text: 'Unread', icon: <div className="w-4 h-4 bg-red-500 rounded-full" /> };
       default:
         return { text: 'All Types', icon: <Filter className="w-4 h-4" /> };
     }
@@ -254,38 +344,21 @@ const NotificationsPage: React.FC = () => {
       },
     },
     {
-      accessorKey: "sender",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            From
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        )
-      },
+      accessorKey: "title",
+      header: "Notification",
       cell: ({ row }) => {
         const item = row.original;
+        const isRead = item.status === 'read';
+        
         return (
           <div className="cursor-pointer" onClick={() => handleView(item)}>
-            <div className="flex items-center gap-2 mb-1">
-              <Avatar className="w-6 h-6">
-                <AvatarImage src={item.senderAvatar} />
-                <AvatarFallback className="text-xs bg-red-100 text-red-600">
-                  {item.sender.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <span className={`text-sm font-medium ${item.status === 'unread' ? 'font-semibold' : ''}`}>
-                {item.sender}
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-medium ${isRead ? 'text-muted-foreground' : 'font-semibold text-foreground'}`}>
+                {formatNotificationSummary(item)}
               </span>
               {item.isStarred && (
                 <Star className="w-3 h-3 text-yellow-500 fill-current" />
               )}
-            </div>
-            <div className="text-xs text-gray-500 truncate max-w-xs ml-8">
-              {item.description}
             </div>
           </div>
         );
@@ -305,10 +378,13 @@ const NotificationsPage: React.FC = () => {
         )
       },
       cell: ({ row }) => {
+        const date = new Date(row.getValue("timestamp"));
+        const isRead = row.original.status === 'read';
+        
         return (
-          <div className="flex items-center gap-1 text-sm text-gray-500">
-            <Clock className="w-3 h-3" />
-            {formatTimestamp(row.getValue("timestamp"))}
+          <div className={`flex flex-col gap-1 text-xs ${isRead ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            <span>{formatTimestamp(row.getValue("timestamp"))}</span>
+            <span>{date.toLocaleString()}</span>
           </div>
         );
       },
@@ -362,10 +438,12 @@ const NotificationsPage: React.FC = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // Add global filter function for starred messages
     globalFilterFn: (row, columnId, filterValue) => {
       if (filterValue === 'starred') {
         return row.original.isStarred === true;
+      }
+      if (filterValue === 'unread') {
+        return row.original.status === 'unread';
       }
       return true;
     },
@@ -377,6 +455,56 @@ const NotificationsPage: React.FC = () => {
     },
   })
 
+  // Render table body with loading state
+  const renderTableBody = () => {
+    if (isLoading) {
+      return (
+        <TableRow>
+          <TableCell colSpan={columns.length} className="h-24 text-center">
+            <div className="flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
+              <span>Loading notifications...</span>
+            </div>
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    if (table.getRowModel().rows?.length) {
+      return table.getRowModel().rows.map((row) => (
+        <TableRow
+          key={row.id}
+          className={`${row.original.status === 'unread' ? 'bg-red-50/30' : ''} hover:bg-gray-50`}
+        >
+          {row.getVisibleCells().map((cell) => (
+            <TableCell key={cell.id}>
+              {flexRender(
+                cell.column.columnDef.cell,
+                cell.getContext()
+              )}
+            </TableCell>
+          ))}
+        </TableRow>
+      ));
+    }
+
+    return (
+      <TableRow>
+        <TableCell colSpan={columns.length} className="h-24 text-center">
+          <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500">
+            {userId ? 'No notifications found' : 'Please log in to view notifications'}
+          </p>
+          {process.env.NODE_ENV === 'development' && (
+            <p className="text-xs text-gray-400 mt-2">
+              Debug: userId = {userId || 'undefined'}
+            </p>
+          )}
+        </TableCell>
+      </TableRow>
+    );
+  };
+
   const selectedDisplay = getSelectedFilterDisplay();
 
   return (
@@ -387,7 +515,7 @@ const NotificationsPage: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={() => router.push('/home')}
-        className="fixed top-14 md:top-24 left-2 md:left-6 h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+          className="fixed top-14 md:top-24 left-2 md:left-6 h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
         >
           <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
         </Button>
@@ -416,15 +544,15 @@ const NotificationsPage: React.FC = () => {
             {/* Table Controls */}
             <div className="flex items-center gap-4 py-4">
               <Input
-                placeholder="Filter by sender..."
-                value={(table.getColumn("sender")?.getFilterValue() as string) ?? ""}
+                placeholder="Filter by title..."
+                value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
                 onChange={(event) =>
-                  table.getColumn("sender")?.setFilterValue(event.target.value)
+                  table.getColumn("title")?.setFilterValue(event.target.value)
                 }
                 className="max-w-sm"
               />
               
-              {/* Enhanced Type Filter Dropdown with Starred */}
+              {/* Enhanced Type Filter Dropdown with Starred and Unread */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="ml-auto cursor-pointer">
@@ -444,7 +572,7 @@ const NotificationsPage: React.FC = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => handleTypeFilter('vote')} className='cursor-pointer'>
                     <ThumbsUp className="mr-2 h-4 w-4 text-blue-600" />
-                    Votes
+                    Vote of Thanks
                     {selectedTypeFilter === 'vote' && (
                       <Badge variant="secondary" className="ml-auto">Selected</Badge>
                     )}
@@ -460,6 +588,13 @@ const NotificationsPage: React.FC = () => {
                     <Star className="mr-2 h-4 w-4 text-yellow-500" />
                     Starred Messages
                     {selectedTypeFilter === 'starred' && (
+                      <Badge variant="secondary" className="ml-auto">Selected</Badge>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleTypeFilter('unread')} className='cursor-pointer'>
+                    <div className="mr-2 w-4 h-4 bg-red-500 rounded-full" />
+                    Unread Messages
+                    {selectedTypeFilter === 'unread' && (
                       <Badge variant="secondary" className="ml-auto">Selected</Badge>
                     )}
                   </DropdownMenuItem>
@@ -489,33 +624,7 @@ const NotificationsPage: React.FC = () => {
                   ))}
                 </TableHeader>
                 <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        className={`${row.original.status === 'unread' ? 'bg-red-50/30' : ''} hover:bg-gray-50`}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center"
-                      >
-                        <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">No notifications found</p>
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  {renderTableBody()}
                 </TableBody>
               </Table>
             </div>
@@ -581,7 +690,7 @@ const NotificationsPage: React.FC = () => {
                 </Badge>
               </div>
               <p className="text-gray-700 leading-relaxed">
-                {selectedItem?.content}
+                {selectedItem?.content || selectedItem?.description}
               </p>
             </div>
           </DialogContent>

@@ -15,7 +15,12 @@ export async function GET(req: NextRequest) {
     if (searchParams.get('city')) filter.city = searchParams.get('city');
     if (searchParams.get('isAvailable')) filter.isAvailable = searchParams.get('isAvailable') === 'true';
     const donors = await Donor.find(filter).sort({ createdAt: -1 });
-    return NextResponse.json({ donors }, { status: 200 });
+    // Map donors to include userId as string
+    const donorsWithUserId = donors.map(donor => ({
+      ...donor.toObject(),
+      userId: donor.userId?.toString() || '',
+    }));
+    return NextResponse.json({ donors: donorsWithUserId }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Failed to fetch donors' }, { status: 500 });

@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Heart, Search, BarChart3, ArrowUp, Droplets, Activity, Share2, LucideIcon, Copy, Instagram, Mail, Check } from 'lucide-react'
+import { Heart, Search, BarChart3, ArrowUp, Droplets, Activity, Share2, LucideIcon, Copy, Instagram, Mail, Check, Bot, Users, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,10 +15,12 @@ import {
 import { FaWhatsapp } from 'react-icons/fa'
 
 
+
 interface StatCardProps {
   value: string;
   label: string;
 }
+
 
 
 interface FeatureCardProps {
@@ -28,11 +30,13 @@ interface FeatureCardProps {
 }
 
 
+
 const BloodBridgeLanding: React.FC = () => {
   const router = useRouter()
   const [showScroll, setShowScroll] = useState<boolean>(false)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
 
 
   useEffect(() => {
@@ -44,9 +48,11 @@ const BloodBridgeLanding: React.FC = () => {
   }, [])
 
 
+
   const scrollToTop = (): void => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
 
 
   const handleRegisterClick = (): void => {
@@ -54,9 +60,15 @@ const BloodBridgeLanding: React.FC = () => {
   }
 
 
+
   const handleEmergencyClick = (): void => {
     router.push('/signup')
   }
+
+  const handleGuideClick = (): void => {
+        router.push('/healthbotai')
+  }
+
 
 
   // Share data
@@ -65,6 +77,7 @@ const BloodBridgeLanding: React.FC = () => {
     text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story. You can also find donors near you when needed.',
     url: typeof window !== 'undefined' ? window.location.href : '',
   };
+
 
 
   // Copy to clipboard function that prevents dropdown closing
@@ -77,6 +90,7 @@ const BloodBridgeLanding: React.FC = () => {
         setTimeout(() => setCopyStatus('idle'), 3000);
         return;
       }
+
 
       // Fallback to execCommand
       const textArea = document.createElement('textarea');
@@ -105,6 +119,7 @@ const BloodBridgeLanding: React.FC = () => {
   };
 
 
+
   // Enhanced WhatsApp share with better messaging
   const handleWhatsAppShare = () => {
     const enhancedText = `${shareData.text}\n\n🔍 Find donors instantly\n❤️ Save up to 3 lives per donation\n🌟 Join our life-saving community`;
@@ -112,6 +127,7 @@ const BloodBridgeLanding: React.FC = () => {
     const whatsappUrl = `https://wa.me/?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
   };
+
 
 
   // Instagram share (fixed - no more popup)
@@ -123,6 +139,7 @@ const BloodBridgeLanding: React.FC = () => {
   };
 
 
+
   // Email share
   const handleEmailShare = () => {
     const subject = encodeURIComponent(shareData.title);
@@ -130,6 +147,7 @@ const BloodBridgeLanding: React.FC = () => {
     const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
     window.location.href = mailtoUrl;
   };
+
 
 
 
@@ -143,6 +161,7 @@ const BloodBridgeLanding: React.FC = () => {
   )
 
 
+
   const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => (
     <Card className="border-0  transition-all bg-white group hover:-translate-y-1">
       <CardHeader className="pb-4">
@@ -154,6 +173,7 @@ const BloodBridgeLanding: React.FC = () => {
       </CardHeader>
     </Card>
   )
+
 
 
   const features: FeatureCardProps[] = [
@@ -171,8 +191,14 @@ const BloodBridgeLanding: React.FC = () => {
       icon: BarChart3,
       title: "Track Your Impact",
       description: "Monitor donations and see your life-saving impact in real-time"
+    },
+    {
+      icon: Bot,
+      title: "AI Health Assistant",
+      description: "Get personalized health guidance and donation recovery tips from our smart chatbot"
     }
   ]
+
 
 
   const stats: StatCardProps[] = [
@@ -180,6 +206,7 @@ const BloodBridgeLanding: React.FC = () => {
     { value: "25K+", label: "Active Donors" },
     { value: "100+", label: "Cities" }
   ]
+
 
 
   return (
@@ -223,6 +250,7 @@ const BloodBridgeLanding: React.FC = () => {
           </div>
 
 
+
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {stats.map((stat, index) => (
@@ -231,6 +259,7 @@ const BloodBridgeLanding: React.FC = () => {
           </div>
         </div>
       </section>
+
 
 
       {/* Features Section */}
@@ -242,7 +271,8 @@ const BloodBridgeLanding: React.FC = () => {
           </div>
 
 
-          <div className="grid md:grid-cols-3 gap-8">
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <FeatureCard 
                 key={index} 
@@ -256,31 +286,83 @@ const BloodBridgeLanding: React.FC = () => {
       </section>
 
 
-      {/* Impact Section */}
+
+      {/* Blood Importance & Statistics Section (Replacing Every Drop Counts) */}
       <section className="py-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Every Drop Counts</h2>
-          <p className="text-lg text-gray-600 mb-12">
-            Every two seconds, someone needs blood. Your donation saves lives.
-          </p>
+        <div className="max-w-6xl mx-auto px-6">
+          <Card className="border-0 bg-gradient-to-br from-red-50 to-orange-50">
+            <CardHeader className="text-center pb-6">
+              <CardTitle className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center justify-center gap-2">
+                <Heart className="w-8 h-8 text-red-500" />
+                Blood Donation Impact
+              </CardTitle>
+              <CardDescription className="text-lg text-gray-600">
+                Understanding the critical importance of blood donation
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Lives Saved */}
+                <div className="text-center p-6 bg-white/70 rounded-xl border border-red-100">
+                  <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-red-600 mb-2">3</h3>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Lives Saved</p>
+                  <p className="text-xs text-gray-600">Per donation</p>
+                </div>
 
+                {/* Blood Demand */}
+                <div className="text-center p-6 bg-white/70 rounded-xl border border-orange-100">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <TrendingUp className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-orange-600 mb-2">38%</h3>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Population Eligible</p>
+                  <p className="text-xs text-gray-600">To donate blood</p>
+                </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-red-50 p-6 rounded-lg hover:bg-red-100 transition-colors">
-              <div className="text-2xl font-bold text-red-500 mb-2">36,000+</div>
-              <div className="text-gray-600">Units needed daily</div>
-            </div>
-            <div className="bg-red-50 p-6 rounded-lg hover:bg-red-100 transition-colors">
-              <div className="text-2xl font-bold text-red-500 mb-2">1 in 7</div>
-              <div className="text-gray-600">Patients need blood</div>
-            </div>
-            <div className="bg-red-50 p-6 rounded-lg hover:bg-red-100 transition-colors">
-              <div className="text-2xl font-bold text-red-500 mb-2">3 Lives</div>
-              <div className="text-gray-600">Saved per donation</div>
-            </div>
-          </div>
+                {/* Critical Need */}
+                <div className="text-center p-6 bg-white/70 rounded-xl border border-purple-100">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Droplets className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-purple-600 mb-2">5%</h3>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Actually Donate</p>
+                  <p className="text-xs text-gray-600">Of eligible donors</p>
+                </div>
+              </div>
+
+              {/* Additional Info */}
+              <div className="p-6 bg-gradient-to-r from-red-100 to-orange-100 rounded-lg">
+                <div className="flex items-center gap-3 mb-4">
+                  <Heart className="w-6 h-6 text-red-600" />
+                  <h4 className="text-xl font-bold text-gray-800">Why Your Blood Matters</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    <span>Someone needs blood every 2 seconds</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    <span>Blood cannot be manufactured artificially</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    <span>Red blood cells last only 42 days</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span>One donation helps multiple patients</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
+
 
 
       {/* Share Section with Icon-Only Dropdown */}
@@ -370,6 +452,7 @@ const BloodBridgeLanding: React.FC = () => {
       </section>
 
 
+
       {/* CTA Section */}
       <section className="py-16 bg-primary text-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
@@ -387,6 +470,7 @@ const BloodBridgeLanding: React.FC = () => {
           </Button>
         </div>
       </section>
+
 
 
       {/* Footer */}
@@ -436,6 +520,7 @@ const BloodBridgeLanding: React.FC = () => {
             </div>
 
 
+
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Contact Info</h3>
               <ul className="space-y-2 text-muted-foreground">
@@ -461,6 +546,16 @@ const BloodBridgeLanding: React.FC = () => {
       </footer>
 
 
+
+      {/* Fixed Health Guide Button */}
+      <Button
+        onClick={handleGuideClick}
+        size="icon"
+        className="fixed bottom-24 right-8 w-14 h-14 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/70 cursor-pointer shadow-lg border-2 border-white"
+        title="Health Guide"
+      >
+ <Bot className="w-6 h-6 text-white" />      </Button>
+
       {/* Scroll to Top Button */}
       {showScroll && (
         <Button
@@ -474,6 +569,7 @@ const BloodBridgeLanding: React.FC = () => {
     </div>
   )
 }
+
 
 
 export default BloodBridgeLanding

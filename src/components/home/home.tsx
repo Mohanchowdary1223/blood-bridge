@@ -2,7 +2,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { Search, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Share2, ArrowRight, ArrowLeft, Copy, Instagram, Mail, Check } from 'lucide-react';
+import { Search, BarChart3, Bot, Droplets, Share2, ArrowRight, ArrowLeft, Copy, Instagram, Mail, Check, Users, Heart, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,12 +15,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { FaWhatsapp } from 'react-icons/fa'
 
+
 interface HomeComponentProps {
   hideRecentActivity?: boolean;
 }
 
-const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = false }) => {
+
+const HomeComponent: React.FC<HomeComponentProps> = () => {
   const router = useRouter()
+
 
   const [userName, setUserName] = useState('User');
   const [bloodGroup, setBloodGroup] = useState('O+');
@@ -45,17 +48,21 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     }
   }, []);
 
+
   const handleSearchClick = () => {
     router.push('/finddonor')
   }
+
 
   const handleStatsClick = () => {
     router.push('/trackimpact')
   }
 
+
   const handleGuideClick = () => {
-    router.push('/health-instructions')
+    router.push('/healthaibot')
   }
+
 
   // Share data
   const shareData = {
@@ -63,6 +70,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story. You can also find donors near you when needed.',
     url: typeof window !== 'undefined' ? window.location.href : '',
   };
+
 
   // Copy to clipboard function that prevents dropdown closing
   const handleCopyLink = async () => {
@@ -73,6 +81,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
         setTimeout(() => setCopyStatus('idle'), 3000);
         return;
       }
+
 
       const textArea = document.createElement('textarea');
       textArea.value = shareData.url;
@@ -98,6 +107,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     }
   };
 
+
   const handleWhatsAppShare = () => {
     const enhancedText = `${shareData.text}\n\n🔍 Find donors instantly\n❤️ Save up to 3 lives per donation\n🌟 Join our life-saving community`;
     const encodedText = encodeURIComponent(`${enhancedText}\n\n${shareData.url}`);
@@ -105,10 +115,12 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     window.open(whatsappUrl, '_blank');
   };
 
+
   const handleInstagramShare = () => {
     window.open('https://www.instagram.com/', '_blank');
     handleCopyLink();
   };
+
 
   const handleEmailShare = () => {
     const subject = encodeURIComponent(shareData.title);
@@ -116,6 +128,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
     window.location.href = mailtoUrl;
   };
+
 
   // Blood compatibility logic
   type BloodType = 'O-' | 'O+' | 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+';
@@ -177,6 +190,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     }
   };
 
+
   const getBloodCompatibility = (bloodType: string): CompatibilityInfo | null => {
     if (!bloodType || typeof bloodType !== 'string') {
       return null;
@@ -187,7 +201,9 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     return null;
   };
 
+
   const compatibility = getBloodCompatibility(bloodGroup);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-8">
@@ -210,6 +226,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
             </p>
           </div>
         </div>
+
 
         {/* Action Cards - Removed Donate Blood Card */}
         <div className="mb-12">
@@ -234,6 +251,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
               </CardContent>
             </Card>
 
+
             <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -254,29 +272,29 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
               </CardContent>
             </Card>
 
+
             <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <BookOpen className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Bot className="w-8 h-8 text-white" />
                 </div>
-                <CardTitle className="text-xl text-foreground">Health Guide</CardTitle>
+                <CardTitle className="text-xl text-foreground">Health Assistant</CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Learn recovery and health maintenance tips
+                  Get personalized health guidance and donation recovery tips from our smart chatbot
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
                 <Button
                   onClick={handleGuideClick}
-                  className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
+                  className="w-full bg-primary hover:bg-primary/80 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
                 >
-                  View Guide
+                  Health Assistant
                 </Button>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Blood Compatibility Section */}
         <div className="mb-12">
           <div className="space-y-6">
             <div className="text-center">
@@ -290,6 +308,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                 </Badge>
               </div>
             </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Can Donate To */}
@@ -316,6 +335,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                   </p>
                 </CardContent>
               </Card>
+
 
               {/* Can Receive From */}
               <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
@@ -344,8 +364,78 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
             </div>
           </div>
         </div>
+        <div className="mb-12">
+          <Card className="border-0 bg-gradient-to-br from-red-50 to-orange-50">
+            <CardHeader className="text-center pb-6">
+              <CardTitle className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
+                <Heart className="w-6 h-6 text-red-500" />
+                Blood Donation Impact
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Understanding the critical importance of blood donation
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Lives Saved */}
+                <div className="text-center p-6 bg-white/70 rounded-xl border border-red-100">
+                  <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-red-600 mb-2">3</h3>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Lives Saved</p>
+                  <p className="text-xs text-gray-600">Per donation</p>
+                </div>
 
-        {/* Enhanced Share Section with Dropdown Menu */}
+                {/* Blood Demand */}
+                <div className="text-center p-6 bg-white/70 rounded-xl border border-orange-100">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <TrendingUp className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-orange-600 mb-2">38%</h3>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Population Eligible</p>
+                  <p className="text-xs text-gray-600">To donate blood</p>
+                </div>
+
+                {/* Critical Need */}
+                <div className="text-center p-6 bg-white/70 rounded-xl border border-purple-100">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Droplets className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-purple-600 mb-2">5%</h3>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Actually Donate</p>
+                  <p className="text-xs text-gray-600">Of eligible donors</p>
+                </div>
+              </div>
+
+              {/* Additional Info */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-red-100 to-orange-100 rounded-lg">
+                <div className="flex items-center gap-3 mb-3">
+                  <Heart className="w-5 h-5 text-red-600" />
+                  <h4 className="font-bold text-gray-800">Why Your Blood Matters</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    <span>Someone needs blood every 2 seconds</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    <span>Blood cannot be manufactured artificially</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    <span>Red blood cells last only 42 days</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span>One donation helps multiple patients</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         <div className="mb-12">
           <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
             <CardContent className="p-8">
@@ -429,50 +519,9 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
           </Card>
         </div>
 
-        {/* Recent Activity */}
-        {!hideRecentActivity && (
-          <Card className="border-0 mb-12">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Clock className="w-6 h-6 text-primary" />
-                Recent Activity
-              </CardTitle>
-              <CardDescription>
-                Stay updated with your latest donation activities and impact
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1 ">
-                    <p className="font-semibold text-blue-900">Upcoming Activity</p>
-                    <p className="text-sm text-blue-700">Check your scheduled activities</p>
-                  </div>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
-                    Pending
-                  </Badge>
-                </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-green-900">Community Impact</p>
-                    <p className="text-sm text-green-700">You're part of our life-saving community</p>
-                  </div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-300">
-                    Active
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
+
 
       {/* Footer - Removed Donation Links */}
       <footer className="bg-muted mt-16">
@@ -519,15 +568,16 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                   </li>
                 </ul>
 
+
                 {/* Right Column */}
                 <ul className="space-y-2">
                   <li>
                     <Button
                       variant="link"
-                      onClick={() => router.push('/health-instructions')}
+                      onClick={() => router.push('/healthaibot')}
                       className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
-                      Health Guide
+                      Health Assistant
                     </Button>
                   </li>
                   <li>
@@ -551,6 +601,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                 </ul>
               </div>
             </div>
+
 
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Contact Info</h3>
@@ -576,17 +627,19 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
         </div>
       </footer>
 
+
       {/* Fixed Health Guide Button */}
       <Button
         onClick={handleGuideClick}
         size="icon"
-        className="fixed bottom-8 right-4 w-14 h-14 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-purple-500 hover:bg-purple-600 cursor-pointer shadow-lg border-2 border-white"
-        title="Health Guide"
+        className="fixed bottom-8 right-4 w-12 h-12 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
+        title="Health Assistant"
       >
-        <BookOpen className="w-6 h-6 text-white" />
+        <Bot className="w-10 h-10 text-white" />
       </Button>
     </div>
   )
 }
+
 
 export default HomeComponent

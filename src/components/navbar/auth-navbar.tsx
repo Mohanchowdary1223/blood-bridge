@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Menu, X, User, LogOut, Info, Search, BookOpen } from 'lucide-react';
+import { Droplets, Menu, X, User, LogOut, Info, Search, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -108,13 +108,13 @@ const AuthNavbar = () => {
                     <Button 
                       variant="ghost"
                       onClick={() => {
-                        router.push('/health-instructions');
+                        router.push('/healthaibot');
                         setIsMenuOpen(false);
                       }}
                       className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
                     >
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      Health Guide
+                      <Bot className="w-4 h-4 mr-2" />
+                      Health Assistant
                     </Button>
                     <Button 
                       variant="ghost"
@@ -163,11 +163,11 @@ const AuthNavbar = () => {
               </Button>
               <Button 
                 variant="ghost"
-                onClick={() => router.push('/health-instructions')}
+                onClick={() => router.push('/healthaibot')}
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <BookOpen className="w-4 h-4 mr-2" />
-                Health Guide
+                <Bot className="w-4 h-4 mr-2" />
+                Health Assistant
               </Button>
               <Button 
                 variant="ghost"
