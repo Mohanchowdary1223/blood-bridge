@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Share2, Droplets, User, Heart, ArrowLeft, Copy, Instagram, Mail, Check } from 'lucide-react';
+import { Search, Share2, Droplets, User, Heart, ArrowLeft, Copy, Instagram, Mail, Check, BookOpen } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,10 @@ export default function HealthIssueHome() {
 
   const handleSearchClick = () => {
     router.push('/finddonor')
+  }
+
+  const handleGuideClick = () => {
+    router.push('/health-instructions')
   }
 
   // Share data
@@ -179,9 +183,9 @@ export default function HealthIssueHome() {
           </div>
         </div>
 
-        {/* Main Action Cards - Now only Find Donors */}
-        <div className="mb-12 flex flex-col items-center justify-center">
-          <div className="grid grid-cols-1 gap-6 min-w-full md:min-w-2xs">
+        {/* Main Action Cards - Find Donors and Health Guide */}
+        <div className="mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -198,6 +202,26 @@ export default function HealthIssueHome() {
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
                 >
                   Find Donor
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <BookOpen className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-xl text-foreground">Health Guide</CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Learn about health recovery and wellness tips
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button
+                  onClick={handleGuideClick}
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
+                >
+                  View Guide
                 </Button>
               </CardContent>
             </Card>
@@ -433,29 +457,44 @@ export default function HealthIssueHome() {
             </div>
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Quick Links</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
-                  </Button>
-                </li>
-                <li>
-                  <Button variant="link"
-                    onClick={() => {
-                        router.push('/finddonor');
-                      }} className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    Find Donor
-                  </Button>
-                </li>
-                <li>
-                  <Button variant="link" 
-                    onClick={() => {
-                        router.push('/profile');
-                      }} className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                    Profile 
-                  </Button>
-                </li>
-              </ul>
+              <div className="grid grid-cols-2 gap-2">
+                {/* Left Column */}
+                <ul className="space-y-2">
+                  <li>
+                    <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                      <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+                    </Button>
+                  </li>
+                  <li>
+                    <Button variant="link"
+                      onClick={() => {
+                          router.push('/finddonor');
+                        }} className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                      Find Donor
+                    </Button>
+                  </li>
+                </ul>
+                
+                {/* Right Column */}
+                <ul className="space-y-2">
+                  <li>
+                    <Button variant="link"
+                      onClick={() => {
+                          router.push('/health-instructions');
+                        }} className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                      Health Guide
+                    </Button>
+                  </li>
+                  <li>
+                    <Button variant="link" 
+                      onClick={() => {
+                          router.push('/profile');
+                        }} className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                      Profile 
+                    </Button>
+                  </li>
+                </ul>
+              </div>
             </div>
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Contact Info</h3>
@@ -480,6 +519,16 @@ export default function HealthIssueHome() {
           </div>
         </div>
       </footer>
+
+      {/* Fixed Health Guide Button */}
+      <Button
+        onClick={handleGuideClick}
+        size="icon"
+        className="fixed bottom-8 right-8 w-14 h-14 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-purple-500 hover:bg-purple-600 cursor-pointer shadow-lg border-2 border-white"
+        title="Health Guide"
+      >
+        <BookOpen className="w-6 h-6 text-white" />
+      </Button>
     </div>
   );
 }

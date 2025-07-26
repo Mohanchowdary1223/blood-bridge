@@ -344,7 +344,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                 </Label>
                 {editMode ? (
                   <Select value={editData.bloodType} onValueChange={(value) => handleSelectChange('bloodType', value)}>
-                    <SelectTrigger className="h-12 border-gray-200 cursor-pointer">
+                    <SelectTrigger className="h-12 border-gray-200 cursor-pointer min-w-full">
                       <SelectValue placeholder="Select blood type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -391,7 +391,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                 </Label>
                 {editMode ? (
                   <Select value={editData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
-                    <SelectTrigger className="h-12 border-gray-200 cursor-pointer">
+                    <SelectTrigger className="h-12 border-gray-200 min-w-full cursor-pointer">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
@@ -465,7 +465,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                 </Label>
                 {editMode ? (
                   <Select value={editData.country} onValueChange={(value) => handleSelectChange('country', value)}>
-                    <SelectTrigger className="h-12 border-gray-200 cursor-pointer">
+                    <SelectTrigger className="h-12 min-w-full border-gray-200 cursor-pointer">
                       <SelectValue placeholder="Select country" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -488,7 +488,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                 <Label className="text-sm font-medium text-gray-700">State</Label>
                 {editMode ? (
                   <Select value={editData.state} onValueChange={(value) => handleSelectChange('state', value)} disabled={!editData.country}>
-                    <SelectTrigger className="h-12 border-gray-200 cursor-pointer">
+                    <SelectTrigger className="h-12 min-w-full border-gray-200 cursor-pointer">
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -511,7 +511,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                 <Label className="text-sm font-medium text-gray-700">City</Label>
                 {editMode ? (
                   <Select value={editData.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={!editData.state}>
-                    <SelectTrigger className="h-12 border-gray-200 cursor-pointer">
+                    <SelectTrigger className="h-12 min-w-full border-gray-200 cursor-pointer">
                       <SelectValue placeholder="Select city" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">

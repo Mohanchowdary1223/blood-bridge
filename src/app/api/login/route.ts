@@ -51,12 +51,13 @@ export async function POST(req: NextRequest) {
 
     // Create response with user data
     const userData = {
-      id: user._id,
+      _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       phone: user.phone,
-      signupReason: user.signupReason || ''
+      signupReason: user.signupReason || '',
+      bloodType: user.bloodType || ''
     };
 
     const response = NextResponse.json(

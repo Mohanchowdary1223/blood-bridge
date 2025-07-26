@@ -334,7 +334,7 @@ const DonorFormPage: React.FC = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><Droplet className="w-4 h-4" /> Blood Type</Label>
                 <Select value={donorFormData.bloodType} onValueChange={(value) => handleSelectChange('bloodType', value)}>
-                  <SelectTrigger className={`h-12 cursor-pointer ${donorFormErrors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
+                  <SelectTrigger className={`h-12 min-w-full cursor-pointer ${donorFormErrors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
                     <SelectValue placeholder="Select blood type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -438,7 +438,7 @@ const DonorFormPage: React.FC = () => {
             <div className="space-y-2">
               <Label>Gender</Label>
               <Select value={donorFormData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
-                <SelectTrigger className={`h-12 cursor-pointer ${donorFormErrors.gender ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
+                <SelectTrigger className={`h-12 min-w-1/2 cursor-pointer ${donorFormErrors.gender ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -463,7 +463,7 @@ const DonorFormPage: React.FC = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Country</Label>
                 <Select value={donorFormData.country} onValueChange={(value) => handleSelectChange('country', value)}>
-                  <SelectTrigger className={`h-12 cursor-pointer ${donorFormErrors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
+                  <SelectTrigger className={`h-12 min-w-full cursor-pointer ${donorFormErrors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
@@ -482,7 +482,7 @@ const DonorFormPage: React.FC = () => {
               <div className="space-y-2">
                 <Label>State</Label>
                 <Select value={donorFormData.state} onValueChange={(value) => handleSelectChange('state', value)} disabled={!donorFormData.country}>
-                  <SelectTrigger className={`h-12 cursor-pointer ${donorFormErrors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
+                  <SelectTrigger className={`h-12 min-w-full cursor-pointer ${donorFormErrors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
@@ -501,7 +501,7 @@ const DonorFormPage: React.FC = () => {
               <div className="space-y-2">
                 <Label>City</Label>
                 <Select value={donorFormData.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={!donorFormData.state}>
-                  <SelectTrigger className={`h-12 cursor-pointer ${donorFormErrors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
+                  <SelectTrigger className={`h-12 min-w-full cursor-pointer ${donorFormErrors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
                     <SelectValue placeholder="Select city" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">

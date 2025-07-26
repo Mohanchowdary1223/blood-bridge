@@ -496,7 +496,7 @@ const Register = () => {
                     <div className="relative group">
                       <Droplet className="absolute left-3 top-3 h-4 w-4 text-red-500 z-10" />
                       <Select value={formData.bloodType} onValueChange={(value) => handleSelectChange('bloodType', value)}>
-                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 ${errors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
+                        <SelectTrigger className={`pl-10 min-w-full  h-12 cursor-pointer transition-all duration-200 ${errors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
                           <SelectValue placeholder="Select Blood Type" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-0">
@@ -650,7 +650,7 @@ const Register = () => {
                     <div className="relative group">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                       <Select value={formData.country} onValueChange={(value) => handleSelectChange('country', value)}>
-                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 ${errors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
+                        <SelectTrigger className={`pl-10 min-w-full  h-12 cursor-pointer transition-all duration-200 ${errors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'}`}>
                           <SelectValue placeholder="Select Country" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-0 max-h-60">
@@ -674,7 +674,7 @@ const Register = () => {
                     <div className="relative group">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                       <Select value={formData.state} onValueChange={(value) => handleSelectChange('state', value)} disabled={!formData.country}>
-                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 ${errors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.country ? 'opacity-50' : ''}`}>
+                        <SelectTrigger className={`pl-10 min-w-full  h-12 cursor-pointer transition-all duration-200 ${errors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.country ? 'opacity-50' : ''}`}>
                           <SelectValue placeholder="Select State" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-0 max-h-60">
@@ -698,7 +698,7 @@ const Register = () => {
                     <div className="relative group">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                       <Select value={formData.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={!formData.state}>
-                        <SelectTrigger className={`pl-10 h-12 cursor-pointer transition-all duration-200 ${errors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.state ? 'opacity-50' : ''}`}>
+                        <SelectTrigger className={`pl-10 min-w-full  h-12 cursor-pointer transition-all duration-200 ${errors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-red-500'} ${!formData.state ? 'opacity-50' : ''}`}>
                           <SelectValue placeholder="Select City" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-0 max-h-60">

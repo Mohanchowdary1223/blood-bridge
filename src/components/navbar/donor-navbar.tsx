@@ -2,11 +2,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Menu, X, User, LogOut, Info, Search, BookOpen } from 'lucide-react';
+import { Droplets, Menu, X, User, LogOut, Info, Search, Mail, BookOpen, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
-const AuthNavbar = () => {
+const DonorNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
   const router = useRouter();
@@ -16,35 +16,27 @@ const AuthNavbar = () => {
     try {
       await fetch('/api/logout', { method: 'POST' });
       localStorage.clear();
-      
-      // Show success message
       setShowLogoutSuccess(true);
-      
-      // Redirect after showing success message
       setTimeout(() => {
         setShowLogoutSuccess(false);
         router.push('/login');
       }, 500);
     } catch (error) {
       console.error('Logout failed:', error);
-      // Still redirect even if API call fails
       localStorage.clear();
       router.push('/login');
     }
   };
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
     };
-
     if (isMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -67,8 +59,8 @@ const AuthNavbar = () => {
                 BloodBridge
               </button>
             </div>
-
-            {/* Mobile Menu - Right Side Only */}
+            
+            {/* Mobile Menu */}
             <div className="md:hidden relative" ref={menuRef}>
               <Button
                 variant="ghost"
@@ -82,16 +74,14 @@ const AuthNavbar = () => {
                   <Menu className="w-5 h-5" />
                 )}
               </Button>
-
-              {/* Compact Dropdown Menu */}
               {isMenuOpen && (
-                <div className="absolute right-0 top-12 w-52 bg-background border border-border rounded-lg py-2 z-50">
+                <div className="absolute right-0 top-12 w-52 bg-background border border-border rounded-lg py-2 z-50 shadow-lg">
                   <div className="flex flex-col">
                     <Button 
                       variant="ghost"
                       className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
                     >
-                      <Info className="w-4 h-4 mr-2" />
+                      <Info className="w-4 h-4 mr-1" />
                       <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
                     </Button>
                     <Button 
@@ -102,8 +92,19 @@ const AuthNavbar = () => {
                       }}
                       className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
                     >
-                      <Search className="w-4 h-4 mr-2" />
+                      <Search className="w-4 h-4 mr-1" />
                       Find Donor
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        router.push('/trackimpact');
+                        setIsMenuOpen(false);
+                      }}
+                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                    >
+                      <BarChart3 className="w-4 h-4 mr-1" />
+                      Track Impact
                     </Button>
                     <Button 
                       variant="ghost"
@@ -113,7 +114,7 @@ const AuthNavbar = () => {
                       }}
                       className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
                     >
-                      <BookOpen className="w-4 h-4 mr-2" />
+                      <BookOpen className="w-4 h-4 mr-1" />
                       Health Guide
                     </Button>
                     <Button 
@@ -124,8 +125,19 @@ const AuthNavbar = () => {
                       }}
                       className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
                     >
-                      <User className="w-4 h-4 mr-2" />
+                      <User className="w-4 h-4 mr-1" />
                       Profile
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        router.push('/mails');
+                        setIsMenuOpen(false);
+                      }}
+                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
+                    >
+                      <Mail className="w-4 h-4 mr-1" />
+                      Mails
                     </Button>
                     <div className="border-t border-border my-1" />
                     <Button 
@@ -136,21 +148,21 @@ const AuthNavbar = () => {
                       }}
                       className="justify-start px-4 py-2 text-sm text-red-600 hover:text-red-700 cursor-pointer rounded-none hover:bg-red-50"
                     >
-                      <LogOut className="w-4 h-4 mr-2" />
+                      <LogOut className="w-4 h-4 mr-1" />
                       Logout
                     </Button>
                   </div>
                 </div>
               )}
             </div>
-
+            
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-3">
               <Button 
                 variant="ghost"
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <Info className="w-4 h-4 mr-2" />
+                <Info className="w-4 h-4 mr-1" />
                 <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
               </Button>
               <Button 
@@ -158,15 +170,23 @@ const AuthNavbar = () => {
                 onClick={() => router.push('/finddonor')}
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <Search className="w-4 h-4 mr-2" />
+                <Search className="w-4 h-4 mr-1" />
                 Find Donor
+              </Button>
+              <Button 
+                variant="ghost"
+                onClick={() => router.push('/trackimpact')}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <BarChart3 className="w-4 h-4 mr-1" />
+                Track Impact
               </Button>
               <Button 
                 variant="ghost"
                 onClick={() => router.push('/health-instructions')}
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <BookOpen className="w-4 h-4 mr-2" />
+                <BookOpen className="w-4 h-4 mr-1" />
                 Health Guide
               </Button>
               <Button 
@@ -174,22 +194,29 @@ const AuthNavbar = () => {
                 onClick={() => router.push('/profile')}
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <User className="w-4 h-4 mr-2" />
+                <User className="w-4 h-4 mr-1" />
                 Profile
+              </Button>
+              <Button 
+                variant="ghost"
+                onClick={() => router.push('/mails')}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <Mail className="w-4 h-4 mr-1" />
+                Mails
               </Button>
               <Button 
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white font-semibold cursor-pointer"
               >
-                <LogOut className="w-4 h-4 mr-2" />
+                <LogOut className="w-4 h-4 mr-1" />
                 Logout
               </Button>
             </div>
           </div>
         </div>
       </nav>
-
-      {/* Logout Success Popup */}
+      
       {showLogoutSuccess && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
           <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4">
@@ -209,4 +236,4 @@ const AuthNavbar = () => {
   );
 };
 
-export default AuthNavbar;
+export default DonorNavbar;

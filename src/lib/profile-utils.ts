@@ -16,10 +16,11 @@ export const getProfileType = (user: IUser): ProfileType => {
       return 'underAge';
     case 'aboveAge':
       return 'aboveAge';
-    case 'ageRestriction':
+    case 'ageRestriction': {
       // Handle legacy ageRestriction by calculating age
       const currentAge = user.currentAge || 0;
       return currentAge < 18 ? 'underAge' : 'aboveAge';
+    }
     default:
       return 'default';
   }

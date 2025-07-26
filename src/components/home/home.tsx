@@ -2,7 +2,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { Search, Heart, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Share2, ArrowRight, ArrowLeft, Copy, Instagram, Mail, Check } from 'lucide-react';
+import { Search, BarChart3, BookOpen, Clock, CheckCircle, Droplets, Share2, ArrowRight, ArrowLeft, Copy, Instagram, Mail, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,12 +49,8 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     router.push('/finddonor')
   }
 
-  const handleScheduleClick = () => {
-    router.push('/schedule-donation')
-  }
-
   const handleStatsClick = () => {
-    router.push('/stats')
+    router.push('/trackimpact')
   }
 
   const handleGuideClick = () => {
@@ -71,7 +67,6 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
   // Copy to clipboard function that prevents dropdown closing
   const handleCopyLink = async () => {
     try {
-      // Try modern clipboard API first
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(shareData.url);
         setCopyStatus('copied');
@@ -79,7 +74,6 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
         return;
       }
 
-      // Fallback to execCommand
       const textArea = document.createElement('textarea');
       textArea.value = shareData.url;
       textArea.style.position = 'fixed';
@@ -100,12 +94,10 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
       }
     } catch (error) {
       console.error('Copy failed:', error);
-      // Final fallback - show prompt
       prompt('Copy this link:', shareData.url);
     }
   };
 
-  // Enhanced WhatsApp share with better messaging
   const handleWhatsAppShare = () => {
     const enhancedText = `${shareData.text}\n\n🔍 Find donors instantly\n❤️ Save up to 3 lives per donation\n🌟 Join our life-saving community`;
     const encodedText = encodeURIComponent(`${enhancedText}\n\n${shareData.url}`);
@@ -113,13 +105,11 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
     window.open(whatsappUrl, '_blank');
   };
 
-  // Instagram share
   const handleInstagramShare = () => {
     window.open('https://www.instagram.com/', '_blank');
     handleCopyLink();
   };
 
-  // Email share
   const handleEmailShare = () => {
     const subject = encodeURIComponent(shareData.title);
     const body = encodeURIComponent(`${shareData.text}\n\nCheck it out: ${shareData.url}`);
@@ -221,9 +211,9 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
           </div>
         </div>
 
-        {/* Action Cards */}
+        {/* Action Cards - Removed Donate Blood Card */}
         <div className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -246,26 +236,6 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
 
             <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
               <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Heart className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl text-foreground">Donate Blood</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Schedule your next blood donation
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  onClick={handleScheduleClick}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
-                >
-                  Schedule
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
-              <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <BarChart3 className="w-8 h-8 text-white" />
                 </div>
@@ -279,7 +249,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                   onClick={handleStatsClick}
                   className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
                 >
-                  View Stats
+                  View Status
                 </Button>
               </CardContent>
             </Card>
@@ -404,7 +374,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-auto p-2">
-                   
+                  
                     {/* Social Media Icons Row */}
                     <div className='flex flex-row gap-2'>
                       {/* WhatsApp */}
@@ -434,7 +404,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                         <Mail className="w-5 h-5 text-blue-600" />
                       </DropdownMenuItem>
                     </div>
-               
+              
                     <DropdownMenuSeparator />
                     
                     {/* Copy Link - Updated to prevent dropdown closing */}
@@ -478,8 +448,8 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                     <Clock className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1 ">
-                    <p className="font-semibold text-blue-900">Upcoming Donation</p>
-                    <p className="text-sm text-blue-700">Your next donation is scheduled for next week</p>
+                    <p className="font-semibold text-blue-900">Upcoming Activity</p>
+                    <p className="text-sm text-blue-700">Check your scheduled activities</p>
                   </div>
                   <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300">
                     Pending
@@ -491,24 +461,11 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                     <CheckCircle className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-green-900">Donation Impact</p>
-                    <p className="text-sm text-green-700">Your last donation helped save 3 lives</p>
+                    <p className="font-semibold text-green-900">Community Impact</p>
+                    <p className="text-sm text-green-700">You're part of our life-saving community</p>
                   </div>
                   <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-300">
-                    Completed
-                  </Badge>
-                </div>
-
-                <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                  <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-purple-900">Health Status</p>
-                    <p className="text-sm text-purple-700">You're eligible to donate again in 2 months</p>
-                  </div>
-                  <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-300">
-                    Good
+                    Active
                   </Badge>
                 </div>
               </div>
@@ -517,7 +474,7 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer - Removed Donation Links */}
       <footer className="bg-muted mt-16">
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-3 gap-8">
@@ -567,15 +524,6 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                   <li>
                     <Button
                       variant="link"
-                      onClick={() => router.push('/schedule-donation')}
-                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                    >
-                      Schedule Donate
-                    </Button>
-                  </li>
-                  <li>
-                    <Button
-                      variant="link"
                       onClick={() => router.push('/health-instructions')}
                       className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
@@ -585,10 +533,19 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
                   <li>
                     <Button
                       variant="link"
-                      onClick={() => router.push('/stats')}
+                      onClick={() => router.push('/mails')}
                       className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
-                      View Stats
+                      Mails
+                    </Button>
+                  </li>
+                  <li>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push('/trackimpact')}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Track Impact
                     </Button>
                   </li>
                 </ul>
@@ -618,6 +575,16 @@ const HomeComponent: React.FC<HomeComponentProps> = ({ hideRecentActivity = fals
           </div>
         </div>
       </footer>
+
+      {/* Fixed Health Guide Button */}
+      <Button
+        onClick={handleGuideClick}
+        size="icon"
+        className="fixed bottom-8 right-4 w-14 h-14 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-purple-500 hover:bg-purple-600 cursor-pointer shadow-lg border-2 border-white"
+        title="Health Guide"
+      >
+        <BookOpen className="w-6 h-6 text-white" />
+      </Button>
     </div>
   )
 }

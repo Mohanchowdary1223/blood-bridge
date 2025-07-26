@@ -279,7 +279,7 @@ export const HealthIssueProfile: React.FC<HealthIssueProfileProps> = ({
                     value={editData.bloodType || 'not-specified'}
                     onValueChange={handleBloodTypeChange}
                   >
-                    <SelectTrigger className="h-12 border-gray-200 focus:border-orange-500 cursor-pointer">
+                    <SelectTrigger className="h-12 min-w-full border-gray-200 focus:border-orange-500 cursor-pointer">
                       <SelectValue placeholder="Select your blood group" />
                     </SelectTrigger>
                     <SelectContent>

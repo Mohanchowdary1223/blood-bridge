@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Copy, Search, Users, MapPin, Droplet, Check, Heart, Phone } from 'lucide-react'
+import { ArrowLeft, Copy, Search, Users, MapPin, Droplet, Check, Heart, Phone, MoreVertical, AlertTriangle, ThumbsUp,  Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -10,6 +10,10 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Textarea } from '@/components/ui/textarea'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 interface Donor {
   _id: string;
@@ -20,6 +24,7 @@ interface Donor {
   state: string;
   country: string;
   isAvailable: boolean | null;
+  gender?: string; // Added gender field
 }
 
 interface FindDonorPageProps {
@@ -42,8 +47,23 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
   const [hasSearched, setHasSearched] = useState(false)
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  
+  // New state for modals
+  const [thanksModalOpen, setThanksModalOpen] = useState(false)
+  const [reportModalOpen, setReportModalOpen] = useState(false)
+  const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null)
+  const [thanksMessage, setThanksMessage] = useState('')
+  const [reportReason, setReportReason] = useState('')
+  const [reportDetails, setReportDetails] = useState('')
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+  const reportReasons = [
+    'Contact information is wrong',
+    'Responded to donate but did not donate',
+    'Donor details are incorrect',
+    'Inappropriate behavior',
+    'Other'
+  ]
 
   useEffect(() => {
     const allCountries = Country.getAllCountries()
@@ -118,6 +138,64 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
     }
   }
 
+  const handleThanks = (donor: Donor) => {
+    setSelectedDonor(donor)
+    setThanksModalOpen(true)
+  }
+
+  const handleReport = (donor: Donor) => {
+    setSelectedDonor(donor)
+    setReportModalOpen(true)
+  }
+
+  const submitThanks = async () => {
+    try {
+      // API call to send thanks message
+      const response = await fetch('/api/thanks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          donorId: selectedDonor?._id,
+          message: thanksMessage
+        })
+      })
+      
+      if (response.ok) {
+        setThanksModalOpen(false)
+        setThanksMessage('')
+        setSelectedDonor(null)
+        // Show success message
+      }
+    } catch (error) {
+      console.error('Failed to send thanks:', error)
+    }
+  }
+
+  const submitReport = async () => {
+    try {
+      // API call to submit report
+      const response = await fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          donorId: selectedDonor?._id,
+          reason: reportReason,
+          details: reportDetails
+        })
+      })
+      
+      if (response.ok) {
+        setReportModalOpen(false)
+        setReportReason('')
+        setReportDetails('')
+        setSelectedDonor(null)
+        // Show success message
+      }
+    } catch (error) {
+      console.error('Failed to submit report:', error)
+    }
+  }
+
   const availableDonors = searchResults.filter(d => d.isAvailable === true)
   const unavailableDonors = searchResults.filter(d => d.isAvailable === false)
 
@@ -146,10 +224,12 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
             <TableHeader>
               <TableRow className="bg-gray-50/80">
                 <TableHead className="font-semibold text-gray-900">Name</TableHead>
+                <TableHead className="font-semibold text-gray-900">Gender</TableHead>
                 <TableHead className="font-semibold text-gray-900">Phone</TableHead>
                 <TableHead className="font-semibold text-gray-900">Blood Type</TableHead>
                 <TableHead className="font-semibold text-gray-900">Location</TableHead>
                 <TableHead className="font-semibold text-gray-900 text-center">Status</TableHead>
+                <TableHead className="font-semibold text-gray-900 text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -162,6 +242,11 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                 >
                   <TableCell className="font-semibold text-gray-900">
                     {donor.name}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {donor.gender || 'N/A'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -214,6 +299,35 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                       {donor.isAvailable ? '✅ Available' : '❌ Unavailable'}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 cursor-pointer hover:bg-gray-100"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem 
+                          onClick={() => handleThanks(donor)}
+                          className="cursor-pointer"
+                        >
+                          <ThumbsUp className="w-4 h-4 mr-2" />
+                          Vote of Thanks
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleReport(donor)}
+                          className="cursor-pointer text-red-600"
+                        >
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          Report Donor
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -224,18 +338,18 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 px-4">
+    <div className="min-h-screen  bg-gradient-to-br from-blue-50 to-indigo-50 px-4">
       {/* Fixed Back Button */}
       <Button
         variant="ghost"
         size="icon"
         onClick={handleBack}
-        className="fixed top-14 md:top-24 left-1 md:left-2 h-8 md:h-10 w-8 md:w-10 bg-white/90 backdrop-blur-smborder border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        className="fixed top-14 md:top-24 left-1 md:left-2 h-8 md:h-10 w-8 md:w-10 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
       >
         <ArrowLeft className="h-5 w-5 text-gray-700" />
       </Button>
 
-      <div className="container mx-auto max-w-7xl pt-5 pb-10">
+      <div className="container mx-auto max-w-5xl pt-5 pb-10">
         {!hideNavbarAndTitle && (
           <div className="text-center mb-8">
             <div className="flex justify-center items-center gap-3 mb-4">
@@ -250,17 +364,17 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
 
         {/* Search Filters Card */}
         <Card className="border-0 bg-white/95 backdrop-blur-sm mb-8">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <CardHeader className="pb-6 ">
+            <CardTitle className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
               <Search className="w-6 h-6 text-blue-500" />
               Search Filters
             </CardTitle>
-            <CardDescription>
+            <CardDescription className='flex items-center justify-center text-sm text-muted-foreground'>
               Use the filters below to find blood donors in your area
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="space-y-6 flex flex-col justify-center items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 gap-x-20 justify-center items-center">
               {/* Blood Group Filter */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -268,7 +382,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                   Blood Group
                 </Label>
                 <Select value={filters.bloodGroup} onValueChange={(value) => handleFilterChange('bloodGroup', value)}>
-                  <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 cursor-pointer">
+                  <SelectTrigger className="h-12  border-gray-200 min-w-50 focus:border-blue-500 cursor-pointer">
                     <SelectValue placeholder="Select Blood Group" />
                   </SelectTrigger>
                   <SelectContent>
@@ -288,7 +402,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                   Country
                 </Label>
                 <Select value={filters.country} onValueChange={(value) => handleFilterChange('country', value)}>
-                  <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 cursor-pointer">
+                  <SelectTrigger className="h-12 border-gray-200 min-w-50 focus:border-blue-500 cursor-pointer">
                     <SelectValue placeholder="Select Country" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
@@ -309,7 +423,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                   onValueChange={(value) => handleFilterChange('state', value)}
                   disabled={!filters.country}
                 >
-                  <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 cursor-pointer">
+                  <SelectTrigger className="h-12 border-gray-200 min-w-50 focus:border-blue-500 cursor-pointer">
                     <SelectValue placeholder="Select State" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
@@ -330,7 +444,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
                   onValueChange={(value) => handleFilterChange('city', value)}
                   disabled={!filters.state}
                 >
-                  <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 cursor-pointer">
+                  <SelectTrigger className="h-12 border-gray-200 min-w-50 focus:border-blue-500 cursor-pointer">
                     <SelectValue placeholder="Select City" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
@@ -367,14 +481,31 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
           </CardContent>
         </Card>
 
+        {/* Report Donor Note */}
+        <Card className="border-0 bg-amber-50/50 backdrop-blur-sm mb-8">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-amber-800 mb-1">Report Donor Issues</h3>
+                <p className="text-sm text-amber-700">
+                  If you find any incorrect donor details, contact information issues, or donation-related problems, 
+                  please use the three-dot menu next to each donor to report the issue. Your reports help us maintain 
+                  accurate and reliable donor information for everyone.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Results Section */}
         <Card className="border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="pb-6">
-            <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <CardTitle className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
               <Users className="w-6 h-6 text-blue-500" />
               Search Results
             </CardTitle>
-            <CardDescription>
+            <CardDescription className='flex items-center justify-center text-sm text-muted-foreground'>
               {hasSearched 
                 ? `Found ${searchResults.length} donor${searchResults.length !== 1 ? 's' : ''} - Click to copy phone numbers`
                 : "Use the filters above and click search to find donors"
@@ -428,6 +559,105 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Vote of Thanks Modal */}
+      <Dialog open={thanksModalOpen} onOpenChange={setThanksModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ThumbsUp className="w-5 h-5 text-green-600" />
+              Send Vote of Thanks
+            </DialogTitle>
+            <DialogDescription>
+              Send a thank you message to {selectedDonor?.name} for their willingness to donate blood.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="thanks-message">Your Message</Label>
+              <Textarea
+                id="thanks-message"
+                placeholder="Write your thank you message here..."
+                value={thanksMessage}
+                onChange={(e) => setThanksMessage(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setThanksModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={submitThanks}
+                disabled={!thanksMessage.trim()}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Send Thanks
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Donor Modal */}
+      <Dialog open={reportModalOpen} onOpenChange={setReportModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              Report Donor Issue
+            </DialogTitle>
+            <DialogDescription>
+              Report an issue with {selectedDonor?.name}'s information or behavior.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <Label>Reason for reporting</Label>
+              <RadioGroup value={reportReason} onValueChange={setReportReason}>
+                {reportReasons.map((reason) => (
+                  <div key={reason} className="flex items-center space-x-2">
+                    <RadioGroupItem value={reason} id={reason} />
+                    <Label htmlFor={reason} className="text-sm cursor-pointer">
+                      {reason}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="report-details">Additional Details (Optional)</Label>
+              <Textarea
+                id="report-details"
+                placeholder="Provide additional details about the issue..."
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setReportModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={submitReport}
+                disabled={!reportReason}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                Submit Report
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 
