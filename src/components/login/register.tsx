@@ -503,7 +503,6 @@ const Register = () => {
                           {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
                             <SelectItem key={type} value={type} className="cursor-pointer hover:bg-red-50 focus:bg-red-50">
                               <span className="flex items-center gap-2">
-                                <Droplet className="h-3 w-3 text-red-500" />
                                 {type}
                               </span>
                             </SelectItem>

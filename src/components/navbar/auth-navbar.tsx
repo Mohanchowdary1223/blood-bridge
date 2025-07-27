@@ -1,16 +1,41 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Menu, X, User, LogOut, Info, Search, Bot } from 'lucide-react';
+import { Droplets, Info, Search, Bot, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const AuthNavbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
+  const [userName, setUserName] = useState('User'); // Default fallback
   const router = useRouter();
-  const menuRef = useRef<HTMLDivElement>(null);
+
+  /* ------------------------- Load user details ------------------------- */
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr)
+          if (userData?.name) {
+            setUserName(userData.name)
+          }
+        } catch (error) {
+          console.error('Failed to parse user data:', error)
+          // Keep default 'User' if parsing fails
+        }
+      }
+    }
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -24,7 +49,7 @@ const AuthNavbar = () => {
       setTimeout(() => {
         setShowLogoutSuccess(false);
         router.push('/login');
-      }, 500);
+      }, 1500); // Increased timeout to 1.5 seconds for better UX
     } catch (error) {
       console.error('Logout failed:', error);
       // Still redirect even if API call fails
@@ -32,23 +57,6 @@ const AuthNavbar = () => {
       router.push('/login');
     }
   };
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuOpen]);
 
   return (
     <>
@@ -68,134 +76,114 @@ const AuthNavbar = () => {
               </button>
             </div>
 
-            {/* Mobile Menu - Right Side Only */}
-            <div className="md:hidden relative" ref={menuRef}>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="hover:bg-muted"
-              >
-                {isMenuOpen ? (
-                  <X className="w-5 h-5" />
-                ) : (
-                  <Menu className="w-5 h-5" />
-                )}
-              </Button>
+            {/* Right Side Navigation */}
+            <div className="flex items-center space-x-4">
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex space-x-2">
+                <Button 
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <Info className="w-4 h-4 mr-2" />
+                  <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+                </Button>
+                <Button 
+                  variant="ghost"
+                  onClick={() => router.push('/finddonor')}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Find Donor
+                </Button>
+                <Button 
+                  variant="ghost"
+                  onClick={() => router.push('/healthaibot')}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <Bot className="w-4 h-4 mr-2" />
+                  Health Assistant
+                </Button>
+              </div>
 
-              {/* Compact Dropdown Menu */}
-              {isMenuOpen && (
-                <div className="absolute right-0 top-12 w-52 bg-background border border-border rounded-lg py-2 z-50">
-                  <div className="flex flex-col">
-                    <Button 
-                      variant="ghost"
-                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
-                    >
-                      <Info className="w-4 h-4 mr-2" />
-                      <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        router.push('/finddonor');
-                        setIsMenuOpen(false);
-                      }}
-                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
-                    >
-                      <Search className="w-4 h-4 mr-2" />
-                      Find Donor
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        router.push('/healthaibot');
-                        setIsMenuOpen(false);
-                      }}
-                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
-                    >
-                      <Bot className="w-4 h-4 mr-2" />
-                      Health Assistant
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        router.push('/profile');
-                        setIsMenuOpen(false);
-                      }}
-                      className="justify-start px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer rounded-none hover:bg-muted"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Profile
-                    </Button>
-                    <div className="border-t border-border my-1" />
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        handleLogout();
-                        setIsMenuOpen(false);
-                      }}
-                      className="justify-start px-4 py-2 text-sm text-red-600 hover:text-red-700 cursor-pointer rounded-none hover:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Logout
-                    </Button>
+              {/* Profile Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="relative h-10 w-10 rounded-full cursor-pointer"
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {userName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium leading-none">
+                      {userName.charAt(0).toUpperCase() + userName.slice(1)}
+                    </p>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-3">
-              <Button 
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <Info className="w-4 h-4 mr-2" />
-                <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
-              </Button>
-              <Button 
-                variant="ghost"
-                onClick={() => router.push('/finddonor')}
-                className="text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                Find Donor
-              </Button>
-              <Button 
-                variant="ghost"
-                onClick={() => router.push('/healthaibot')}
-                className="text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <Bot className="w-4 h-4 mr-2" />
-                Health Assistant
-              </Button>
-              <Button 
-                variant="ghost"
-                onClick={() => router.push('/profile')}
-                className="text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Button>
-              <Button 
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold cursor-pointer"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem 
+                    onClick={() => router.push('/profile')}
+                    className="cursor-pointer"
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                  
+                  {/* Mobile only - Navigation items in dropdown */}
+                  <DropdownMenuItem 
+                    className="cursor-pointer md:hidden"
+                  >
+                    <Info className="mr-2 h-4 w-4" />
+                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem 
+                    onClick={() => router.push('/finddonor')}
+                    className="cursor-pointer md:hidden"
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    Find Donor
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem 
+                    onClick={() => router.push('/healthaibot')}
+                    className="cursor-pointer md:hidden"
+                  >
+                    <Bot className="mr-2 h-4 w-4" />
+                    Health Assistant
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Logout Success Popup */}
+      {/* Logout Success Popup - Enhanced */}
       {showLogoutSuccess && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-          <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4">
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/50 backdrop-blur-sm">
+          <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4 shadow-lg">
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                   <LogOut className="w-4 h-4 text-white" />
                 </div>
               </div>

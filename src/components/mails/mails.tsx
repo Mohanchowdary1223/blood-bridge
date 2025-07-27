@@ -515,7 +515,7 @@ const NotificationsPage: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={() => router.push('/home')}
-          className="fixed top-14 md:top-24 left-2 md:left-6 h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+          className="fixed top-14 md:top-24 left-2  h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
         >
           <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
         </Button>

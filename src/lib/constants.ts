@@ -1,5 +1,5 @@
 export const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
-export const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bloodbank';
+export const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mohanchowdary963:mohan123@bloodbridge.puxw39h.mongodb.net/bloodbridge?retryWrites=true&w=majority&appName=BloodBridge';
 export const ADMIN_CREATION_KEY = process.env.ADMIN_CREATION_KEY || 'your-secure-admin-key';
 
 // JWT Configuration

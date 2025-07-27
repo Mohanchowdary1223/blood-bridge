@@ -137,7 +137,7 @@ export const DonateLaterProfile: React.FC<DonateLaterProfileProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-white" />
+                    <p className='text-white text-lg'>{user.name.slice(0,1).toUpperCase()} </p>
                   </div>
                   <div>
                     <CardTitle className="text-2xl font-bold text-foreground">{user.name.slice(0, 1).toUpperCase()}{user.name.slice(1)}</CardTitle>

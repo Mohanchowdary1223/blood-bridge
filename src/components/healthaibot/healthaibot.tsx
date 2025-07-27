@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import {
   Sidebar,
   SidebarContent,
@@ -10,11 +11,10 @@ import {
   SidebarMenuButton,
   SidebarProvider,
   SidebarTrigger,
-  SidebarInset,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea" // Changed from Input to Textarea
 import {
   ArrowLeft,
   Plus,
@@ -26,13 +26,18 @@ import {
   MoreVertical,
   MessageCircle,
 } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface Message {
   id: string
@@ -48,6 +53,8 @@ interface ChatSession {
   createdAt: Date
 }
 
+const USER_ID = "demo-user" // Replace with real user id from auth/session
+
 const HealthcareChatBotContent: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<ChatSession[]>([])
   const [currentChat, setCurrentChat] = useState<ChatSession | null>(null)
@@ -55,153 +62,106 @@ const HealthcareChatBotContent: React.FC = () => {
   const [inputMessage, setInputMessage] = useState("")
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false)
   const { open, openMobile, isMobile, setOpen, setOpenMobile } = useSidebar()
+  const router = useRouter()
+  
+  // Ref for auto-scrolling to bottom
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null) // Added for textarea auto-resize
 
-  /* ------------------------------------------------------------------ */
-  /*                     Seed data on first render                      */
-  /* ------------------------------------------------------------------ */
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
+  // Scroll to bottom when currentChat messages change
   useEffect(() => {
-    const sample: ChatSession[] = [
-      {
-        _id: "1",
-        title: "Blood Pressure Consultation",
-        messages: [
-          {
-            id: "1",
-            text: "Hello! I have concerns about my blood pressure readings.",
-            sender: "user",
-            timestamp: new Date("2025-07-25T10:00:00"),
-          },
-          {
-            id: "2",
-            text: "I understand your concern about blood pressure. Can you tell me your recent readings and any symptoms you've been experiencing?",
-            sender: "bot",
-            timestamp: new Date("2025-07-25T10:00:30"),
-          },
-        ],
-        createdAt: new Date("2025-07-25"),
-      },
-      {
-        _id: "2",
-        title: "Exercise and Fitness",
-        messages: [
-          {
-            id: "3",
-            text: "What exercises are best for heart health?",
-            sender: "user",
-            timestamp: new Date("2025-07-24T14:00:00"),
-          },
-          {
-            id: "4",
-            text: "Great question! For heart health, I recommend cardio exercises like walking, swimming, cycling.",
-            sender: "bot",
-            timestamp: new Date("2025-07-24T14:00:30"),
-          },
-        ],
-        createdAt: new Date("2025-07-24"),
-      },
-      {
-        _id: "3",
-        title: "Diet and Nutrition Query",
-        messages: [
-          {
-            id: "5",
-            text: "What foods should I avoid for better heart health?",
-            sender: "user",
-            timestamp: new Date("2025-07-23T09:00:00"),
-          },
-          {
-            id: "6",
-            text: "For heart health, limit processed foods high in sodium, trans fats and saturated fats.",
-            sender: "bot",
-            timestamp: new Date("2025-07-23T09:00:30"),
-          },
-        ],
-        createdAt: new Date("2025-07-23"),
-      },
-    ]
-    setChatHistory(sample)
-    setCurrentChat(sample[0])
+    scrollToBottom()
+  }, [currentChat?.messages])
+
+  // Initialize with new chat when component mounts
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch("/api/healthaibot", {
+          headers: { "x-user-id": USER_ID },
+        })
+        const data = await res.json()
+        setChatHistory(data.history || [])
+        // Always start with new chat when component loads
+        setCurrentChat(null)
+      } catch (error) {
+        console.error("Failed to fetch chat history:", error)
+        // Even if fetch fails, start with new chat
+        setCurrentChat(null)
+      }
+    }
+    fetchHistory()
   }, [])
 
-  /* ------------------------------------------------------------------ */
-  /*                       Bot reply generator                          */
-  /* ------------------------------------------------------------------ */
-  const getHealthcareResponse = (msg: string): string => {
-    const m = msg.toLowerCase()
-
-    if (m.includes("blood pressure") || m.includes("bp"))
-      return "Blood pressure management involves: 1) Regular monitoring, 2) Low sodium diet, 3) Regular exercise, 4) Stress management, 5) Adequate sleep. Normal BP is < 120/80. Please consult a professional."
-    if (m.includes("heart rate") || m.includes("pulse"))
-      return "Normal resting heart-rate for adults is 60-100 BPM. Athletes may have 40-60 BPM."
-    if (m.includes("exercise") || m.includes("workout"))
-      return "Aim for 150 min moderate cardio weekly plus 2 strength sessions."
-    if (m.includes("diet") || m.includes("nutrition"))
-      return "Heart-healthy diet: fruits, vegetables, whole grains, lean proteins, healthy fats. Limit sodium & sugar."
-    if (m.includes("emergency") || m.includes("urgent"))
-      return "⚠️ MEDICAL EMERGENCY: Call 911 immediately for chest pain, trouble breathing, severe headache."
-    return "I can help with blood pressure, heart rate, exercise, diet and more. Ask away!"
-  }
-
-  /* ------------------------------------------------------------------ */
-  /*                            Handlers                                */
-  /* ------------------------------------------------------------------ */
-  const sendMessage = () => {
+  // Send message to backend
+  const sendMessage = async () => {
     if (!inputMessage.trim()) return
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      text: inputMessage,
-      sender: "user",
-      timestamp: new Date(),
-    }
-
     setLoading(true)
-
-    setTimeout(() => {
-      const botMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        text: getHealthcareResponse(inputMessage),
-        sender: "bot",
-        timestamp: new Date(),
-      }
-
-      let newChat: ChatSession
-
-      if (currentChat) {
-        newChat = {
-          ...currentChat,
-          messages: [...currentChat.messages, userMsg, botMsg],
-        }
-        setChatHistory((prev) =>
-          prev.map((c) => (c._id === newChat._id ? newChat : c)),
-        )
-      } else {
-        newChat = {
-          _id: Date.now().toString(),
-          title:
-            inputMessage.slice(0, 30) + (inputMessage.length > 30 ? "…" : ""),
-          messages: [userMsg, botMsg],
-          createdAt: new Date(),
-        }
-        setChatHistory((prev) => [newChat, ...prev])
-      }
-
-      setCurrentChat(newChat)
+    
+    try {
+      const chatId = currentChat?._id
+      const title = currentChat?.title || inputMessage.slice(0, 30) + (inputMessage.length > 30 ? "…" : "")
+      
+      const res = await fetch("/api/healthaibot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": USER_ID,
+        },
+        body: JSON.stringify({ chatId, message: inputMessage, title }),
+      })
+      
+      const data = await res.json()
       setInputMessage("")
+      
+      // Reset textarea height after sending
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+      }
+      
+      // Update chatHistory and currentChat
+      if (chatId) {
+        setChatHistory((prev) => prev.map((c) => (c._id === chatId ? data.chat : c)))
+        setCurrentChat(data.chat)
+      } else {
+        setChatHistory((prev) => [data.chat, ...prev])
+        setCurrentChat(data.chat)
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error)
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
-  const deleteChat = (id: string) => {
-    setChatHistory((prev) => prev.filter((c) => c._id !== id))
-
-    if (currentChat && currentChat._id === id) {
-      const remaining = chatHistory.filter((c) => c._id !== id)
-      setCurrentChat(remaining[0] ?? null)
+  // Delete chat from backend
+  const deleteChat = async (id: string) => {
+    try {
+      await fetch(`/api/healthaibot?id=${id}`, {
+        method: "DELETE",
+        headers: { "x-user-id": USER_ID },
+      })
+      
+      setChatHistory((prev) => prev.filter((c) => c._id !== id))
+      
+      if (currentChat && currentChat._id === id) {
+        const remaining = chatHistory.filter((c) => c._id !== id)
+        setCurrentChat(remaining[0] ?? null)
+      }
+      
+      setShowDeleteSuccess(true)
+      setTimeout(() => setShowDeleteSuccess(false), 3000)
+    } catch (error) {
+      console.error("Failed to delete chat:", error)
     }
-
-    setShowDeleteSuccess(true)
-    setTimeout(() => setShowDeleteSuccess(false), 3000)
   }
 
   // Helper function to close sidebar
@@ -225,152 +185,206 @@ const HealthcareChatBotContent: React.FC = () => {
     closeSidebar()
   }
 
-  /* ------------------------------------------------------------------ */
-  /*                            JSX                                     */
-  /* ------------------------------------------------------------------ */
+  // Handle history click - opens sidebar and shows chat history
+  const handleHistoryClick = () => {
+    if (!open && !isMobile) {
+      setOpen(true)
+    } else if (!openMobile && isMobile) {
+      setOpenMobile(true)
+    }
+  }
+
+  // Handle back/home button click - navigate to home
+  const handleBackToHome = () => {
+    router.push("/home")
+  }
+
+  // Auto-resize textarea function
+  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto'
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px'
+  }
+
   return (
-    <div className="flex h-screen w-full overflow-hidden">
-      {/* success toast */}
-      {showDeleteSuccess && (
-        <div className="fixed top-20 right-4 z-[60] rounded-md bg-green-500 px-4 py-2 text-white shadow-lg">
-          Chat deleted successfully!
-        </div>
-      )}
+    <TooltipProvider>
+      <div className="flex h-screen w-full overflow-hidden">
+        {/* success toast */}
+        {showDeleteSuccess && (
+          <div className="fixed top-20 right-4 z-[60] rounded-md bg-green-500 px-4 py-2 text-white shadow-lg">
+            Chat deleted successfully!
+          </div>
+        )}
 
-      {/* mobile sidebar trigger (below navbar) */}
-      {isMobile && !openMobile && (
-        <div className="fixed top-20 left-4 z-[60]">
-          <SidebarTrigger className="h-10 w-10 cursor-pointer border bg-background shadow-md" />
-        </div>
-      )}
+        {/* mobile sidebar trigger (below navbar) */}
+        {isMobile && !openMobile && (
+          <div className="fixed top-20 left-4 z-[60]">
+            <SidebarTrigger className="h-10 w-10 cursor-pointer border bg-background shadow-md" />
+          </div>
+        )}
 
-      {/* sidebar */}
-      <Sidebar
-        side="left"
-        variant="sidebar"
-        collapsible="icon"
-        className="fixed left-0 top-16 bottom-0 z-50 w-[280px] border-r bg-background"
-      >
-        <SidebarHeader className="border-b">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <div className="flex w-full items-center justify-center p-2">
-                <SidebarTrigger className="h-8 w-8 cursor-pointer" />
-              </div>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-
-        <SidebarContent className="flex-1 overflow-hidden">
-          <SidebarMenu className="px-2">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setCurrentChat(null)}
-                className="w-full cursor-pointer"
-              >
-                <ArrowLeft className="size-4" />
-                <span>Back</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={handleNewChat}
-                className="w-full cursor-pointer"
-              >
-                <Plus className="size-4" />
-                <span>New Chat</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <SidebarMenuButton className="w-full cursor-default" disabled>
-                <History className="size-4" />
-                <span>Recent Chats</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-
-          {(isMobile ? openMobile : open) && (
-            <ScrollArea className="flex-1 px-2">
-              <SidebarMenu>
-                {chatHistory.map((chat) => (
-                  <SidebarMenuItem key={chat._id}>
-                    <div className="group flex w-full items-center">
-                      {/* chat title press */}
-                      <SidebarMenuButton
-                        onClick={() => handleContinueChat(chat)}
-                        className="flex-1 min-h-[44px] justify-start pr-2 cursor-pointer"
-                      >
-                        <div className="flex w-full min-w-0 flex-col items-start">
-                          <span className="truncate text-sm font-medium">
-                            {chat.title}
-                          </span>
-                          <span className="truncate text-xs text-muted-foreground">
-                            {chat.messages.length} messages
-                          </span>
-                        </div>
-                      </SidebarMenuButton>
-
-                      {/* three-dots dropdown */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            /* always visible on mobile, hover-to-show on ≥md */
-                            className="h-6 w-6 flex-shrink-0 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleContinueChat(chat)
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <MessageCircle className="mr-2 h-4 w-4" />
-                            Continue Chat
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              deleteChat(chat._id!)
-                            }}
-                            className="cursor-pointer text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Chat
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </ScrollArea>
-          )}
-        </SidebarContent>
-      </Sidebar>
-
-      {/* main panel */}
-      <SidebarInset className="mt-16 flex flex-1 flex-col min-w-0">
-        <div
-          className={`flex min-h-0 flex-1 flex-col pb-20 ${
-            !openMobile && isMobile ? "pt-16" : "pt-0"
-          }`}
+        {/* sidebar */}
+        <Sidebar
+          side="left"
+          variant="sidebar"
+          collapsible="icon"
+          className="fixed left-0 top-16 bottom-0 z-50 w-[280px] border-r bg-background"
         >
-          <ScrollArea className="flex-1">
-            <div className="w-full p-4">
+          <SidebarHeader className="border-b">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <div className="flex w-full items-center justify-center p-2">
+                  <SidebarTrigger className="h-8 w-8 cursor-pointer" />
+                </div>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarHeader>
+
+          <SidebarContent className="flex-1 overflow-hidden">
+            <SidebarMenu className="px-2">
+              {/* Back Button with Tooltip - Navigate to /home */}
+              <SidebarMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton
+                      onClick={handleBackToHome}
+                      className="w-full cursor-pointer"
+                    >
+                      <ArrowLeft className="size-4" />
+                      <span>Home</span>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  {!open && !isMobile && (
+                    <TooltipContent side="right">
+                      <p>Home</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </SidebarMenuItem>
+
+              {/* New Chat Button with Tooltip */}
+              <SidebarMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton
+                      onClick={handleNewChat}
+                      className="w-full cursor-pointer"
+                    >
+                      <Plus className="size-4" />
+                      <span>New Chat</span>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  {!open && !isMobile && (
+                    <TooltipContent side="right">
+                      <p>New Chat</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </SidebarMenuItem>
+
+              {/* History Header with Tooltip - Clickable when collapsed */}
+              <SidebarMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton 
+                      className={`w-full ${!open && !isMobile ? 'cursor-pointer' : 'cursor-default'}`}
+                      onClick={!open && !isMobile ? handleHistoryClick : undefined}
+                      disabled={open || isMobile}
+                    >
+                      <History className="size-4" />
+                      <span>Recent Chats</span>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  {!open && !isMobile && (
+                    <TooltipContent side="right">
+                      <p>Chat History</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </SidebarMenuItem>
+            </SidebarMenu>
+
+            {/* Chat History List - Only show when sidebar is open */}
+            {(isMobile ? openMobile : open) && (
+              <div className="flex-1 overflow-y-auto px-2 pb-20">
+                <SidebarMenu>
+                  {chatHistory.map((chat) => (
+                    <SidebarMenuItem key={chat._id}>
+                      <div className="group flex w-full items-center">
+                        {/* chat title press */}
+                        <SidebarMenuButton
+                          onClick={() => handleContinueChat(chat)}
+                          className="flex-1 min-h-[44px] justify-start pr-2 cursor-pointer"
+                        >
+                          <div className="flex w-full min-w-0 flex-col items-start">
+                            <span className="truncate text-sm font-medium">
+                              {chat.title}
+                            </span>
+                            <span className="truncate text-xs text-muted-foreground">
+                              {chat.messages?.length || 0} messages
+                            </span>
+                          </div>
+                        </SidebarMenuButton>
+
+                        {/* three-dots dropdown */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 flex-shrink-0 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-3 w-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleContinueChat(chat)
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <MessageCircle className="mr-2 h-4 w-4" />
+                              Continue Chat
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteChat(chat._id!)
+                              }}
+                              className="cursor-pointer text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Chat
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </div>
+            )}
+          </SidebarContent>
+        </Sidebar>
+
+        {/* Fixed Chat Container - Like sidebar positioning */}
+        <div 
+          className="fixed top-16 bottom-0 right-0 z-40 flex flex-col border-l bg-background"
+          style={{ 
+            left: isMobile ? (openMobile ? '280px' : '0') : (open ? '280px' : '64px'),
+            transition: 'left 0.2s ease-in-out'
+          }}
+        >
+          {/* Chat Messages Area - Native scrolling */}
+          <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
+            <div className="p-4 h-full">
               {currentChat ? (
-                <div className="mx-auto w-full max-w-4xl space-y-4">
-                  {currentChat.messages.map((msg) => (
+                <div className="space-y-4 max-w-4xl mx-auto pb-5 pt-5">
+                  {currentChat.messages?.map((msg) => (
                     <div
                       key={msg.id}
                       className={`flex w-full ${
@@ -378,10 +392,10 @@ const HealthcareChatBotContent: React.FC = () => {
                       }`}
                     >
                       <div
-                        className={`flex max-w-xs flex-row ${
+                        className={`flex max-w-xs ${
                           msg.sender === "user"
                             ? "flex-row-reverse lg:max-w-md xl:max-w-lg"
-                            : "lg:max-w-md xl:max-w-lg"
+                            : "flex-row lg:max-w-md xl:max-w-lg"
                         }`}
                       >
                         <div
@@ -407,19 +421,24 @@ const HealthcareChatBotContent: React.FC = () => {
                               : "bg-muted text-muted-foreground"
                           }`}
                         >
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed break-words hyphens-auto">
                             {msg.text}
                           </p>
                           <p className="mt-2 text-xs opacity-70">
-                            {msg.timestamp.toLocaleTimeString()}
+                            {(() => {
+                              const t = typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp;
+                              return t && typeof t.toLocaleTimeString === 'function' ? t.toLocaleTimeString() : '';
+                            })()}
                           </p>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )) || []}
+                  {/* Invisible div to scroll to */}
+                  <div ref={messagesEndRef} />
                 </div>
               ) : (
-                <div className="flex min-h-[400px] items-center justify-center">
+                <div className="flex h-full items-center justify-center">
                   <div className="max-w-md text-center">
                     <Bot className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
                     <h2 className="mb-2 text-xl font-semibold">
@@ -436,35 +455,47 @@ const HealthcareChatBotContent: React.FC = () => {
                 </div>
               )}
             </div>
-          </ScrollArea>
-        </div>
+          </div>
 
-        {/* input bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background p-4 md:left-16">
-          <div className="mx-auto flex w-full max-w-4xl space-x-2">
-            <Input
-              placeholder="Ask about your health concerns…"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              disabled={loading}
-              className="flex-1"
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={loading || !inputMessage.trim()}
-              className="cursor-pointer"
-            >
-              {loading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
+          {/* Fixed Input Bar with Textarea */}
+          <div className="border-t bg-background p-4">
+            <div className="flex space-x-2 max-w-4xl mx-auto items-end">
+              <div className="flex-1">
+                <Textarea
+                  ref={textareaRef}
+                  placeholder="Ask about your health concerns… "
+                  value={inputMessage}
+                  onChange={(e) => {
+                    setInputMessage(e.target.value)
+                    adjustTextareaHeight(e.target)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      sendMessage()
+                    }
+                  }}
+                  disabled={loading}
+                  className="min-h-[40px] max-h-[120px] resize-none overflow-hidden"
+                  rows={1}
+                />
+              </div>
+              <Button
+                onClick={sendMessage}
+                disabled={loading || !inputMessage.trim()}
+                className="cursor-pointer h-10 w-10 p-0 flex-shrink-0"
+              >
+                {loading ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
-      </SidebarInset>
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }
 

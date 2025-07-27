@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bloodbank';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mohanchowdary963:mohan123@bloodbridge.puxw39h.mongodb.net/bloodbridge?retryWrites=true&w=majority&appName=BloodBridge';
 
 export async function connectToDatabase() {
   try {

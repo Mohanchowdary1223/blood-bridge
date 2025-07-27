@@ -35,8 +35,7 @@ const NavbarWrapper = () => {
     return null;
   }
 
-  // Show default navbar on home and emergency-blood page
-  if (pathname === '/' || pathname === '/emergency-blood') {
+  if (pathname === '/' || pathname === '/healthbotai') {
     return <DefaultNavbar />;
   }
 
