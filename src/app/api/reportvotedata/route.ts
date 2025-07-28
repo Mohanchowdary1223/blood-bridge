@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Notification from '@/models/reportvotedata/Notification';
+import UserNotification from '@/models/UserNotification';
+import MasterNotification from '@/models/MasterNotification';
 import { connectToDatabase } from '@/lib/mongodb';
 
 // GET: Fetch notifications for a user
@@ -13,14 +14,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
     
-    const notifications = await Notification.find({
-      $or: [
-        { sender: userId },
-        { receiver: userId }
-      ]
-    }).sort({ timestamp: -1 });
-    
-    return NextResponse.json({ notifications });
+    // Fetch only user notifications (deletable copy)
+    const notifications = await UserNotification.find({ userId }).sort({ 'notification.timestamp': -1 });
+    return NextResponse.json({ notifications: notifications.map(n => ({ _id: n._id, ...n.notification })) });
   } catch (error) {
     console.error('GET notifications error:', error);
     return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
@@ -41,13 +37,19 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
     
-    const notification = await Notification.create({
+    // Create notification object
+    const notificationObj = {
       ...body,
       timestamp: new Date(),
       status: 'unread',
-    });
-    
-    return NextResponse.json({ notification }, { status: 201 });
+    };
+
+    // Store in user notifications (deletable copy)
+    await UserNotification.create({ userId: body.receiver, notification: notificationObj });
+    // Store in master notifications (permanent copy)
+    await MasterNotification.create({ notification: notificationObj });
+
+    return NextResponse.json({ notification: notificationObj }, { status: 201 });
   } catch (error) {
     console.error('POST notification error:', error);
     return NextResponse.json({ 
@@ -73,19 +75,15 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid notificationId format' }, { status: 400 });
     }
 
-    const notification = await Notification.findByIdAndUpdate(
+    // Update only user notification
+    const notification = await UserNotification.findByIdAndUpdate(
       notificationId,
-      { 
-        ...updates,
-        updatedAt: new Date() // Add updatedAt field
-      },
+      { $set: { ...updates, 'notification.updatedAt': new Date() } },
       { new: true }
     );
-    
     if (!notification) {
       return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
     }
-    
     return NextResponse.json({ notification });
   } catch (error) {
     console.error('PATCH notification error:', error);
@@ -112,12 +110,11 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid notificationId format' }, { status: 400 });
     }
 
-    const notification = await Notification.findByIdAndDelete(notificationId);
-    
+    // Only delete from user notifications
+    const notification = await UserNotification.findByIdAndDelete(notificationId);
     if (!notification) {
       return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
     }
-    
     return NextResponse.json({ message: 'Notification deleted successfully' });
   } catch (error) {
     console.error('DELETE notification error:', error);

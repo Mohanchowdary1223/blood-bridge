@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Notification from '@/models/reportvotedata/Notification';
+import UserNotification from '@/models/UserNotification';
+import MasterNotification from '@/models/MasterNotification';
 import { connectToDatabase } from '@/lib/mongodb';
 
 export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { donorId, reason, details, reporterName,title, timestamp } = body;
+    const { donorId, receiverName, reason, details, reporterName, title, timestamp } = body;
     
     if (!donorId || !reason) {
       return NextResponse.json({ 
@@ -14,22 +15,26 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Create notification for report
-    const notification = await Notification.create({
+    // Create notification object
+    const notificationObj = {
       type: 'report',
       title: title || 'Donor Report Submitted',
       description: `${reporterName || 'Someone'} reported an issue: ${reason}`,
-      sender: reporterName || 'Anonymous', // Always use reporterName (user's name)
+      sender: reporterName || 'Anonymous',
       receiver: donorId,
+      receiverName: receiverName || '',
       content: `Reason: ${reason}\n\nDetails: ${details || 'No additional details provided'}`,
       timestamp: timestamp ? new Date(timestamp) : new Date(),
       status: 'unread',
-      priority: 'high' // Reports typically have higher priority
-    });
-    
+      priority: 'high'
+    };
+    // Store in user notifications (deletable copy)
+    await UserNotification.create({ userId: donorId, notification: notificationObj });
+    // Store in master notifications (permanent copy)
+    await MasterNotification.create({ notification: notificationObj });
     return NextResponse.json({ 
       success: true, 
-      notification,
+      notification: notificationObj,
       message: 'Report submitted successfully!' 
     }, { status: 201 });
     

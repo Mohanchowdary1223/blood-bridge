@@ -106,21 +106,13 @@ const NotificationsPage: React.FC = () => {
     
     const fetchNotifications = async () => {
       try {
-        console.log('Fetching notifications for userId:', userId);
         setIsLoading(true);
-        
+        // Fetch user notifications
         const res = await fetch(`/api/reportvotedata?userId=${userId}`);
-        console.log('Response status:', res.status);
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
         const data = await res.json();
-        console.log('Received data:', data);
-        
-        if (data.notifications && Array.isArray(data.notifications)) {
-          const transformedNotifications = data.notifications.map((n: BackendNotification) => ({
+        let notifications: NotificationItem[] = [];
+        if (res.ok && data.notifications && Array.isArray(data.notifications)) {
+          notifications = data.notifications.map((n: BackendNotification) => ({
             id: n._id,
             type: n.type,
             title: n.title,
@@ -133,13 +125,34 @@ const NotificationsPage: React.FC = () => {
             content: n.content,
             isStarred: n.isStarred || false
           }));
-          
-          console.log('Transformed notifications:', transformedNotifications);
-          setNotifications(transformedNotifications);
-        } else {
-          console.log('No notifications array in response');
-          setNotifications([]);
         }
+        // Fetch admin sent reports for this user
+        const adminRes = await fetch(`/api/admin/sendreports?userId=${userId}`);
+        const adminData = await adminRes.json();
+        if (adminRes.ok && adminData.reports && Array.isArray(adminData.reports)) {
+          // Define an interface for admin report data
+          interface AdminReport {
+            _id: string;
+            message: string;
+            sentAt: string;
+          }
+          
+                    const adminNotifications = adminData.reports.map((r: AdminReport) => ({
+                      id: r._id,
+                      type: 'admin-warning',
+                      title: 'Admin Warning',
+                      description: r.message,
+                      sender: 'Admin',
+                      senderAvatar: '',
+                      timestamp: r.sentAt,
+                      status: 'read',
+                      priority: 'high',
+                      content: r.message,
+                      isStarred: false
+                    }));
+          notifications = [...adminNotifications, ...notifications];
+        }
+        setNotifications(notifications);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
         setNotifications([]);
@@ -147,7 +160,6 @@ const NotificationsPage: React.FC = () => {
         setIsLoading(false);
       }
     };
-    
     fetchNotifications();
   }, [userId]);
 

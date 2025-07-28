@@ -25,13 +25,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Hide navbar for blocked users
+  // Hide navbar for /blocked-home using next/navigation (client-side)
+  let isBlockedPage = false;
+  if (typeof window !== 'undefined') {
+    isBlockedPage = window.location.pathname.startsWith('/blocked-home');
+  }
   return (
     <html lang="en">
       <body
           className={`${outfit.variable} ${dancingScript.variable} font-outfit antialiased`}
       >
           <div className="relative flex min-h-screen flex-col">
-            <NavbarWrapper />
+            {!isBlockedPage && <NavbarWrapper />}
             <main className="flex-1">
               <Suspense fallback={<Loading/>}>
                 {children}

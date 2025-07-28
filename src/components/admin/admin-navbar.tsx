@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Users, Heart, LogOut, User, Shield, Mail } from 'lucide-react';
+import { Users, Heart, LogOut, User, Shield, Mail, UserX, LayoutDashboard } from 'lucide-react';
 
 export default function AdminNavbar() {
   const router = useRouter();
@@ -46,8 +46,16 @@ export default function AdminNavbar() {
 
           {/* Right Side Navigation */}
           <div className="flex items-center space-x-4">
-            {/* Desktop Navigation - Users, Donors, and Mails */}
+            {/* Desktop Navigation - Dashboard, Users, Donors, Blocked Users, and Mails */}
             <div className="hidden md:flex space-x-2">
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/admin')}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
               <Button
                 variant="ghost"
                 onClick={() => router.push('/admin/users')}
@@ -63,6 +71,14 @@ export default function AdminNavbar() {
               >
                 <Heart className="w-4 h-4 mr-2" />
                 Donors
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/admin/blockedusers')}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <UserX className="w-4 h-4 mr-2" />
+                Blocked Users
               </Button>
               <Button
                 variant="ghost"
@@ -107,7 +123,15 @@ export default function AdminNavbar() {
                   Profile
                 </DropdownMenuItem>
 
-                {/* Mobile only - Users, Donors, and Mails in dropdown */}
+                {/* Mobile only - Dashboard, Users, Donors, Blocked Users, and Mails in dropdown */}
+                <DropdownMenuItem
+                  onClick={() => router.push('/admin')}
+                  className="cursor-pointer md:hidden"
+                >
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </DropdownMenuItem>
+
                 <DropdownMenuItem
                   onClick={() => router.push('/admin/users')}
                   className="cursor-pointer md:hidden"
@@ -122,6 +146,14 @@ export default function AdminNavbar() {
                 >
                   <Heart className="mr-2 h-4 w-4" />
                   Donors
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => router.push('/admin/blockedusers')}
+                  className="cursor-pointer md:hidden"
+                >
+                  <UserX className="mr-2 h-4 w-4" />
+                  Blocked Users
                 </DropdownMenuItem>
 
                 <DropdownMenuItem

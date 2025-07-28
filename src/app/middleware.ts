@@ -42,8 +42,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    // If admin, only allow /admin and its subpages
-    if (user.isAdmin()) {
+    // If blocked, only allow /blocked-home
+    if (user.role === 'blocked') {
+      if (!pathname.startsWith('/blocked-home')) {
+        return NextResponse.redirect(new URL('/blocked-home', request.url));
+      }
+    } else if (user.isAdmin()) {
+      // If admin, only allow /admin and its subpages
       if (!pathname.startsWith(ADMIN_PATH)) {
         return NextResponse.redirect(new URL('/admin', request.url));
       }

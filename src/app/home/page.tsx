@@ -8,8 +8,11 @@ import HealthIssueHome from "@/components/home/user-types/health-issue-home";
 import UnderAgeHome from "@/components/home/user-types/under-age-home";
 import AboveAgeHome from "@/components/home/user-types/above-age-home";
 
+
 export default function HomePage() {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(null);
   const [userType, setUserType] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,16 +22,26 @@ export default function HomePage() {
         router.replace("/login");
         return;
       }
-      const user = JSON.parse(userStr);
-      if (user.role === "admin") {
+      const userObj = JSON.parse(userStr);
+      setUser(userObj);
+      if (userObj.role === "admin") {
         router.replace("/admin");
         return;
       }
-      setUserType(getProfileType(user));
+      setUserType(getProfileType(userObj));
     }
   }, [router]);
 
-  if (!userType) return null;
+
+  if (!userType || !user) return null;
+
+  // If blocked, redirect to /blocked-home and render nothing (no navbar, no UI)
+  if (user.role === "blocked") {
+    if (typeof window !== "undefined") {
+      window.location.replace("/blocked-home");
+    }
+    return null;
+  }
 
   switch (userType) {
     case "donor":

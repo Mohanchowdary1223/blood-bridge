@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Notification from '@/models/reportvotedata/Notification';
+import UserNotification from '@/models/UserNotification';
+import MasterNotification from '@/models/MasterNotification';
 import { connectToDatabase } from '@/lib/mongodb';
 
 export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { donorId, message, senderName, title, timestamp } = body;
+    const { donorId, receiverName, message, senderName, title, timestamp } = body;
     
     if (!donorId || !message) {
       return NextResponse.json({ 
@@ -14,22 +15,26 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Create notification for vote of thanks
-    const notification = await Notification.create({
+    // Create notification object
+    const notificationObj = {
       type: 'vote',
       title: title || 'New Vote of Thanks',
       description: `Vote of Thanks from ${senderName || 'Someone'}`,
-      sender: senderName || 'Anonymous', // Always use senderName (user's name)
+      sender: senderName || 'Anonymous',
       receiver: donorId,
+      receiverName: receiverName || '',
       content: message,
       timestamp: timestamp ? new Date(timestamp) : new Date(),
       status: 'unread',
       priority: 'medium'
-    });
-    
+    };
+    // Store in user notifications (deletable copy)
+    await UserNotification.create({ userId: donorId, notification: notificationObj });
+    // Store in master notifications (permanent copy)
+    await MasterNotification.create({ notification: notificationObj });
     return NextResponse.json({ 
       success: true, 
-      notification,
+      notification: notificationObj,
       message: 'Thank you message sent successfully!' 
     }, { status: 201 });
     

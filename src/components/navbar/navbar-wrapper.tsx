@@ -28,10 +28,11 @@ const NavbarWrapper = () => {
     }
   }, [typeof window !== 'undefined' && localStorage.getItem('user')]);
 
-  // Don't show navbar on auth or admin pages
+  // Don't show navbar on auth, admin, or blocked-home pages
   const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/register';
   const isAdminPage = pathname.startsWith('/admin');
-  if (isAuthPage || isAdminPage) {
+  const isBlockedPage = pathname.startsWith('/blocked-home');
+  if (isAuthPage || isAdminPage || isBlockedPage) {
     return null;
   }
 

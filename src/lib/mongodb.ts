@@ -1,11 +1,14 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mohanchowdary963:mohan123@bloodbridge.puxw39h.mongodb.net/bloodbridge?retryWrites=true&w=majority&appName=BloodBridge';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 export async function connectToDatabase() {
   try {
     if (mongoose.connection.readyState >= 1) return;
     
+    if (!MONGODB_URI) {
+      throw new Error('MONGODB_URI is not defined');
+    }
     await mongoose.connect(MONGODB_URI);
     console.log('Connected to MongoDB');
   } catch (error) {

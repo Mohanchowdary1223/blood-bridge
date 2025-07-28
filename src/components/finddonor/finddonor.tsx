@@ -185,6 +185,7 @@ const FindDonorPage = ({ hideNavbarAndTitle }: FindDonorPageProps) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         donorId: selectedDonor?.userId || selectedDonor?._id, // Use userId if available
+        receiverName: selectedDonor?.name || '',
         message: thanksMessage,
         senderName: currentUser.name || 'Anonymous User',
         senderUserId: currentUser._id || currentUser.userId,
@@ -223,6 +224,7 @@ const submitReport = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         donorId: selectedDonor?.userId || selectedDonor?._id, // Use userId if available
+        receiverName: selectedDonor?.name || '',
         reason: reportReason,
         details: reportDetails,
         reporterName: currentUser.name || 'Anonymous User',

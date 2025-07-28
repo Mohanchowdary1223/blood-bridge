@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import UsersChatHistory, { IMessage } from '@/models/UsersChatHistory';
 import { connectToDatabase } from '@/lib/mongodb';
 
-const GEMINI_API_KEY = 'AIzaSyCeSwEPezpqP9UV6HP1UflRbAN3A4otV4o'; // Move to environment variable
+
+const GEMINI_API_KEY = process.env.GEMINI_API;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 async function getUserId(req: NextRequest): Promise<string> {

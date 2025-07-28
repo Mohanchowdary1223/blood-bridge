@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -70,17 +71,13 @@ interface UnblockRequest {
   userId: string;
   userName: string;
   userEmail: string;
-  userAvatar?: string;
-  title: string;
-  reason: string;
-  requestDate: string;
+  message: string;
+  date: string;
+  blockedReason: string;
   status: 'blocked' | 'unblocked';
-  blockDate: string;
-  blockReason: string;
-  adminNotes?: string;
 }
 
-const UnblockRequestsPage: React.FC = () => {
+const UnblockRequestsPage = () => {
   const router = useRouter();
   const [selectedRequest, setSelectedRequest] = useState<UnblockRequest | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -95,67 +92,20 @@ const UnblockRequestsPage: React.FC = () => {
   const [requests, setRequests] = useState<UnblockRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - replace with actual API call
+  // Fetch real unblock requests from API
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         setIsLoading(true);
-        
-        // Simulate API call - replace with actual endpoint
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const mockData: UnblockRequest[] = [
-          {
-            id: '1',
-            userId: 'user123',
-            userName: 'John Doe',
-            userEmail: 'john.doe@example.com',
-            userAvatar: '/avatars/john.jpg',
-            title: 'Request to Unblock Account',
-            reason: 'I was blocked by mistake. I did not violate any community guidelines and would like to appeal this decision.',
-            requestDate: '2024-01-15T10:30:00Z',
-            status: 'blocked',
-            blockDate: '2024-01-10T14:20:00Z',
-            blockReason: 'Violation of community guidelines',
-            adminNotes: ''
-          },
-          {
-            id: '2',
-            userId: 'user456',
-            userName: 'Jane Smith',
-            userEmail: 'jane.smith@example.com',
-            title: 'Account Status',
-            reason: 'Previously blocked account that has been restored.',
-            requestDate: '2024-01-14T09:15:00Z',
-            status: 'unblocked',
-            blockDate: '2024-01-05T16:45:00Z',
-            blockReason: 'Spam posting',
-            adminNotes: 'User showed genuine remorse and understanding'
-          },
-          {
-            id: '3',
-            userId: 'user789',
-            userName: 'Mike Johnson',
-            userEmail: 'mike.j@example.com',
-            title: 'Account Management',
-            reason: 'Account status under review.',
-            requestDate: '2024-01-13T14:22:00Z',
-            status: 'blocked',
-            blockDate: '2024-01-08T11:30:00Z',
-            blockReason: 'Malicious activities',
-            adminNotes: 'Account requires monitoring'
-          }
-        ];
-        
-        setRequests(mockData);
+        const res = await fetch('/api/admin/unblock-request');
+        const data = await res.json();
+        setRequests(data.requests || []);
       } catch (error) {
-        console.error('Failed to fetch user requests:', error);
         setRequests([]);
       } finally {
         setIsLoading(false);
       }
     };
-    
     fetchRequests();
   }, []);
 
@@ -190,33 +140,28 @@ const UnblockRequestsPage: React.FC = () => {
 
   const confirmAction = async () => {
     try {
+      let res;
       if (actionType === 'unblock') {
-        // API call to unblock user
-        console.log('Unblocking user:', actionUserId);
-        
-        // Update local state
-        setRequests(prev => 
-          prev.map(r => 
-            r.userId === actionUserId 
-              ? { ...r, status: 'unblocked' as const }
-              : r
-          )
-        );
+        res = await fetch('/api/admin/unblock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: actionUserId }),
+        });
       } else if (actionType === 'block') {
-        // API call to block user
-        console.log('Blocking user:', actionUserId);
-        
-        // Update local state
-        setRequests(prev => 
-          prev.map(r => 
-            r.userId === actionUserId 
-              ? { ...r, status: 'blocked' as const }
-              : r
-          )
-        );
+        res = await fetch('/api/admin/block', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: actionUserId }),
+        });
       }
+      // Optionally, show a notification here if needed
+      // e.g., use a different notification system or UI feedback
+      // Refresh requests
+      const reqRes = await fetch('/api/admin/unblock-request');
+      const data = await reqRes.json();
+      setRequests(data.requests || []);
     } catch (error) {
-      console.error('Failed to perform action:', error);
+      // Optionally, show a notification here if needed
     } finally {
       setIsAlertDialogOpen(false);
       setActionType(null);
@@ -238,35 +183,16 @@ const UnblockRequestsPage: React.FC = () => {
   const getSelectedFilterDisplay = () => {
     switch (selectedStatusFilter) {
       case 'blocked':
-        return { text: 'Blocked', icon: <UserX className="w-4 h-4 text-red-500" /> };
+        return { icon: <UserX className="w-4 h-4 text-red-500" />, text: 'Blocked' };
       case 'unblocked':
-        return { text: 'Unblocked', icon: <UserCheck className="w-4 h-4 text-green-500" /> };
+        return { icon: <UserCheck className="w-4 h-4 text-green-500" />, text: 'Unblocked' };
       default:
-        return { text: 'All Status', icon: <AlertTriangle className="w-4 h-4" /> };
+        return { icon: <AlertTriangle className="w-4 h-4" />, text: 'All Status' };
     }
   };
 
-  // Define columns for the data table (Priority column removed)
+  // Define columns
   const columns: ColumnDef<UnblockRequest>[] = [
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.getValue("status") as string;
-        return (
-          <Badge 
-            variant={status === 'blocked' ? 'destructive' : 'default'}
-            className={
-              status === 'blocked' 
-                ? 'bg-red-100 text-red-700 border-red-200'
-                : 'bg-green-100 text-green-700 border-green-200'
-            }
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
-        );
-      },
-    },
     {
       accessorKey: "userName",
       header: ({ column }) => {
@@ -284,7 +210,7 @@ const UnblockRequestsPage: React.FC = () => {
         const request = row.original;
         return (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-medium">
+            <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
               {request.userName.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -296,22 +222,48 @@ const UnblockRequestsPage: React.FC = () => {
       },
     },
     {
-      accessorKey: "title",
-      header: "Title",
+      accessorKey: "message",
+      header: "Message",
       cell: ({ row }) => {
-        const request = row.original;
+        const message = row.getValue("message") as string;
         return (
-          <div className="cursor-pointer max-w-xs" onClick={() => handleView(request)}>
-            <div className="font-medium text-sm">{request.title}</div>
-            <div className="text-xs text-muted-foreground mt-1 truncate">
-              {request.reason.substring(0, 50)}...
-            </div>
+          <div className="max-w-xs">
+            <p className="truncate text-sm">
+              {message.length > 50 ? `${message.substring(0, 50)}...` : message}
+            </p>
           </div>
         );
       },
     },
     {
-      accessorKey: "requestDate",
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <Badge
+            variant={status === 'blocked' ? 'destructive' : 'default'}
+            className={
+              status === 'blocked'
+                ? 'bg-red-100 text-red-700 border-red-200'
+                : 'bg-green-100 text-green-700 border-green-200'
+            }
+          >
+            {status === 'blocked' ? 'Blocked' : 'Unblocked'}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "blockedReason",
+      header: "Blocked Reason",
+      cell: ({ row }) => {
+        const reason = row.getValue("blockedReason") as string;
+        return <span className="text-xs text-gray-700">{reason || '-'}</span>;
+      },
+    },
+    {
+      accessorKey: "date",
       header: ({ column }) => {
         return (
           <Button
@@ -324,10 +276,10 @@ const UnblockRequestsPage: React.FC = () => {
         )
       },
       cell: ({ row }) => {
-        const date = new Date(row.getValue("requestDate"));
+        const date = new Date(row.getValue("date"));
         return (
           <div className="flex flex-col gap-1 text-xs">
-            <span>{formatTimestamp(row.getValue("requestDate"))}</span>
+            <span>{formatTimestamp(row.getValue("date"))}</span>
             <span className="text-muted-foreground">{date.toLocaleDateString()}</span>
           </div>
         );
@@ -339,7 +291,6 @@ const UnblockRequestsPage: React.FC = () => {
       cell: ({ row }) => {
         const request = row.original;
         const isBlocked = request.status === 'blocked';
-        
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -355,23 +306,22 @@ const UnblockRequestsPage: React.FC = () => {
                 View Details
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {isBlocked ? (
-                <DropdownMenuItem 
-                  onClick={() => handleUnblock(request.userId)} 
-                  className='cursor-pointer text-green-600'
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Unblock User
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem 
-                  onClick={() => handleBlock(request.userId)}
-                  className="text-red-600 cursor-pointer"
-                >
-                  <ShieldOff className="w-4 h-4 mr-2" />
-                  Block User
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem
+                onClick={() => handleUnblock(request.userId)}
+                className='cursor-pointer text-green-600'
+                disabled={request.status === 'unblocked'}
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                {request.status === 'unblocked' ? 'Already Unblocked' : 'Unblock User'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleBlock(request.userId)}
+                className="text-red-600 cursor-pointer"
+                disabled={request.status === 'blocked'}
+              >
+                <ShieldOff className="w-4 h-4 mr-2" />
+                {request.status === 'blocked' ? 'Already Blocked' : 'Block User'}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -589,7 +539,7 @@ const UnblockRequestsPage: React.FC = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <UserX className="w-5 h-5 text-red-600" />
-                {selectedRequest?.title}
+                Unblock Request
                 <Badge 
                   variant={selectedRequest?.status === 'blocked' ? 'destructive' : 'default'}
                   className={
@@ -602,91 +552,81 @@ const UnblockRequestsPage: React.FC = () => {
                 </Badge>
               </DialogTitle>
               <DialogDescription>
-                User: {selectedRequest?.userName} • {selectedRequest && formatTimestamp(selectedRequest.requestDate)}
+                User: {selectedRequest?.userName} • {selectedRequest && formatTimestamp(selectedRequest.date)}
               </DialogDescription>
             </DialogHeader>
-            <div className="mt-4 space-y-4">
-              {/* User Info */}
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-medium text-lg">
-                  {selectedRequest?.userName.charAt(0).toUpperCase()}
+            
+            {selectedRequest && (
+              <div className="space-y-4">
+                {/* User Info */}
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-medium text-lg">
+                    {selectedRequest.userName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-medium text-lg">{selectedRequest.userName}</div>
+                    <div className="text-sm text-muted-foreground">{selectedRequest.userEmail}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-medium text-lg">{selectedRequest?.userName}</div>
-                  <div className="text-sm text-muted-foreground">{selectedRequest?.userEmail}</div>
-                </div>
-              </div>
 
-              {/* Block Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium text-sm text-gray-600 mb-2">Block Date</h4>
-                  <p className="text-sm">{selectedRequest && new Date(selectedRequest.blockDate).toLocaleString()}</p>
+                {/* Block Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="font-medium text-sm text-gray-600 mb-2">Request Date</h4>
+                    <p className="text-sm">{new Date(selectedRequest.date).toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="font-medium text-sm text-gray-600 mb-2">Blocked Reason</h4>
+                    <p className="text-sm">{selectedRequest.blockedReason}</p>
+                  </div>
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium text-sm text-gray-600 mb-2">Block Reason</h4>
-                  <p className="text-sm">{selectedRequest?.blockReason}</p>
-                </div>
-              </div>
 
-              {/* Request Details */}
-              <div className="space-y-3">
-                <h4 className="font-medium">Details:</h4>
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-gray-700 leading-relaxed">
-                    {selectedRequest?.reason}
-                  </p>
-                </div>
-              </div>
-
-              {/* Admin Notes */}
-              {selectedRequest?.adminNotes && (
+                {/* Request Details */}
                 <div className="space-y-3">
-                  <h4 className="font-medium">Admin Notes:</h4>
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <h4 className="font-medium">Request Message:</h4>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-gray-700 leading-relaxed">
-                      {selectedRequest.adminNotes}
+                      {selectedRequest.message}
                     </p>
                   </div>
                 </div>
-              )}
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4">
-                {selectedRequest?.status === 'blocked' ? (
-                  <Button 
+                {/* Actions */}
+                <div className="flex gap-3 pt-4">
+                  <Button
                     onClick={() => handleUnblock(selectedRequest.userId)}
                     className="bg-green-600 hover:bg-green-700"
+                    disabled={selectedRequest.status === 'unblocked'}
                   >
                     <Shield className="w-4 h-4 mr-2" />
-                    Unblock User
+                    {selectedRequest.status === 'unblocked' ? 'Already Unblocked' : 'Unblock User'}
                   </Button>
-                ) : (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    onClick={() => handleBlock(selectedRequest.userId)}
+                    variant="outline"
                     className="border-red-200 text-red-600 hover:bg-red-50"
+                    disabled={selectedRequest.status === 'blocked'}
                   >
                     <ShieldOff className="w-4 h-4 mr-2" />
-                    Block User
+                    {selectedRequest.status === 'blocked' ? 'Already Blocked' : 'Block User'}
                   </Button>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </DialogContent>
         </Dialog>
 
-        {/* Confirmation Alert Dialog */}
+        {/* Alert Dialog */}
         <AlertDialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>
+              <AlertDialogTitle className="text-lg font-medium">
                 {actionType === 'unblock' ? 'Unblock User' : 'Block User'}
               </AlertDialogTitle>
-              <AlertDialogDescription>
-                {actionType === 'unblock' 
-                  ? 'Are you sure you want to unblock this user? They will regain full access to the platform.'
-                  : 'Are you sure you want to block this user? They will lose access to the platform.'
-                }
+              <AlertDialogDescription className="text-sm text-muted-foreground">
+                {actionType === 'unblock'
+                  ? 'Are you sure you want to unblock this user?'
+                  : 'Are you sure you want to block this user?'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

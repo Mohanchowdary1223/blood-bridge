@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IDonor extends Document {
+  role: 'donor' | 'blocked';
   userId: mongoose.Types.ObjectId;
   email: string;
   name: string;
@@ -19,6 +20,7 @@ export interface IDonor extends Document {
 }
 
 const DonorSchema: Schema<IDonor> = new Schema({
+  role: { type: String, enum: ['donor', 'blocked'], default: 'donor' },
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
   email: { type: String, required: true },
   name: { type: String, required: true },
