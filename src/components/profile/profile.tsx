@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { IUser as ImportedIUser } from '@/models/User';
-import { ArrowLeft, User, Mail, Phone, Droplet, Calendar, Weight, Ruler, MapPin, Edit, Save, X, Heart } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Droplet, Calendar, Weight, Ruler, MapPin, Edit, Save, X, Heart, Calendar as CalendarIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
 import { Button } from '@/components/ui/button';
@@ -80,6 +80,20 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+
+  // Auto-hide success/error messages after 5 seconds (DonorProfileDetails)
+  useEffect(() => {
+    if (msg) {
+      const timer = setTimeout(() => setMsg(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [msg]);
+  useEffect(() => {
+    if (err) {
+      const timer = setTimeout(() => setErr(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [err]);
   const [countries, setCountries] = useState<ICountry[]>([]);
   const [states, setStates] = useState<IState[]>([]);
   const [cities, setCities] = useState<ICity[]>([]);
@@ -92,6 +106,13 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
     totalLivesSaved: 0,
     totalUnits: 0
   });
+
+  // NEW: Schedule Donation Dialog state
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduleErr, setScheduleErr] = useState('');
+  const [scheduleSuccess, setScheduleSuccess] = useState('');
+  const [scheduledDateFromDb, setScheduledDateFromDb] = useState<string | null>(null);
 
   useEffect(() => {
     setCountries(Country.getAllCountries());
@@ -137,6 +158,12 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
             city: data.donor.city || '',
             isAvailable: data.donor.isAvailable,
           }));
+          // Update main user object with backend bloodType if different
+          if (data.donor.bloodType && data.donor.bloodType !== user.bloodType) {
+            const updatedUser = { ...user, bloodType: data.donor.bloodType } as IUser;
+            onUserUpdate(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
         }
       } catch (error) {
         console.error('Failed to fetch donor data:', error);
@@ -255,6 +282,58 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
     }
   };
 
+  // --- SCHEDULE DONATION LOGIC (NEW) ---
+  // Only allow future dates (not today or before)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isValidFutureDate = (dateStr: string) => {
+    if (!dateStr) return false;
+    const selected = new Date(dateStr);
+    const now = new Date();
+    // Only true if strictly greater than today
+    return selected.setHours(0,0,0,0) > now.setHours(0,0,0,0);
+  };
+
+  // Fetch scheduled date from new backend on mount
+  useEffect(() => {
+    const fetchScheduled = async () => {
+      if (!user._id) return;
+      try {
+        const res = await fetch(`/api/donorscheduledonation?userId=${user._id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.schedule && data.schedule.scheduledDate) {
+            setScheduledDateFromDb(data.schedule.scheduledDate.split('T')[0]);
+          } else {
+            setScheduledDateFromDb(null);
+          }
+        }
+      } catch {}
+    };
+    fetchScheduled();
+  }, [user._id]);
+
+  const handleSchedule = async () => {
+    setScheduleErr('');
+    setScheduleSuccess('');
+    if (!isValidFutureDate(scheduledDate)) {
+      setScheduleErr('Please pick a valid future date.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/donorscheduledonation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user._id, scheduledDate })
+      });
+      if (!res.ok) throw new Error('Failed to schedule');
+      setScheduleSuccess('Donation scheduled for ' + scheduledDate + '.');
+      setScheduledDateFromDb(scheduledDate);
+      setShowScheduleDialog(false);
+    } catch {
+      setScheduleErr('Failed to schedule. Try again.');
+    }
+  };
+
   const router = useRouter();
 
   const getCountryCode = (countryIso: string) => {
@@ -270,7 +349,8 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
         variant="ghost"
         size="icon"
         onClick={() => router.push('/home')}
-        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        className="fixed top-16 md:top-24 left-2 md:left-2 h-10 md:h-10 w-10 md:w-10 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        aria-label="Back to Home"
       >
         <ArrowLeft className="h-5 w-5 text-gray-700" />
       </Button>
@@ -290,7 +370,6 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                 <p className="text-red-700 mb-4">
                   You've made {donationStats.totalDonations} donation{donationStats.totalDonations !== 1 ? 's' : ''} and potentially saved {donationStats.totalLivesSaved} lives!
                 </p>
-                
                 {/* Statistics Grid */}
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="text-center">
@@ -306,7 +385,6 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
                     <div className="text-sm text-blue-700">Units</div>
                   </div>
                 </div>
-                
               </div>
             </div>
           </CardContent>
@@ -318,8 +396,8 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-gradient-to-r text-xl text-white from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                    {user.name.slice(0,1).toUpperCase()}
                   </div>
                   <div>
                     <CardTitle className="text-2xl font-bold text-foreground">{user.name.slice(0, 1).toUpperCase()}{user.name.slice(1)}</CardTitle>
@@ -636,6 +714,88 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
               </div>
             </div>
 
+            {/* --- SCHEDULED DONATION DISPLAY & UPDATE --- */}
+            {(donorData?.isAvailable !== true) && (
+              <div className="col-span-1 md:col-span-2 space-y-3">
+                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4" />
+                  Scheduled Donation Date
+                </Label>
+                {!editMode && (
+                  <div className={`h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center font-semibold text-blue-700 gap-3`}>
+                    {scheduledDateFromDb ? (
+                      <>
+                        {scheduledDateFromDb}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="ml-2 px-2 py-1 text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
+                          onClick={() => {
+                            setScheduledDate('');
+                            setShowScheduleDialog(true);
+                            setScheduleErr('');
+                            setScheduleSuccess('');
+                          }}
+                        >
+                          Update
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        className="bg-red-500 cursor-pointer hover:bg-red-600 text-white flex items-center gap-2"
+                        onClick={() => {
+                          setScheduledDate('');
+                          setShowScheduleDialog(true);
+                          setScheduleErr('');
+                          setScheduleSuccess('');
+                        }}
+                      >
+                        <CalendarIcon className="w-4 h-4" />
+                        Schedule Donation
+                      </Button>
+                    )}
+                  </div>
+                )}
+                {/* POPUP MODAL */}
+                {showScheduleDialog && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+                    <div className="bg-white rounded-lg p-6 space-y-6 shadow-xl w-[90vw] max-w-sm">
+                      <div className="flex items-center gap-2 mb-4">
+                        <CalendarIcon className="w-5 h-5 text-red-500" />
+                        <span className="font-semibold text-lg">Schedule Your Donation</span>
+                      </div>
+                      <p className="text-gray-600 text-sm">Pick a date in future to schedule your next blood donation.</p>
+                      <Input
+                        type="date"
+                        min={todayStr}
+                        value={scheduledDate}
+                        onChange={e => setScheduledDate(e.target.value)}
+                        className="h-12 border-gray-200"
+                      />
+                      {scheduleErr && <div className="text-red-600 text-sm font-medium">{scheduleErr}</div>}
+                      {scheduleSuccess && <div className="text-green-600 text-sm font-medium">{scheduleSuccess}</div>}
+                      <div className="flex gap-3 mt-6 items-center justify-center">
+                        <Button
+                          className="bg-red-500 text-white cursor-pointer"
+                          onClick={handleSchedule}
+                        >
+                          Confirm
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowScheduleDialog(false)}
+                          className='cursor-pointer'
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* --- END schedule --- */}
+
             {/* Edit Mode Action Buttons */}
             {editMode && (
               <div className="flex flex-row  gap-4 pt-6 border-t justify-center items-center">
@@ -684,6 +844,20 @@ export const UserProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUser
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+
+  // Auto-hide success/error messages after 5 seconds (UserProfileDetails)
+  useEffect(() => {
+    if (msg) {
+      const timer = setTimeout(() => setMsg(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [msg]);
+  useEffect(() => {
+    if (err) {
+      const timer = setTimeout(() => setErr(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [err]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
@@ -889,55 +1063,55 @@ export const UserProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUser
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
 
-        {/* Signup Reason Card */}
-        <Card className="border-0 bg-white/95 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-foreground">Signup Information</CardTitle>
-            <CardDescription>
-              Your reason for joining BloodBridge community
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="signupReason" className="text-sm font-medium text-gray-700">
-                Why did you sign up?
-              </Label>
-              <Select
-                value={signupReason}
-                onValueChange={handleSignupReasonChange}
-                disabled={editMode || loading}
-              >
-                <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 cursor-pointer">
-                  <SelectValue placeholder="Select your reason" />
-                </SelectTrigger>
-                <SelectContent>
-                  {signupReasons.map((reason) => (
-                    <SelectItem key={reason.value} value={reason.value} className="cursor-pointer">
-                      {reason.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!editMode && (
-                <Button
-                  onClick={handleSave}
-                  className="mt-3 bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      <span>Saving...</span>
-                    </div>
-                  ) : (
-                    'Update Signup Reason'
+            {/* Signup Reason Card */}
+            <Card className="border-0 bg-white/95 backdrop-blur-sm mt-6">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-foreground">Signup Information</CardTitle>
+                <CardDescription>
+                  Your reason for joining BloodBridge community
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="signupReason" className="text-sm font-medium text-gray-700">
+                    Why did you sign up?
+                  </Label>
+                  <Select
+                    value={signupReason}
+                    onValueChange={handleSignupReasonChange}
+                    disabled={editMode || loading}
+                  >
+                    <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 cursor-pointer">
+                      <SelectValue placeholder="Select your reason" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {signupReasons.map((reason) => (
+                        <SelectItem key={reason.value} value={reason.value} className="cursor-pointer">
+                          {reason.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!editMode && (
+                    <Button
+                      onClick={handleSave}
+                      className="mt-3 bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                          <span>Saving...</span>
+                        </div>
+                      ) : (
+                        'Update Signup Reason'
+                      )}
+                    </Button>
                   )}
-                </Button>
-              )}
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </CardContent>
         </Card>
       </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -67,10 +68,9 @@ interface BackendNotification {
   content?: string;
   isStarred?: boolean;
 }
-
 interface NotificationItem {
   id: string;
-  type: 'vote' | 'report';
+  type: 'vote' | 'report' | 'admin-warning';
   title: string;
   description: string;
   sender: string;
@@ -99,11 +99,9 @@ const NotificationsPage: React.FC = () => {
 
   useEffect(() => {
     if (!userId) {
-      console.log('No userId found in localStorage');
       setIsLoading(false);
       return;
     }
-    
     const fetchNotifications = async () => {
       try {
         setIsLoading(true);
@@ -130,31 +128,30 @@ const NotificationsPage: React.FC = () => {
         const adminRes = await fetch(`/api/admin/sendreports?userId=${userId}`);
         const adminData = await adminRes.json();
         if (adminRes.ok && adminData.reports && Array.isArray(adminData.reports)) {
-          // Define an interface for admin report data
           interface AdminReport {
             _id: string;
             message: string;
             sentAt: string;
           }
-          
-                    const adminNotifications = adminData.reports.map((r: AdminReport) => ({
-                      id: r._id,
-                      type: 'admin-warning',
-                      title: 'Admin Warning',
-                      description: r.message,
-                      sender: 'Admin',
-                      senderAvatar: '',
-                      timestamp: r.sentAt,
-                      status: 'read',
-                      priority: 'high',
-                      content: r.message,
-                      isStarred: false
-                    }));
-          notifications = [...adminNotifications, ...notifications];
+          const adminNotifications = adminData.reports.map((r: AdminReport) => ({
+            id: r._id,
+            type: 'admin-warning',
+            title: 'Admin Warning',
+            description: r.message,
+            sender: 'Admin',
+            senderAvatar: '',
+            timestamp: r.sentAt,
+            status: 'unread', // always unread for admin messages
+            priority: 'high',
+            content: r.message,
+            isStarred: false
+          }));
+          notifications = [...notifications, ...adminNotifications];
         }
+        // sort in chronological order descending
+        notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setNotifications(notifications);
       } catch (error) {
-        console.error('Failed to fetch notifications:', error);
         setNotifications([]);
       } finally {
         setIsLoading(false);
@@ -163,35 +160,24 @@ const NotificationsPage: React.FC = () => {
     fetchNotifications();
   }, [userId]);
 
-  // Debug logging
-  console.log('Current state:', {
-    userId,
-    notificationsCount: notifications.length,
-    isLoading,
-    notifications: notifications.slice(0, 2) // First 2 notifications for debugging
-  });
-
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     if (diffInHours < 48) return 'Yesterday';
     return date.toLocaleDateString();
   };
 
-  // Format notification summary for display
   const formatNotificationSummary = (item: NotificationItem) => {
-    // If description contains 'from', extract the name after 'from'
+    if (item.type === 'admin-warning') return 'Admin Warning';
     if (item.type === 'vote' && item.description?.includes('from')) {
       return item.description;
     }
     if (item.type === 'report' && item.description?.includes('from')) {
       return item.description;
     }
-    // Fallback: show sender as is (should be user name if backend is correct)
     if (item.type === 'vote') {
       return `Vote of Thanks from ${item.sender}`;
     } else {
@@ -202,7 +188,7 @@ const NotificationsPage: React.FC = () => {
   // API functions
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch('/api/reportvotedata', {
+      await fetch('/api/reportvotedata', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -210,18 +196,11 @@ const NotificationsPage: React.FC = () => {
           updates: { status: 'read' }
         })
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to mark as read');
-      }
-    } catch (error) {
-      console.error('Failed to mark as read:', error);
-    }
+    } catch {}
   };
-
   const toggleStar = async (notificationId: string, isStarred: boolean) => {
     try {
-      const response = await fetch('/api/reportvotedata', {
+      await fetch('/api/reportvotedata', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -229,64 +208,45 @@ const NotificationsPage: React.FC = () => {
           updates: { isStarred: !isStarred }
         })
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update star status');
-      }
-    } catch (error) {
-      console.error('Failed to update star status:', error);
-    }
+    } catch {}
   };
-
   const deleteNotification = async (notificationId: string) => {
     try {
-      const response = await fetch(`/api/reportvotedata?notificationId=${notificationId}`, {
+      await fetch(`/api/reportvotedata?notificationId=${notificationId}`, {
         method: 'DELETE'
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete notification');
-      }
-    } catch (error) {
-      console.error('Failed to delete notification:', error);
-    }
+    } catch {}
   };
-
   // Handler functions
   const handleView = (item: NotificationItem) => {
     setSelectedItem(item);
     setIsDialogOpen(true);
-    
-    // Mark as read in database
-    if (item.status === 'unread') {
+    // Mark as read in database if not already read and not admin-warning (admin warning is handled as unread always visually)
+    if (item.status === 'unread' && item.type !== 'admin-warning') {
       markAsRead(item.id);
     }
-    
     // Update local state
     setNotifications(prev => 
-      prev.map(n => n.id === item.id ? { ...n, status: 'read' as const } : n)
+      prev.map(n => 
+        n.id === item.id
+          ? { ...n, status: n.type === 'admin-warning' ? 'unread' : 'read' }
+          : n
+      )
     );
   };
-
   const handleStar = (id: string) => {
     const notification = notifications.find(n => n.id === id);
     if (notification) {
       toggleStar(id, notification.isStarred || false);
     }
-    
-    // Update local state
     setNotifications(prev => 
       prev.map(n => n.id === id ? { ...n, isStarred: !n.isStarred } : n)
     );
   };
-
   const handleDelete = (id: string) => {
     deleteNotification(id);
-    
-    // Update local state
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
-
   // Type filter function
   const handleTypeFilter = (type: string) => {
     setSelectedTypeFilter(type);
@@ -304,7 +264,6 @@ const NotificationsPage: React.FC = () => {
       table.setGlobalFilter("");
     }
   };
-
   // Get display text and icon for selected filter
   const getSelectedFilterDisplay = () => {
     switch (selectedTypeFilter) {
@@ -330,11 +289,14 @@ const NotificationsPage: React.FC = () => {
         <div className="flex items-center justify-center">
           <div 
             className={`w-3 h-3 rounded-full ${
-              row.getValue("status") === 'unread' 
-                ? 'bg-red-500' 
-                : 'bg-gray-300'
+              // admin-warning is always red dot, like unread
+              row.original.type === 'admin-warning'
+                ? 'bg-red-500'
+                : row.getValue("status") === 'unread' 
+                  ? 'bg-red-500' 
+                  : 'bg-gray-300'
             }`}
-            title={row.getValue("status") === 'unread' ? 'Unread' : 'Read'}
+            title={row.getValue("status") === 'unread' || row.original.type === 'admin-warning' ? 'Unread' : 'Read'}
           />
         </div>
       ),
@@ -343,11 +305,15 @@ const NotificationsPage: React.FC = () => {
       accessorKey: "type",
       header: "Type",
       cell: ({ row }) => {
-        const type = row.getValue("type") as string;
+        const type = row.original.type;
         return (
           <div className="flex items-center justify-center">
             {type === 'vote' ? (
               <ThumbsUp className="w-5 h-5 text-blue-600" />
+            ) : type === 'admin-warning' ? (
+              <span title="Admin Warning">
+                <Bell className="w-5 h-5 text-red-600 animate-shake" />
+              </span>
             ) : (
               <Bell className="w-5 h-5 text-red-600" />
             )}
@@ -360,12 +326,15 @@ const NotificationsPage: React.FC = () => {
       header: "Notification",
       cell: ({ row }) => {
         const item = row.original;
-        const isRead = item.status === 'read';
-        
+        const isUnreadAdmin = item.type === 'admin-warning';
+        const isRead = item.status === 'read' && item.type !== 'admin-warning';
         return (
-          <div className="cursor-pointer" onClick={() => handleView(item)}>
+          <div 
+            className={`cursor-pointer ${isUnreadAdmin ? 'text-red-700 font-bold' : ''}`}
+            onClick={() => handleView(item)}
+          >
             <div className="flex items-center gap-2">
-              <span className={`text-sm font-medium ${isRead ? 'text-muted-foreground' : 'font-semibold text-foreground'}`}>
+              <span className={`text-sm font-medium ${isRead ? 'text-muted-foreground' : isUnreadAdmin ? 'font-bold text-red-700' : 'font-semibold text-foreground'}`}>
                 {formatNotificationSummary(item)}
               </span>
               {item.isStarred && (
@@ -391,10 +360,10 @@ const NotificationsPage: React.FC = () => {
       },
       cell: ({ row }) => {
         const date = new Date(row.getValue("timestamp"));
-        const isRead = row.original.status === 'read';
-        
+        const isRead = row.original.status === 'read' && row.original.type !== 'admin-warning';
+        const isUnreadAdmin = row.original.type === 'admin-warning';
         return (
-          <div className={`flex flex-col gap-1 text-xs ${isRead ? 'text-muted-foreground' : 'text-gray-500'}`}>
+          <div className={`flex flex-col gap-1 text-xs ${isRead ? 'text-muted-foreground' : isUnreadAdmin ? 'text-red-700' : 'text-gray-500'}`}>
             <span>{formatTimestamp(row.getValue("timestamp"))}</span>
             <span>{date.toLocaleString()}</span>
           </div>
@@ -455,7 +424,8 @@ const NotificationsPage: React.FC = () => {
         return row.original.isStarred === true;
       }
       if (filterValue === 'unread') {
-        return row.original.status === 'unread';
+        // admin-warning is always considered unread
+        return row.original.status === 'unread' || row.original.type === 'admin-warning';
       }
       return true;
     },
@@ -465,7 +435,7 @@ const NotificationsPage: React.FC = () => {
       columnVisibility,
       rowSelection,
     },
-  })
+  });
 
   // Render table body with loading state
   const renderTableBody = () => {
@@ -481,12 +451,17 @@ const NotificationsPage: React.FC = () => {
         </TableRow>
       );
     }
-
     if (table.getRowModel().rows?.length) {
       return table.getRowModel().rows.map((row) => (
         <TableRow
           key={row.id}
-          className={`${row.original.status === 'unread' ? 'bg-red-50/30' : ''} hover:bg-gray-50`}
+          className={
+            row.original.type === 'admin-warning'
+              ? 'bg-red-50/60 font-semibold'
+              : row.original.status === 'unread'
+                ? 'bg-red-50/30'
+                : 'hover:bg-gray-50'
+          }
         >
           {row.getVisibleCells().map((cell) => (
             <TableCell key={cell.id}>
@@ -499,7 +474,6 @@ const NotificationsPage: React.FC = () => {
         </TableRow>
       ));
     }
-
     return (
       <TableRow>
         <TableCell colSpan={columns.length} className="h-24 text-center">
@@ -507,11 +481,6 @@ const NotificationsPage: React.FC = () => {
           <p className="text-gray-500">
             {userId ? 'No notifications found' : 'Please log in to view notifications'}
           </p>
-          {process.env.NODE_ENV === 'development' && (
-            <p className="text-xs text-gray-400 mt-2">
-              Debug: userId = {userId || 'undefined'}
-            </p>
-          )}
         </TableCell>
       </TableRow>
     );
@@ -527,7 +496,8 @@ const NotificationsPage: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={() => router.push('/home')}
-          className="fixed top-14 md:top-24 left-2  h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+          className="fixed top-16 md:top-24 left-2 md:left-2 h-10 md:h-10 w-10 md:w-10 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+          aria-label="Back to Home"
         >
           <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
         </Button>
@@ -678,9 +648,11 @@ const NotificationsPage: React.FC = () => {
                 {selectedItem?.type === 'vote' ? (
                   <ThumbsUp className="w-5 h-5 text-blue-600" />
                 ) : (
-                  <Bell className="w-5 h-5 text-red-600" />
+                  <Bell className={`w-5 h-5 ${selectedItem?.type === 'admin-warning' ? 'text-red-600 animate-shake' : 'text-red-600'}`} />
                 )}
-                {selectedItem?.title}
+                <span className={selectedItem?.type === 'admin-warning' ? "text-red-700 font-bold" : ""}>
+                  {selectedItem?.title}
+                </span>
                 {selectedItem?.isStarred && (
                   <Star className="w-4 h-4 text-yellow-500 fill-current ml-2" />
                 )}
@@ -695,13 +667,15 @@ const NotificationsPage: React.FC = () => {
                   className={`text-xs capitalize ${
                     selectedItem?.type === 'report' 
                       ? 'bg-red-100 text-red-700 border-red-200' 
-                      : 'bg-blue-100 text-blue-700 border-blue-200'
+                      : selectedItem?.type === 'admin-warning'
+                        ? 'bg-red-100 text-red-700 border-red-200'
+                        : 'bg-blue-100 text-blue-700 border-blue-200'
                   }`}
                 >
-                  {selectedItem?.type}
+                  {selectedItem?.type === 'admin-warning' ? 'admin' : selectedItem?.type}
                 </Badge>
               </div>
-              <p className="text-gray-700 leading-relaxed">
+              <p className={`leading-relaxed ${selectedItem?.type === 'admin-warning' ? "text-red-800 font-bold" : "text-gray-700"}`}>
                 {selectedItem?.content || selectedItem?.description}
               </p>
             </div>

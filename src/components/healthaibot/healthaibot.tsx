@@ -53,7 +53,22 @@ interface ChatSession {
   createdAt: Date
 }
 
-const USER_ID = "demo-user" // Replace with real user id from auth/session
+
+// Get userId from localStorage (client-side only)
+function getUserIdFromLocalStorage(): string | null {
+  if (typeof window !== 'undefined') {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        return user.id || user._id || null;
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
 
 const HealthcareChatBotContent: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<ChatSession[]>([])
@@ -61,6 +76,7 @@ const HealthcareChatBotContent: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [inputMessage, setInputMessage] = useState("")
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null);
   const { open, openMobile, isMobile, setOpen, setOpenMobile } = useSidebar()
   const router = useRouter()
   
@@ -81,88 +97,84 @@ const HealthcareChatBotContent: React.FC = () => {
     scrollToBottom()
   }, [currentChat?.messages])
 
-  // Initialize with new chat when component mounts
+  // On mount, get userId and fetch chat history
   useEffect(() => {
+    const id = getUserIdFromLocalStorage();
+    setUserId(id);
+    if (!id) {
+      setChatHistory([]);
+      setCurrentChat(null);
+      return;
+    }
     const fetchHistory = async () => {
       try {
         const res = await fetch("/api/healthaibot", {
-          headers: { "x-user-id": USER_ID },
-        })
-        const data = await res.json()
-        setChatHistory(data.history || [])
-        // Always start with new chat when component loads
-        setCurrentChat(null)
+          headers: { "x-user-id": id },
+        });
+        const data = await res.json();
+        setChatHistory(data.history || []);
+        setCurrentChat(null);
       } catch (error) {
-        console.error("Failed to fetch chat history:", error)
-        // Even if fetch fails, start with new chat
-        setCurrentChat(null)
+        console.error("Failed to fetch chat history:", error);
+        setCurrentChat(null);
       }
-    }
-    fetchHistory()
-  }, [])
+    };
+    fetchHistory();
+  }, []);
 
   // Send message to backend
   const sendMessage = async () => {
-    if (!inputMessage.trim()) return
-    setLoading(true)
-    
+    if (!inputMessage.trim() || !userId) return;
+    setLoading(true);
     try {
-      const chatId = currentChat?._id
-      const title = currentChat?.title || inputMessage.slice(0, 30) + (inputMessage.length > 30 ? "…" : "")
-      
+      const chatId = currentChat?._id;
+      const title = currentChat?.title || inputMessage.slice(0, 30) + (inputMessage.length > 30 ? "…" : "");
       const res = await fetch("/api/healthaibot", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": USER_ID,
+          "x-user-id": userId,
         },
         body: JSON.stringify({ chatId, message: inputMessage, title }),
-      })
-      
-      const data = await res.json()
-      setInputMessage("")
-      
-      // Reset textarea height after sending
+      });
+      const data = await res.json();
+      setInputMessage("");
       if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto'
+        textareaRef.current.style.height = 'auto';
       }
-      
-      // Update chatHistory and currentChat
       if (chatId) {
-        setChatHistory((prev) => prev.map((c) => (c._id === chatId ? data.chat : c)))
-        setCurrentChat(data.chat)
+        setChatHistory((prev) => prev.map((c) => (c._id === chatId ? data.chat : c)));
+        setCurrentChat(data.chat);
       } else {
-        setChatHistory((prev) => [data.chat, ...prev])
-        setCurrentChat(data.chat)
+        setChatHistory((prev) => [data.chat, ...prev]);
+        setCurrentChat(data.chat);
       }
     } catch (error) {
-      console.error("Failed to send message:", error)
+      console.error("Failed to send message:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Delete chat from backend
   const deleteChat = async (id: string) => {
+    if (!userId) return;
     try {
       await fetch(`/api/healthaibot?id=${id}`, {
         method: "DELETE",
-        headers: { "x-user-id": USER_ID },
-      })
-      
-      setChatHistory((prev) => prev.filter((c) => c._id !== id))
-      
+        headers: { "x-user-id": userId },
+      });
+      setChatHistory((prev) => prev.filter((c) => c._id !== id));
       if (currentChat && currentChat._id === id) {
-        const remaining = chatHistory.filter((c) => c._id !== id)
-        setCurrentChat(remaining[0] ?? null)
+        const remaining = chatHistory.filter((c) => c._id !== id);
+        setCurrentChat(remaining[0] ?? null);
       }
-      
-      setShowDeleteSuccess(true)
-      setTimeout(() => setShowDeleteSuccess(false), 3000)
+      setShowDeleteSuccess(true);
+      setTimeout(() => setShowDeleteSuccess(false), 3000);
     } catch (error) {
-      console.error("Failed to delete chat:", error)
+      console.error("Failed to delete chat:", error);
     }
-  }
+  };
 
   // Helper function to close sidebar
   const closeSidebar = () => {

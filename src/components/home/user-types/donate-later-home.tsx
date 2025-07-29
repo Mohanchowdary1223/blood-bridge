@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { easeOut, motion } from 'framer-motion'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle
 } from '@/components/ui/card'
@@ -8,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Search, Heart, Share2, Droplets, ArrowRight, ArrowLeft, User,
-  Copy, Instagram, Mail, Check, Bot, Users, TrendingUp
+  Copy, Instagram, Mail, Check, Bot, Users, TrendingUp, ArrowUp
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -19,14 +20,30 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { FaWhatsapp } from 'react-icons/fa'
 
+// Animation variants
+const fadeInUpVariant = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } }
+}
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.2, delayChildren: 0.1 }
+  }
+}
+const scaleOnHover = {
+  hover: { scale: 1.05, transition: { duration: 0.2 } }
+}
+
 export default function DonateLaterHome() {
   const [userName, setUserName] = useState('User')
   const [bloodGroup, setBloodGroup] = useState('')
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [showScroll, setShowScroll] = useState(false)
   const router = useRouter()
 
-  /* ------------------------- Load user details ------------------------- */
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const userStr = localStorage.getItem('user')
@@ -40,19 +57,23 @@ export default function DonateLaterHome() {
     }
   }, [])
 
-  /* --------------------------- Navigation ------------------------------ */
+  useEffect(() => {
+    const handleScroll = () => setShowScroll(window.scrollY > 300)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+
   const handleSearchClick = () => router.push('/finddonor')
   const handleGuideClick = () => router.push('/healthaibot')
 
-  /* ------------------------- Share utilities --------------------------- */
+  // Share utilities
   const shareData = {
     title: 'BloodBridge - Save Lives Through Blood Donation',
     text:
       "Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone's story. You can also find donors near you when needed.",
     url: typeof window !== 'undefined' ? window.location.href : ''
   }
-
-  /* Copy link (keeps dropdown open) */
   const handleCopyLink = async () => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
@@ -61,7 +82,6 @@ export default function DonateLaterHome() {
         setTimeout(() => setCopyStatus('idle'), 3_000)
         return
       }
-      /* Fallback */
       const ta = document.createElement('textarea')
       ta.value = shareData.url
       ta.style.position = 'fixed'
@@ -76,24 +96,21 @@ export default function DonateLaterHome() {
       prompt('Copy this link:', shareData.url)
     }
   }
-
   const handleWhatsAppShare = () => {
     const msg = `${shareData.text}\n\n🔍 Find donors instantly\n❤️ Save up to 3 lives per donation\n🌟 Join our life-saving community\n\n${shareData.url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
   }
-
   const handleInstagramShare = () => {
     window.open('https://www.instagram.com/', '_blank')
     handleCopyLink()
   }
-
   const handleEmailShare = () => {
     const subject = encodeURIComponent(shareData.title)
     const body = encodeURIComponent(`${shareData.text}\n\n${shareData.url}`)
     window.location.href = `mailto:?subject=${subject}&body=${body}`
   }
 
-  /* -------------------- Blood compatibility helpers -------------------- */
+  // Blood compatibility logic
   type BloodType = 'O-' | 'O+' | 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+'
   type CompatibilityInfo = {
     canDonateTo: string[]
@@ -101,7 +118,6 @@ export default function DonateLaterHome() {
     donorType: string
     receiverType: string
   }
-
   const compatibilityMap: Record<BloodType, CompatibilityInfo> = {
     'O-': {
       canDonateTo: ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
@@ -154,16 +170,12 @@ export default function DonateLaterHome() {
       receiverType: 'Universal Receiver'
     }
   }
-
   const getBloodCompatibility = (type: string) =>
     compatibilityMap[type as BloodType] ?? null
-
   const compatibility =
     bloodGroup && !['unknown', "I don't know my blood type"].includes(bloodGroup)
       ? getBloodCompatibility(bloodGroup)
       : null
-
-  /* ------------------------------- UI ---------------------------------- */
   const isUnknown =
     !bloodGroup || ['unknown', "I don't know my blood type"].includes(bloodGroup)
 
@@ -171,7 +183,12 @@ export default function DonateLaterHome() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-8">
       <div className="container mx-auto px-6 max-w-6xl">
         {/* ---------- hero ---------- */}
-        <div className="text-center mb-12">
+        <motion.div
+          className="text-center mb-12"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUpVariant}
+        >
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">
               Hello
@@ -188,104 +205,134 @@ export default function DonateLaterHome() {
             Take your time! You can find donors now, register to donate when
             you're ready, or invite friends to join.
           </p>
-        </div>
+        </motion.div>
 
         {/* ---------- main actions (now 3 cards) ---------- */}
-        <div className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div
+          className="mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          variants={fadeInUpVariant}
+        >
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.2 }}
+          >
             {/* Find donors */}
-            <Card className="group border-0 hover:-translate-y-2 transition-all">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Search className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl">Find Donors</CardTitle>
-                <CardDescription>
-                  Search for blood donors in your area
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={handleSearchClick}
-                  className="w-full bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
-                >
-                  Find Donor
-                </Button>
-              </CardContent>
-            </Card>
+            <motion.div variants={fadeInUpVariant}>
+              <motion.div whileHover="hover" variants={scaleOnHover}>
+                <Card className="group border-0 hover:-translate-y-2 transition-all">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                      <Search className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">Find Donors</CardTitle>
+                    <CardDescription>
+                      Connect with verified blood donors in your local area and request immediate assistance
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={handleSearchClick}
+                      className="w-full bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
+                    >
+                      Find Donor
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
 
             {/* Register to donate */}
-            <Card className="group border-0 hover:-translate-y-2 transition-all">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Heart className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl">Donate Blood</CardTitle>
-                <CardDescription>
-                  Register to donate blood when you're ready
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={() => router.push('/donorform')}
-                  className="w-full bg-green-500 cursor-pointer hover:bg-green-600 text-white font-semibold py-2 rounded-lg"
-                >
-                  Register to Donate
-                </Button>
-              </CardContent>
-            </Card>
+            <motion.div variants={fadeInUpVariant}>
+              <motion.div whileHover="hover" variants={scaleOnHover}>
+                <Card className="group border-0 hover:-translate-y-2 transition-all">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                      <Heart className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">Donate Blood</CardTitle>
+                    <CardDescription>
+                      Join our community of life-savers and register to become a verified blood donor today
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={() => router.push('/donorform')}
+                      className="w-full bg-green-500 cursor-pointer hover:bg-green-600 text-white font-semibold py-2 rounded-lg"
+                    >
+                      Register to Donate
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
 
             {/* Health Guide */}
-            <Card className="group border-0 hover:-translate-y-2 transition-all">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Bot className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl">Health Assistant</CardTitle>
-                <CardDescription>
-                  Get personalized health guidance and donation recovery tips from our smart chatbot
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={handleGuideClick}
-                  className="w-full bg-primary cursor-pointer hover:bg-primary/80 text-white font-semibold py-2 rounded-lg"
-                >
-                  Health Assistant
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+            <motion.div variants={fadeInUpVariant}>
+              <motion.div whileHover="hover" variants={scaleOnHover}>
+                <Card className="group border-0 hover:-translate-y-2 transition-all">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                      <Bot className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">Health Assistant</CardTitle>
+                    <CardDescription>
+                      Get personalized health guidance and donation recovery tips from our intelligent chatbot
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={handleGuideClick}
+                      className="w-full bg-primary cursor-pointer hover:bg-primary/80 text-white font-semibold py-2 rounded-lg"
+                    >
+                      Health Assistant
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
         {/* ---------- compatibility ---------- */}
-        <div className="mb-12">
+        <motion.div
+          className="mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          variants={fadeInUpVariant}
+        >
           {isUnknown ? (
-            /* ask to update profile */
-            <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 max-w-2xl mx-auto">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl">Update Your Profile</CardTitle>
-                <CardDescription>
-                  Add your blood type to see compatibility information
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={() => router.push('/profile')}
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2"
-                >
-                  <User className="w-4 h-4" />
-                  Update Profile
-                </Button>
-              </CardContent>
-            </Card>
+            <motion.div variants={fadeInUpVariant}>
+              <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-50 max-w-2xl mx-auto">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="w-8 h-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl">Update Your Profile</CardTitle>
+                  <CardDescription>
+                    Add your blood type to see compatibility information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => router.push('/profile')}
+                    className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    Update Profile
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           ) : (
-            /* show compatibility */
             <>
-              <div className="text-center mb-8">
+              <motion.div className="text-center mb-8" variants={fadeInUpVariant}>
                 <h3 className="text-2xl font-bold mb-2">
                   Your Blood Type: {bloodGroup}
                 </h3>
@@ -297,57 +344,66 @@ export default function DonateLaterHome() {
                     {compatibility?.receiverType}
                   </Badge>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              </motion.div>
+              <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-6" variants={staggerContainer}>
                 {/* donate to */}
-                <Card className="border-0 bg-gradient-to-br from-red-50 to-pink-50">
-                  <CardHeader className="text-center pb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <ArrowRight className="w-6 h-6 text-white" />
-                    </div>
-                    <CardTitle>You Can Donate To</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {compatibility?.canDonateTo.map(type => (
-                        <Badge
-                          key={type}
-                          className="bg-red-100 text-red-700 border-red-200 px-3 py-1"
-                        >
-                          {type}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
+                <motion.div variants={fadeInUpVariant}>
+                  <Card className="border-0 bg-gradient-to-br from-red-50 to-pink-50">
+                    <CardHeader className="text-center pb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <ArrowRight className="w-6 h-6 text-white" />
+                      </div>
+                      <CardTitle>You Can Donate To</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {compatibility?.canDonateTo.map(type => (
+                          <Badge
+                            key={type}
+                            className="bg-red-100 text-red-700 border-red-200 px-3 py-1"
+                          >
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
                 {/* receive from */}
-                <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
-                  <CardHeader className="text-center pb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <ArrowLeft className="w-6 h-6 text-white" />
-                    </div>
-                    <CardTitle>You Can Receive From</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {compatibility?.canReceiveFrom.map(type => (
-                        <Badge
-                          key={type}
-                          className="bg-green-100 text-green-700 border-green-200 px-3 py-1"
-                        >
-                          {type}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                <motion.div variants={fadeInUpVariant}>
+                  <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
+                    <CardHeader className="text-center pb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <ArrowLeft className="w-6 h-6 text-white" />
+                      </div>
+                      <CardTitle>You Can Receive From</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {compatibility?.canReceiveFrom.map(type => (
+                          <Badge
+                            key={type}
+                            className="bg-green-100 text-green-700 border-green-200 px-3 py-1"
+                          >
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
             </>
           )}
-        </div>
-        <div className="mb-12">
+        </motion.div>
+
+        <motion.div
+          className="mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          variants={fadeInUpVariant}
+        >
           <Card className="border-0 bg-gradient-to-br from-red-50 to-orange-50">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
@@ -359,39 +415,35 @@ export default function DonateLaterHome() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6" variants={staggerContainer}>
                 {/* Lives Saved */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-red-100">
+                <motion.div className="text-center p-6 bg-white/70 rounded-xl border border-red-100" variants={fadeInUpVariant}>
                   <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Users className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-red-600 mb-2">3</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Lives Saved</p>
                   <p className="text-xs text-gray-600">Per donation</p>
-                </div>
-
+                </motion.div>
                 {/* Blood Demand */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-orange-100">
+                <motion.div className="text-center p-6 bg-white/70 rounded-xl border border-orange-100" variants={fadeInUpVariant}>
                   <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <TrendingUp className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-orange-600 mb-2">38%</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Population Eligible</p>
                   <p className="text-xs text-gray-600">To donate blood</p>
-                </div>
-
+                </motion.div>
                 {/* Critical Need */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-purple-100">
+                <motion.div className="text-center p-6 bg-white/70 rounded-xl border border-purple-100" variants={fadeInUpVariant}>
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Droplets className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-purple-600 mb-2">5%</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Actually Donate</p>
                   <p className="text-xs text-gray-600">Of eligible donors</p>
-                </div>
-              </div>
-
-              {/* Additional Info */}
+                </motion.div>
+              </motion.div>
               <div className="mt-6 p-4 bg-gradient-to-r from-red-100 to-orange-100 rounded-lg">
                 <div className="flex items-center gap-3 mb-3">
                   <Heart className="w-5 h-5 text-red-600" />
@@ -418,9 +470,16 @@ export default function DonateLaterHome() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
+
         {/* ---------- share section ---------- */}
-        <div className="mb-12">
+        <motion.div
+          className="mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          variants={fadeInUpVariant}
+        >
           <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -436,7 +495,6 @@ export default function DonateLaterHome() {
                     </p>
                   </div>
                 </div>
-
                 {/* dropdown trigger */}
                 <DropdownMenu
                   open={isDropdownOpen}
@@ -448,9 +506,7 @@ export default function DonateLaterHome() {
                       Share BloodBridge
                     </Button>
                   </DropdownMenuTrigger>
-
                   <DropdownMenuContent align="end" className="w-auto p-2">
-                    {/* row of icons */}
                     <div className="flex gap-2">
                       <DropdownMenuItem
                         onClick={handleWhatsAppShare}
@@ -459,7 +515,6 @@ export default function DonateLaterHome() {
                       >
                         <FaWhatsapp className="w-5 h-5 text-green-600" />
                       </DropdownMenuItem>
-
                       <DropdownMenuItem
                         onClick={handleInstagramShare}
                         className="p-3 hover:bg-gray-100 rounded flex items-center justify-center"
@@ -467,7 +522,6 @@ export default function DonateLaterHome() {
                       >
                         <Instagram className="w-5 h-5 text-pink-600" />
                       </DropdownMenuItem>
-
                       <DropdownMenuItem
                         onClick={handleEmailShare}
                         className="p-3 hover:bg-gray-100 rounded flex items-center justify-center"
@@ -476,9 +530,7 @@ export default function DonateLaterHome() {
                         <Mail className="w-5 h-5 text-blue-600" />
                       </DropdownMenuItem>
                     </div>
-
                     <DropdownMenuSeparator />
-
                     <DropdownMenuItem
                       onSelect={e => {
                         e.preventDefault()
@@ -500,11 +552,17 @@ export default function DonateLaterHome() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </div>
 
       {/* ---------- footer ---------- */}
-      <footer className="bg-muted mt-16">
+      <motion.footer
+        className="bg-muted mt-16"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.2 }}
+        variants={fadeInUpVariant}
+      >
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="space-y-4">
@@ -519,7 +577,6 @@ export default function DonateLaterHome() {
                 one donation at a time.
               </p>
             </div>
-
             <div className="space-y-4">
               <h3 className="text-xl font-bold">Quick Links</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -546,7 +603,6 @@ export default function DonateLaterHome() {
                     </Button>
                   </li>
                 </ul>
-
                 {/* Right Column */}
                 <ul className="space-y-2">
                   <li>
@@ -582,7 +638,6 @@ export default function DonateLaterHome() {
                 </li>
               </ul>
             </div>
-
             <div className="space-y-4">
               <h3 className="text-xl font-bold">Contact Info</h3>
               <ul className="space-y-2 text-muted-foreground">
@@ -609,7 +664,6 @@ export default function DonateLaterHome() {
               </ul>
             </div>
           </div>
-
           <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
             <p>
               &copy; {new Date().getFullYear()} BloodBridge. All rights
@@ -617,17 +671,40 @@ export default function DonateLaterHome() {
             </p>
           </div>
         </div>
-      </footer>
+      </motion.footer>
 
       {/* Fixed Health Guide Button */}
-      <Button
-        onClick={handleGuideClick}
-        size="icon"
-        className="fixed bottom-8 right-4 w-12 h-12 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
-        title="Health Assistant"
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 1, duration: 0.3 }}
       >
-        <Bot className="w-10 h-10 text-white" />
-      </Button>
+        <Button
+          onClick={handleGuideClick}
+          size="icon"
+          className="fixed bottom-16 right-4 w-12 h-12 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
+          title="Health Assistant"
+        >
+          <Bot className="w-10 h-10 text-white" />
+        </Button>
+      </motion.div>
+      {/* Scroll to Top */}
+      {showScroll && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Button
+            onClick={scrollToTop}
+            size="icon"
+            className="fixed bottom-4 right-4 rounded-full hover:scale-110 transition-all z-50 bg-red-500 hover:bg-red-600 cursor-pointer"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </Button>
+        </motion.div>
+      )}
     </div>
   )
 }

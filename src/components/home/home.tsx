@@ -2,7 +2,8 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { Search, BarChart3, Bot, Droplets, Share2, ArrowRight, ArrowLeft, Copy, Instagram, Mail, Check, Users, Heart, TrendingUp } from 'lucide-react';
+import { easeOut, motion } from 'framer-motion'
+import { Search, BarChart3, Bot, Droplets, Share2, ArrowRight, ArrowLeft, Copy, Instagram, Mail, Check, Users, Heart, TrendingUp, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,20 +16,49 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { FaWhatsapp } from 'react-icons/fa'
 
-
 interface HomeComponentProps {
   hideRecentActivity?: boolean;
 }
 
+// Animation variants - Fixed
+const fadeInUpVariant = {
+   hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: 0.6,
+      ease: easeOut // Cubic Bezier easing equivalent to "easeOut"
+    } 
+  }
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.1
+    }
+  }
+}
+
+const scaleOnHover = {
+  hover: { 
+    scale: 1.05,
+    transition: { duration: 0.2 }
+  }
+}
 
 const HomeComponent: React.FC<HomeComponentProps> = () => {
   const router = useRouter()
-
 
   const [userName, setUserName] = useState('User');
   const [bloodGroup, setBloodGroup] = useState('O+');
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [showScroll, setShowScroll] = useState<boolean>(false)
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -48,21 +78,29 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const handleScroll = (): void => {
+      setShowScroll(window.scrollY > 300)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = (): void => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const handleSearchClick = () => {
     router.push('/finddonor')
   }
 
-
   const handleStatsClick = () => {
     router.push('/trackimpact')
   }
 
-
   const handleGuideClick = () => {
     router.push('/healthaibot')
   }
-
 
   // Share data
   const shareData = {
@@ -70,7 +108,6 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
     text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story. You can also find donors near you when needed.',
     url: typeof window !== 'undefined' ? window.location.href : '',
   };
-
 
   // Copy to clipboard function that prevents dropdown closing
   const handleCopyLink = async () => {
@@ -81,7 +118,6 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
         setTimeout(() => setCopyStatus('idle'), 3000);
         return;
       }
-
 
       const textArea = document.createElement('textarea');
       textArea.value = shareData.url;
@@ -107,7 +143,6 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
     }
   };
 
-
   const handleWhatsAppShare = () => {
     const enhancedText = `${shareData.text}\n\n🔍 Find donors instantly\n❤️ Save up to 3 lives per donation\n🌟 Join our life-saving community`;
     const encodedText = encodeURIComponent(`${enhancedText}\n\n${shareData.url}`);
@@ -115,12 +150,10 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
     window.open(whatsappUrl, '_blank');
   };
 
-
   const handleInstagramShare = () => {
     window.open('https://www.instagram.com/', '_blank');
     handleCopyLink();
   };
-
 
   const handleEmailShare = () => {
     const subject = encodeURIComponent(shareData.title);
@@ -128,7 +161,6 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
     const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
     window.location.href = mailtoUrl;
   };
-
 
   // Blood compatibility logic
   type BloodType = 'O-' | 'O+' | 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+';
@@ -190,7 +222,6 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
     }
   };
 
-
   const getBloodCompatibility = (bloodType: string): CompatibilityInfo | null => {
     if (!bloodType || typeof bloodType !== 'string') {
       return null;
@@ -201,22 +232,35 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
     return null;
   };
 
-
   const compatibility = getBloodCompatibility(bloodGroup);
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-8">
       <div className="container mx-auto px-6 max-w-6xl">
         {/* Welcome Section */}
-        <div className="text-center mb-12">
-          <div className="mb-6">
+        <motion.div 
+          className="text-center mb-12"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUpVariant}
+        >
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <h2 className="text-4xl md:text-5xl font-bold mb-2">
               <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">Hello</span>{" "}
               <span className="text-foreground">{userName.slice(0, 1).toUpperCase()}{userName.slice(1)},</span>
             </h2>
-          </div>
-          <div className="space-y-4">
+          </motion.div>
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             <Badge className="bg-red-50 text-red-600 border-red-200 px-4 py-2">
               <Droplets className="w-4 h-4 mr-2" />
               BloodBridge Community
@@ -224,80 +268,111 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Your one-stop platform for blood donation and management. Make a difference today.
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
+        {/* Action Cards */}
+        <motion.div 
+          className="mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          variants={fadeInUpVariant}
+        >
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.2 }}
+          >
+            <motion.div variants={fadeInUpVariant}>
+              <motion.div whileHover="hover" variants={scaleOnHover}>
+                <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <Search className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl text-foreground">Find Donors</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Connect with verified blood donors in your local area and request immediate assistance
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Button
+                      onClick={handleSearchClick}
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
+                    >
+                      Find Donor
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
 
-        {/* Action Cards - Removed Donate Blood Card */}
-        <div className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Search className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl text-foreground">Find Donors</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Search for blood donors in your area
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  onClick={handleSearchClick}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
-                >
-                  Find Donor
-                </Button>
-              </CardContent>
-            </Card>
+            <motion.div variants={fadeInUpVariant}>
+              <motion.div whileHover="hover" variants={scaleOnHover}>
+                <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <BarChart3 className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl text-foreground">Track Impact</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Record and monitor your donation history with detailed analytics and impact metrics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Button
+                      onClick={handleStatsClick}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
+                    >
+                      View Status
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
 
+            <motion.div variants={fadeInUpVariant}>
+              <motion.div whileHover="hover" variants={scaleOnHover}>
+                <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <Bot className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl text-foreground">Health Assistant</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Get personalized health guidance and donation recovery tips from our intelligent chatbot
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Button
+                      onClick={handleGuideClick}
+                      className="w-full bg-primary hover:bg-primary/80 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
+                    >
+                      Health Assistant
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
-            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <BarChart3 className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl text-foreground">Track Impact</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  View your donation history and impact
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  onClick={handleStatsClick}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
-                >
-                  View Status
-                </Button>
-              </CardContent>
-            </Card>
-
-
-            <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Bot className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl text-foreground">Health Assistant</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Get personalized health guidance and donation recovery tips from our smart chatbot
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  onClick={handleGuideClick}
-                  className="w-full bg-primary hover:bg-primary/80 text-white font-semibold py-2 rounded-lg transition-colors duration-200 cursor-pointer"
-                >
-                  Health Assistant
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        <div className="mb-12">
+        {/* Blood Compatibility Section */}
+        <motion.div 
+          className="mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          variants={fadeInUpVariant}
+        >
           <div className="space-y-6">
-            <div className="text-center">
+            <motion.div 
+              className="text-center"
+              variants={fadeInUpVariant}
+            >
               <h3 className="text-2xl font-bold text-foreground mb-2">Your Blood Type: {bloodGroup}</h3>
               <div className="flex justify-center gap-4">
                 <Badge className="bg-blue-50 text-blue-600 border-blue-200">
@@ -307,64 +382,80 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
                   {compatibility?.receiverType}
                 </Badge>
               </div>
-            </div>
+            </motion.div>
 
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: false }}
+            >
               {/* Can Donate To */}
-              <Card className="border-0 bg-gradient-to-br from-red-50 to-pink-50">
-                <CardHeader className="text-center pb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <ArrowRight className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-lg text-foreground">You Can Donate To</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {compatibility?.canDonateTo?.map((type: string) => (
-                      <Badge 
-                        key={type} 
-                        className="bg-red-100 text-red-700 border-red-200 px-3 py-1"
-                      >
-                        {type}
-                      </Badge>
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground text-center mt-3">
-                    Compatible blood types that can receive your blood
-                  </p>
-                </CardContent>
-              </Card>
-
+              <motion.div variants={fadeInUpVariant}>
+                <Card className="border-0 bg-gradient-to-br from-red-50 to-pink-50">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <ArrowRight className="w-6 h-6 text-white" />
+                    </div>
+                    <CardTitle className="text-lg text-foreground">You Can Donate To</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {compatibility?.canDonateTo?.map((type: string) => (
+                        <Badge 
+                          key={type} 
+                          className="bg-red-100 text-red-700 border-red-200 px-3 py-1"
+                        >
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center mt-3">
+                      Compatible blood types that can receive your blood
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
               {/* Can Receive From */}
-              <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
-                <CardHeader className="text-center pb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <ArrowLeft className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-lg text-foreground">You Can Receive From</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {compatibility?.canReceiveFrom?.map((type: string) => (
-                      <Badge 
-                        key={type} 
-                        className="bg-green-100 text-green-700 border-green-200 px-3 py-1"
-                      >
-                        {type}
-                      </Badge>
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground text-center mt-3">
-                    Compatible blood types you can safely receive
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+              <motion.div variants={fadeInUpVariant}>
+                <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <ArrowLeft className="w-6 h-6 text-white" />
+                    </div>
+                    <CardTitle className="text-lg text-foreground">You Can Receive From</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {compatibility?.canReceiveFrom?.map((type: string) => (
+                        <Badge 
+                          key={type} 
+                          className="bg-green-100 text-green-700 border-green-200 px-3 py-1"
+                        >
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center mt-3">
+                      Compatible blood types you can safely receive
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
           </div>
-        </div>
-        <div className="mb-12">
+        </motion.div>
+
+        {/* Blood Impact Section */}
+        <motion.div 
+          className="mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          variants={fadeInUpVariant}
+        >
           <Card className="border-0 bg-gradient-to-br from-red-50 to-orange-50">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
@@ -376,40 +467,61 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: false }}
+              >
                 {/* Lives Saved */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-red-100">
+                <motion.div 
+                  className="text-center p-6 bg-white/70 rounded-xl border border-red-100"
+                  variants={fadeInUpVariant}
+                >
                   <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Users className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-red-600 mb-2">3</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Lives Saved</p>
                   <p className="text-xs text-gray-600">Per donation</p>
-                </div>
+                </motion.div>
 
                 {/* Blood Demand */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-orange-100">
+                <motion.div 
+                  className="text-center p-6 bg-white/70 rounded-xl border border-orange-100"
+                  variants={fadeInUpVariant}
+                >
                   <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <TrendingUp className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-orange-600 mb-2">38%</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Population Eligible</p>
                   <p className="text-xs text-gray-600">To donate blood</p>
-                </div>
+                </motion.div>
 
                 {/* Critical Need */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-purple-100">
+                <motion.div 
+                  className="text-center p-6 bg-white/70 rounded-xl border border-purple-100"
+                  variants={fadeInUpVariant}
+                >
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Droplets className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-purple-600 mb-2">5%</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Actually Donate</p>
                   <p className="text-xs text-gray-600">Of eligible donors</p>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
               {/* Additional Info */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-red-100 to-orange-100 rounded-lg">
+              <motion.div 
+                className="mt-6 p-4 bg-gradient-to-r from-red-100 to-orange-100 rounded-lg"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
                 <div className="flex items-center gap-3 mb-3">
                   <Heart className="w-5 h-5 text-red-600" />
                   <h4 className="font-bold text-gray-800">Why Your Blood Matters</h4>
@@ -432,11 +544,19 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
                     <span>One donation helps multiple patients</span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </CardContent>
           </Card>
-        </div>
-        <div className="mb-12">
+        </motion.div>
+
+        {/* Share Section */}
+        <motion.div 
+          className="mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          variants={fadeInUpVariant}
+        >
           <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -517,14 +637,17 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-
+        </motion.div>
       </div>
 
-
-      {/* Footer - Removed Donation Links */}
-      <footer className="bg-muted mt-16">
+      {/* Footer */}
+      <motion.footer 
+        className="bg-muted mt-16"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.2 }}
+        variants={fadeInUpVariant}
+      >
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="space-y-4">
@@ -568,7 +691,6 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
                   </li>
                 </ul>
 
-
                 {/* Right Column */}
                 <ul className="space-y-2">
                   <li>
@@ -602,7 +724,6 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
               </div>
             </div>
 
-
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Contact Info</h3>
               <ul className="space-y-2 text-muted-foreground">
@@ -625,21 +746,43 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
             <p>&copy; {new Date().getFullYear()} BloodBridge. All rights reserved. Made with ❤️ for humanity.</p>
           </div>
         </div>
-      </footer>
-
+      </motion.footer>
 
       {/* Fixed Health Guide Button */}
-      <Button
-        onClick={handleGuideClick}
-        size="icon"
-        className="fixed bottom-8 right-4 w-12 h-12 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
-        title="Health Assistant"
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 1, duration: 0.3 }}
       >
-        <Bot className="w-10 h-10 text-white" />
-      </Button>
+        <Button
+          onClick={handleGuideClick}
+          size="icon"
+          className="fixed bottom-16 right-4 w-12 h-12 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
+          title="Health Assistant"
+        >
+          <Bot className="w-6 h-6 text-white" />
+        </Button>
+      </motion.div>
+
+      {/* Scroll to Top Button */}
+      {showScroll && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Button
+            onClick={scrollToTop}
+            size="icon"
+            className="fixed bottom-4 right-4 rounded-full hover:scale-110 transition-all z-50 bg-red-500 hover:bg-red-600 cursor-pointer"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </Button>
+        </motion.div>
+      )}
     </div>
   )
 }
-
 
 export default HomeComponent

@@ -19,80 +19,147 @@ interface Notification {
   status: string;
 }
 
-const DonorNavbar = () => {
-  const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [userName, setUserName] = useState('User'); // Default fallback
+interface UserData {
+  _id?: string;
+  id?: string;
+  name?: string;
+}
+
+const DonorNavbar: React.FC = () => {
+  const [showLogoutSuccess, setShowLogoutSuccess] = useState<boolean>(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [userName, setUserName] = useState<string>('User');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
 
   /* ------------------------- Load user details ------------------------- */
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const userStr = localStorage.getItem('user')
+      const userStr = localStorage.getItem('user');
       if (userStr) {
         try {
-          const userData = JSON.parse(userStr)
+          const userData: UserData = JSON.parse(userStr);
           if (userData?.name) {
-            setUserName(userData.name)
+            setUserName(userData.name);
           }
         } catch (error) {
-          console.error('Failed to parse user data:', error)
-          // Keep default 'User' if parsing fails
+          console.error('Failed to parse user data:', error);
         }
       }
     }
-  }, [])
+  }, []);
 
-  // Fetch unread notifications count
+  // Fetch unread notifications count - FIXED VERSION
   useEffect(() => {
-    const fetchUnreadCount = async () => {
-      const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
+    const fetchUnreadCount = async (): Promise<void> => {
+      // Prevent multiple simultaneous requests
+      if (isLoading) return;
       
-      if (!userId) return;
-
+      setIsLoading(true);
+      
       try {
-        const res = await fetch(`/api/reportvotedata?userId=${userId}`);
-        if (!res.ok) return;
+        let userId = '';
+        
+        if (typeof window !== 'undefined') {
+          const userStr = localStorage.getItem('user');
+          if (userStr) {
+            try {
+              const userData: UserData = JSON.parse(userStr);
+              userId = userData._id || userData.id || '';
+            } catch (parseError) {
+              console.error('Failed to parse user data for notifications:', parseError);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+        
+        if (!userId) {
+          console.warn('No user ID found, skipping notification fetch');
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('Fetching notifications for user:', userId);
+        
+        const res = await fetch(`/api/reportvotedata?userId=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
+        }
         
         const data = await res.json();
+        console.log('Notification data received:', data);
+        
         if (data.notifications && Array.isArray(data.notifications)) {
           const unreadNotifications = data.notifications.filter(
             (notification: Notification) => notification.status === 'unread'
           );
           setUnreadCount(unreadNotifications.length);
+          console.log('Unread count updated:', unreadNotifications.length);
+        } else {
+          console.warn('No notifications array found in response:', data);
+          setUnreadCount(0);
         }
+        
       } catch (error) {
         console.error('Failed to fetch unread count:', error);
+        
+        // More detailed error logging
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          console.error('Network error - check if the API endpoint is accessible');
+        } else if (error instanceof Error) {
+          console.error('Error details:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack
+          });
+        }
+        
+        // Don't update count on error, keep previous value
+      } finally {
+        setIsLoading(false);
       }
     };
 
+    // Initial fetch
     fetchUnreadCount();
     
-    // Optional: Set up polling to refresh count every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Set up polling - only if not already loading
+    const interval = setInterval(() => {
+      if (!isLoading) {
+        fetchUnreadCount();
+      }
+    }, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, []); // Empty dependency array is correct here
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     try {
       await fetch('/api/logout', { method: 'POST' });
       localStorage.clear();
       
-      // Show success message
       setShowLogoutSuccess(true);
       
-      // Redirect after showing success message
       setTimeout(() => {
         setShowLogoutSuccess(false);
         router.push('/login');
-      }, 1500); // Increased timeout to 1.5 seconds for better UX
+      }, 1500);
     } catch (error) {
       console.error('Logout failed:', error);
-      // Still redirect even if API call fails
       localStorage.clear();
       router.push('/login');
     }
+  };
+
+  const handleNavigation = (path: string): void => {
+    router.push(path);
   };
 
   return (
@@ -106,7 +173,7 @@ const DonorNavbar = () => {
                 <Droplets className="w-5 h-5 text-white" />
               </div>
               <button 
-                onClick={() => router.push('/home')}
+                onClick={() => handleNavigation('/home')}
                 className="text-xl cursor-pointer font-bold text-foreground hover:text-red-600 transition-colors"
               >
                 BloodBridge
@@ -115,18 +182,25 @@ const DonorNavbar = () => {
 
             {/* Right Side Navigation */}
             <div className="flex items-center space-x-4">
-              {/* Desktop Navigation - Removed Mail Button */}
+              {/* Desktop Navigation */}
               <div className="hidden md:flex space-x-2">
                 <Button 
                   variant="ghost"
                   className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
                 >
                   <Info className="w-4 h-4 mr-1" />
-                  <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+                  <a 
+                    href="https://mohansunkara.vercel.app/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="no-underline"
+                  >
+                    About
+                  </a>
                 </Button>
                 <Button 
                   variant="ghost"
-                  onClick={() => router.push('/finddonor')}
+                  onClick={() => handleNavigation('/finddonor')}
                   className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
                 >
                   <Search className="w-4 h-4 mr-1" />
@@ -134,7 +208,7 @@ const DonorNavbar = () => {
                 </Button>
                 <Button 
                   variant="ghost"
-                  onClick={() => router.push('/trackimpact')}
+                  onClick={() => handleNavigation('/trackimpact')}
                   className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
                 >
                   <BarChart3 className="w-4 h-4 mr-1" />
@@ -142,7 +216,7 @@ const DonorNavbar = () => {
                 </Button>
                 <Button 
                   variant="ghost"
-                  onClick={() => router.push('/healthaibot')}
+                  onClick={() => handleNavigation('/healthaibot')}
                   className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
                 >
                   <Bot className="w-4 h-4 mr-1" />
@@ -162,11 +236,11 @@ const DonorNavbar = () => {
                         {userName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    {/* Unread Count Badge on Avatar - Fixed styling */}
+                    {/* Unread Count Badge on Avatar */}
                     {unreadCount > 0 && (
                       <Badge 
                         variant="destructive" 
-                        className="absolute -top-1 -right-1 h-5 max-w-5 text-xs px-1.5 rounded-full bg-white  text-primary font-bold shadow-sm border-2 border-white"
+                        className="absolute -top-1 -right-1 h-5 max-w-5 text-xs px-1.5 rounded-full bg-red-500 text-white font-bold shadow-sm border-2 border-white"
                       >
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </Badge>
@@ -181,7 +255,6 @@ const DonorNavbar = () => {
                       <p className="text-sm font-medium leading-none">
                         {userName.charAt(0).toUpperCase() + userName.slice(1)}
                       </p>
-                 
                     </div>
                     {unreadCount > 0 && (
                       <p className="text-xs leading-none text-muted-foreground">
@@ -193,16 +266,16 @@ const DonorNavbar = () => {
                   <DropdownMenuSeparator />
                   
                   <DropdownMenuItem 
-                    onClick={() => router.push('/profile')}
+                    onClick={() => handleNavigation('/profile')}
                     className="cursor-pointer"
                   >
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
 
-                  {/* Mails - Always visible in dropdown */}
+                  {/* Mails */}
                   <DropdownMenuItem 
-                    onClick={() => router.push('/mails')}
+                    onClick={() => handleNavigation('/mails')}
                     className="relative cursor-pointer"
                   >
                     <Mail className="mr-2 h-4 w-4" />
@@ -217,16 +290,21 @@ const DonorNavbar = () => {
                     )}
                   </DropdownMenuItem>
                   
-                  {/* Mobile only - Navigation items in dropdown */}
-                  <DropdownMenuItem 
-                    className="cursor-pointer md:hidden"
-                  >
+                  {/* Mobile Navigation Items */}
+                  <DropdownMenuItem className="cursor-pointer md:hidden">
                     <Info className="mr-2 h-4 w-4" />
-                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+                    <a 
+                      href="https://mohansunkara.vercel.app/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="no-underline"
+                    >
+                      About
+                    </a>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem 
-                    onClick={() => router.push('/finddonor')}
+                    onClick={() => handleNavigation('/finddonor')}
                     className="cursor-pointer md:hidden"
                   >
                     <Search className="mr-2 h-4 w-4" />
@@ -234,7 +312,7 @@ const DonorNavbar = () => {
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem 
-                    onClick={() => router.push('/trackimpact')}
+                    onClick={() => handleNavigation('/trackimpact')}
                     className="cursor-pointer md:hidden"
                   >
                     <BarChart3 className="mr-2 h-4 w-4" />
@@ -242,7 +320,7 @@ const DonorNavbar = () => {
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem 
-                    onClick={() => router.push('/healthaibot')}
+                    onClick={() => handleNavigation('/healthaibot')}
                     className="cursor-pointer md:hidden"
                   >
                     <Bot className="mr-2 h-4 w-4" />
@@ -265,7 +343,7 @@ const DonorNavbar = () => {
         </div>
       </nav>
       
-      {/* Logout Success Popup - Enhanced */}
+      {/* Logout Success Popup */}
       {showLogoutSuccess && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/50 backdrop-blur-sm">
           <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4 shadow-lg">
@@ -275,8 +353,12 @@ const DonorNavbar = () => {
                   <LogOut className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Logged Out Successfully!</h3>
-              <p className="text-sm text-muted-foreground">Thank you for using BloodBridge. Stay safe!</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Logged Out Successfully!
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Thank you for using BloodBridge. Stay safe!
+              </p>
             </div>
           </Card>
         </div>

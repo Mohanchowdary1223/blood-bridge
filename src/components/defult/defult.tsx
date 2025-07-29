@@ -1,6 +1,8 @@
 "use client"
+
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { Heart, Search, BarChart3, ArrowUp, Droplets, Activity, Share2, LucideIcon, Copy, Instagram, Mail, Check, Bot, Users, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -14,14 +16,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { FaWhatsapp } from 'react-icons/fa'
 
-
-
 interface StatCardProps {
   value: string;
   label: string;
 }
-
-
 
 interface FeatureCardProps {
   icon: LucideIcon;
@@ -29,15 +27,44 @@ interface FeatureCardProps {
   description: string;
 }
 
+// Animation variants
+import { easeOut } from "framer-motion";
 
+const fadeInUpVariant = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: 0.6,
+      ease: easeOut
+    } 
+  }
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.1
+    }
+  }
+}
+
+const scaleOnHover = {
+  hover: { 
+    scale: 1.05,
+    transition: { duration: 0.2 }
+  }
+}
 
 const BloodBridgeLanding: React.FC = () => {
   const router = useRouter()
   const [showScroll, setShowScroll] = useState<boolean>(false)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-
-
 
   useEffect(() => {
     const handleScroll = (): void => {
@@ -47,29 +74,21 @@ const BloodBridgeLanding: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-
-
   const scrollToTop = (): void => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-
-
   const handleRegisterClick = (): void => {
     router.push('/register')
   }
-
-
 
   const handleEmergencyClick = (): void => {
     router.push('/signup')
   }
 
   const handleGuideClick = (): void => {
-        router.push('/healthbotai')
+    router.push('/healthbotai')
   }
-
-
 
   // Share data
   const shareData = {
@@ -77,8 +96,6 @@ const BloodBridgeLanding: React.FC = () => {
     text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story. You can also find donors near you when needed.',
     url: typeof window !== 'undefined' ? window.location.href : '',
   };
-
-
 
   // Copy to clipboard function that prevents dropdown closing
   const handleCopyLink = async () => {
@@ -90,7 +107,6 @@ const BloodBridgeLanding: React.FC = () => {
         setTimeout(() => setCopyStatus('idle'), 3000);
         return;
       }
-
 
       // Fallback to execCommand
       const textArea = document.createElement('textarea');
@@ -118,8 +134,6 @@ const BloodBridgeLanding: React.FC = () => {
     }
   };
 
-
-
   // Enhanced WhatsApp share with better messaging
   const handleWhatsAppShare = () => {
     const enhancedText = `${shareData.text}\n\n🔍 Find donors instantly\n❤️ Save up to 3 lives per donation\n🌟 Join our life-saving community`;
@@ -127,8 +141,6 @@ const BloodBridgeLanding: React.FC = () => {
     const whatsappUrl = `https://wa.me/?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
   };
-
-
 
   // Instagram share (fixed - no more popup)
   const handleInstagramShare = () => {
@@ -138,8 +150,6 @@ const BloodBridgeLanding: React.FC = () => {
     handleCopyLink();
   };
 
-
-
   // Email share
   const handleEmailShare = () => {
     const subject = encodeURIComponent(shareData.title);
@@ -148,33 +158,35 @@ const BloodBridgeLanding: React.FC = () => {
     window.location.href = mailtoUrl;
   };
 
-
-
-
   const StatCard: React.FC<StatCardProps> = ({ value, label }) => (
-    <div className="group">
+    <motion.div 
+      className="group"
+      whileHover="hover"
+      variants={scaleOnHover}
+    >
       <div className="text-3xl font-bold text-red-600 mb-2 group-hover:scale-105 transition-transform">
         {value}
       </div>
       <div className="text-gray-600">{label}</div>
-    </div>
+    </motion.div>
   )
-
-
 
   const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => (
-    <Card className="border-0  transition-all bg-white group hover:-translate-y-1">
-      <CardHeader className="pb-4">
-        <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-200 transition-colors">
-          <Icon className="w-6 h-6 text-red-500" />
-        </div>
-        <CardTitle className="text-xl text-gray-900">{title}</CardTitle>
-        <CardDescription className="text-gray-600">{description}</CardDescription>
-      </CardHeader>
-    </Card>
+    <motion.div
+      whileHover="hover"
+      variants={scaleOnHover}
+    >
+      <Card className="border-0  transition-all bg-white group hover:-translate-y-1">
+        <CardHeader className="pb-4">
+          <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-200 transition-colors">
+            <Icon className="w-6 h-6 text-red-500" />
+          </div>
+          <CardTitle className="text-xl text-gray-900">{title}</CardTitle>
+          <CardDescription className="text-gray-600">{description}</CardDescription>
+        </CardHeader>
+      </Card>
+    </motion.div>
   )
-
-
 
   const features: FeatureCardProps[] = [
     {
@@ -199,37 +211,59 @@ const BloodBridgeLanding: React.FC = () => {
     }
   ]
 
-
-
   const stats: StatCardProps[] = [
     { value: "50K+", label: "Lives Saved" },
     { value: "25K+", label: "Active Donors" },
     { value: "100+", label: "Cities" }
   ]
 
-
-
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-12 pb-16 px-6">
+      <motion.section 
+        className="pt-12 pb-16 px-6"
+        initial="hidden"
+        animate="visible"
+        variants={fadeInUpVariant}
+      >
         <div className="max-w-4xl mx-auto text-center">
-          <Badge className="inline-flex items-center gap-2 bg-red-50 text-red-600 border-red-200 px-3 py-1 rounded-full text-sm mb-6">
-            <Droplets className="w-4 h-4" />
-            Trusted by 10,000+ donors
-          </Badge>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge className="inline-flex items-center gap-2 bg-red-50 text-red-600 border-red-200 px-3 py-1 rounded-full text-sm mb-6">
+              <Droplets className="w-4 h-4" />
+              Trusted by 10,000+ donors
+            </Badge>
+          </motion.div>
           
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <motion.h1 
+            className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             Save Lives Through
             <span className="block text-red-500">Blood Donation</span>
-          </h1>
+          </motion.h1>
           
-          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+          <motion.p 
+            className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             Join our community of life-savers. Find donors instantly when you need them, 
             and save up to three lives with every donation you make.
-          </p>
+          </motion.p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
             <Button 
               size="lg" 
               className="bg-red-500 hover:bg-red-600 px-8 py-3 transition-all cursor-pointer"
@@ -247,48 +281,75 @@ const BloodBridgeLanding: React.FC = () => {
               <Activity className="w-5 h-5 mr-2" />
               Emergency Blood
             </Button>
-          </div>
-
-
+          </motion.div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-3 gap-8"
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+          >
             {stats.map((stat, index) => (
-              <StatCard key={index} value={stat.value} label={stat.label} />
+              <motion.div
+                key={index}
+                variants={fadeInUpVariant}
+              >
+                <StatCard value={stat.value} label={stat.label} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
-
-
+      </motion.section>
 
       {/* Features Section */}
-      <section className="py-16 bg-gray-50">
+      <motion.section 
+        className="py-16 bg-gray-50"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.2 }}
+        variants={fadeInUpVariant}
+      >
         <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12">
+          <motion.div 
+            className="text-center mb-12"
+            variants={fadeInUpVariant}
+          >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
             <p className="text-lg text-gray-600">Simple steps to make a difference</p>
-          </div>
+          </motion.div>
 
-
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <motion.div 
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.2 }}
+          >
             {features.map((feature, index) => (
-              <FeatureCard 
-                key={index} 
-                icon={feature.icon} 
-                title={feature.title} 
-                description={feature.description} 
-              />
+              <motion.div
+                key={index}
+                variants={fadeInUpVariant}
+              >
+                <FeatureCard 
+                  icon={feature.icon} 
+                  title={feature.title} 
+                  description={feature.description} 
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
-
-
-      {/* Blood Importance & Statistics Section (Replacing Every Drop Counts) */}
-      <section className="py-16">
+      {/* Blood Importance & Statistics Section */}
+      <motion.section 
+        className="py-16"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.2 }}
+        variants={fadeInUpVariant}
+      >
         <div className="max-w-6xl mx-auto px-6">
           <Card className="border-0 bg-gradient-to-br from-red-50 to-orange-50">
             <CardHeader className="text-center pb-6">
@@ -301,40 +362,67 @@ const BloodBridgeLanding: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: false }}
+              >
                 {/* Lives Saved */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-red-100">
+                <motion.div 
+                  className="text-center p-6 bg-white/70 rounded-xl border border-red-100"
+                  variants={fadeInUpVariant}
+                  whileHover="hover"
+                  style={{ transform: 'scale(1)' }}
+                  animate={{ transform: 'scale(1)' }}
+                  transition={{ duration: 0.2 }}
+                  onHoverStart={() => {}}
+                  onHoverEnd={() => {}}
+                >
                   <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Users className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-red-600 mb-2">3</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Lives Saved</p>
                   <p className="text-xs text-gray-600">Per donation</p>
-                </div>
+                </motion.div>
 
                 {/* Blood Demand */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-orange-100">
+                <motion.div 
+                  className="text-center p-6 bg-white/70 rounded-xl border border-orange-100"
+                  variants={fadeInUpVariant}
+                >
                   <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <TrendingUp className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-orange-600 mb-2">38%</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Population Eligible</p>
                   <p className="text-xs text-gray-600">To donate blood</p>
-                </div>
+                </motion.div>
 
                 {/* Critical Need */}
-                <div className="text-center p-6 bg-white/70 rounded-xl border border-purple-100">
+                <motion.div 
+                  className="text-center p-6 bg-white/70 rounded-xl border border-purple-100"
+                  variants={fadeInUpVariant}
+                >
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Droplets className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-3xl font-bold text-purple-600 mb-2">5%</h3>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Actually Donate</p>
                   <p className="text-xs text-gray-600">Of eligible donors</p>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
               {/* Additional Info */}
-              <div className="p-6 bg-gradient-to-r from-red-100 to-orange-100 rounded-lg">
+              <motion.div 
+                className="p-6 bg-gradient-to-r from-red-100 to-orange-100 rounded-lg"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
                 <div className="flex items-center gap-3 mb-4">
                   <Heart className="w-6 h-6 text-red-600" />
                   <h4 className="text-xl font-bold text-gray-800">Why Your Blood Matters</h4>
@@ -357,16 +445,20 @@ const BloodBridgeLanding: React.FC = () => {
                     <span>One donation helps multiple patients</span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </CardContent>
           </Card>
         </div>
-      </section>
-
-
+      </motion.section>
 
       {/* Share Section with Icon-Only Dropdown */}
-      <section className="py-16 bg-gray-50">
+      <motion.section 
+        className="py-16 bg-gray-50"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.2 }}
+        variants={fadeInUpVariant}
+      >
         <div className="max-w-6xl mx-auto px-6">
           <Card className="border-0 bg-gradient-to-r from-indigo-50 to-purple-50">
             <CardContent className="p-8">
@@ -449,12 +541,16 @@ const BloodBridgeLanding: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      </section>
-
-
+      </motion.section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-primary text-white">
+      <motion.section 
+        className="py-16 bg-primary text-white"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.2 }}
+        variants={fadeInUpVariant}
+      >
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Save Lives?</h2>
           <p className="text-lg mb-8 opacity-90">
@@ -469,12 +565,16 @@ const BloodBridgeLanding: React.FC = () => {
             Become a Donor
           </Button>
         </div>
-      </section>
-
-
+      </motion.section>
 
       {/* Footer */}
-      <footer className="bg-muted mt-16">
+      <motion.footer 
+        className="bg-muted mt-16"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.2 }}
+        variants={fadeInUpVariant}
+      >
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="space-y-4">
@@ -519,8 +619,6 @@ const BloodBridgeLanding: React.FC = () => {
               </div>
             </div>
 
-
-
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-foreground">Contact Info</h3>
               <ul className="space-y-2 text-muted-foreground">
@@ -543,33 +641,43 @@ const BloodBridgeLanding: React.FC = () => {
             <p>&copy; {new Date().getFullYear()} BloodBridge. All rights reserved. Made with ❤️ for humanity.</p>
           </div>
         </div>
-      </footer>
-
-
+      </motion.footer>
 
       {/* Fixed Health Guide Button */}
-      <Button
-        onClick={handleGuideClick}
-        size="icon"
-        className="fixed bottom-24 right-8 w-14 h-14 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/70 cursor-pointer shadow-lg border-2 border-white"
-        title="Health Guide"
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 1, duration: 0.3 }}
       >
- <Bot className="w-6 h-6 text-white" />      </Button>
+        <Button
+          onClick={handleGuideClick}
+          size="icon"
+          className="fixed bottom-24 right-8 w-14 h-14 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/70 cursor-pointer shadow-lg border-2 border-white"
+          title="Health Guide"
+        >
+          <Bot className="w-6 h-6 text-white" />
+        </Button>
+      </motion.div>
 
       {/* Scroll to Top Button */}
       {showScroll && (
-        <Button
-          onClick={scrollToTop}
-          size="icon"
-          className="fixed bottom-8 right-8 rounded-full hover:scale-110 transition-all z-50 bg-red-500 hover:bg-red-600 cursor-pointer"
+        <motion.div
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0 }}
+          transition={{ duration: 0.2 }}
         >
-          <ArrowUp className="w-4 h-4" />
-        </Button>
+          <Button
+            onClick={scrollToTop}
+            size="icon"
+            className="fixed bottom-8 right-8 rounded-full hover:scale-110 transition-all z-50 bg-red-500 hover:bg-red-600 cursor-pointer"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </Button>
+        </motion.div>
       )}
     </div>
   )
 }
-
-
 
 export default BloodBridgeLanding

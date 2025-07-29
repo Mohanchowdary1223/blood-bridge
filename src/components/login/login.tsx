@@ -84,8 +84,8 @@ const Login = () => {
   variant="ghost"
   size="icon"
   onClick={() => router.push('/')}
-  className="fixed top-4 left-4 sm:top-6 sm:left-6 h-10 w-10 sm:h-12 sm:w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
->
+        className="fixed top-16 md:top-24 left-2 md:left-2 h-10 md:h-10 w-10 md:w-10 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        aria-label="Back to Home">
   <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
 </Button>
 

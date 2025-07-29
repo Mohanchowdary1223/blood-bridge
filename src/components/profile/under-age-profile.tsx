@@ -169,8 +169,8 @@ export const UnderAgeProfile: React.FC<UnderAgeProfileProps> = ({
         variant="ghost"
         size="icon"
         onClick={() => router.push('/home')}
-        className="fixed top-14 md:top-24 left-6 h-12 w-12 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
-      >
+        className="fixed top-16 md:top-24 left-2 md:left-2 h-10 md:h-10 w-10 md:w-10 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+        aria-label="Back to Home">
         <ArrowLeft className="h-5 w-5 text-gray-700" />
       </Button>
 
