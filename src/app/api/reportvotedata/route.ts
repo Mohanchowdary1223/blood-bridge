@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import UserNotification from '@/models/UserNotification';
 import MasterNotification from '@/models/MasterNotification';
@@ -75,10 +76,17 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid notificationId format' }, { status: 400 });
     }
 
-    // Update only user notification
+    // Prepare updates for nested notification fields
+    const setObj: Record<string, any> = {};
+    for (const key in updates) {
+      setObj[`notification.${key}`] = updates[key];
+    }
+    setObj['notification.updatedAt'] = new Date();
+
+    // Update only user notification (nested notification fields)
     const notification = await UserNotification.findByIdAndUpdate(
       notificationId,
-      { $set: { ...updates, 'notification.updatedAt': new Date() } },
+      { $set: setObj },
       { new: true }
     );
     if (!notification) {

@@ -2,13 +2,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import UsersChatHistory, { IMessage } from '@/models/UsersChatHistory';
 import { connectToDatabase } from '@/lib/mongodb';
 
-
 const GEMINI_API_KEY = process.env.GEMINI_API;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 async function getUserId(req: NextRequest): Promise<string> {
-  // In production, replace with real auth/session
   return req.headers.get('x-user-id') || 'demo-user';
+}
+
+function isHealthRelated(message: string): boolean {
+  const messageLower = message.toLowerCase().trim();
+  
+  // DEFINITE NON-HEALTH TOPICS - Only block these obvious ones
+  const absoluteNonHealth = [
+    'programming', 'coding', 'javascript', 'python', 'software', 'website development',
+    'business profit', 'stock trading', 'cryptocurrency', 'bitcoin', 'marketing strategy',
+    'movie review', 'music album', 'video game', 'netflix', 'entertainment news',
+    'weather forecast', 'climate change', 'temperature today',
+    'car repair', 'vehicle maintenance', 'driving license', 'auto insurance',
+    'fashion trends', 'makeup tutorial', 'clothing style', 'beauty products',
+    'political election', 'government policy', 'voting', 'legal advice'
+  ];
+
+  // If it contains obvious non-health keywords, block it
+  const isDefinitelyNonHealth = absoluteNonHealth.some(term => 
+    messageLower.includes(term)
+  );
+  
+  if (isDefinitelyNonHealth) {
+    return false;
+  }
+
+  // Everything else is potentially health-related (inclusive approach)
+  return true;
 }
 
 export async function GET(req: NextRequest) {
@@ -29,33 +54,108 @@ export async function POST(req: NextRequest) {
     const userId = await getUserId(req);
     const { chatId, message, title } = await req.json();
 
-    // Dynamic system prompt based on question complexity
-    const systemPrompt = `You are a healthcare assistant. Adjust your response length based on the complexity and importance of the question:
+    // ENHANCED HEALTHCARE-ONLY SYSTEM PROMPT
+    const systemPrompt = `You are a comprehensive healthcare assistant that ONLY answers health, medical, and wellness-related questions.
 
-For simple questions (like greetings, basic definitions): Provide concise answers in 3-5 lines.
-For moderate questions (symptoms, general health advice): Provide detailed responses in 8-12 lines.
-For complex questions (conditions, treatments, detailed explanations): Provide comprehensive responses in 15-25 lines.
+YOU MUST ANSWER questions about:
+✅ Health definitions (what is healthcare, what is health, medical terms)
+✅ Medical conditions, symptoms, diseases, treatments
+✅ Hospitals, clinics, doctors, medical facilities, healthcare services
+✅ Medications, prescriptions, medical procedures, surgery
+✅ Nutrition, diet, healthy foods, vitamins, supplements
+✅ Exercise, fitness, physical therapy, sports medicine
+✅ Mental health, therapy, stress management, wellness
+✅ Body parts, anatomy, medical devices, health tools
+✅ Preventive care, health screenings, medical checkups
+✅ Women's health, men's health, child health, elderly care
 
-Always structure your responses appropriately:
-- Simple: Direct answer with brief explanation
-- Moderate: Acknowledgment, explanation, basic advice, when to seek help
-- Complex: Acknowledgment, detailed explanation with background, comprehensive advice, important warnings, professional consultation emphasis
+RESPONSE LENGTH:
+- Simple questions: 3-5 clear lines
+- Moderate questions: 8-12 detailed lines  
+- Complex questions: 15-25 comprehensive lines
 
-Use accessible language that patients can understand. Include specific examples when helpful for complex topics. Maintain medical accuracy while being educational. Never provide specific diagnoses or replace professional medical consultation. For serious health concerns, always emphasize consulting healthcare professionals.
+STRICT RULE: If asked about non-health topics (technology, business, entertainment, politics, etc.), respond EXACTLY: "I'm a healthcare assistant and can only help with health, medical, wellness, fitness, nutrition, and healthcare-related questions. Please ask me about your health concerns or medical topics."
 
-Format responses in clear, readable paragraphs. Be empathetic and supportive while providing appropriate depth of information based on the question's complexity.`;
+Always provide accurate health information and recommend consulting healthcare professionals for serious medical concerns.`;
 
-    const geminiPayload = {
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: systemPrompt }]
-        },
-        {
-          role: 'user',
-          parts: [{ text: message }]
+    // Use inclusive health detection (only block obvious non-health topics)
+    if (!isHealthRelated(message)) {
+      const botText = "I'm a healthcare assistant and can only help with health, medical, wellness, fitness, nutrition, and healthcare-related questions. Please ask me about your health concerns or medical topics.";
+      
+      const userMsg: IMessage = {
+        id: Date.now().toString(),
+        text: message,
+        sender: 'user',
+        timestamp: new Date(),
+      };
+
+      const botMsg: IMessage = {
+        id: (Date.now() + 1).toString(),
+        text: botText,
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+
+      let chat;
+      if (chatId) {
+        chat = await UsersChatHistory.findOneAndUpdate(
+          { _id: chatId, userId },
+          { $push: { messages: { $each: [userMsg, botMsg] } } },
+          { new: true }
+        );
+      } else {
+        chat = await UsersChatHistory.create({
+          userId,
+          title: title || message.slice(0, 30) + (message.length > 30 ? '…' : ''),
+          messages: [userMsg, botMsg],
+          createdAt: new Date(),
+        });
+      }
+
+      return NextResponse.json({ chat, botMsg });
+    }
+
+    // Get existing chat history if continuing a conversation
+    let existingChat = null;
+    if (chatId) {
+      existingChat = await UsersChatHistory.findOne({ _id: chatId, userId });
+    }
+
+    // Build conversation history for Gemini
+    const geminiContents = [
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }]
+      }
+    ];
+
+    // Add previous conversation history (limit to last 20 messages for performance)
+    if (existingChat && existingChat.messages) {
+      const recentMessages = existingChat.messages.slice(-20);
+      recentMessages.forEach((msg: IMessage) => {
+        if (msg.sender === 'user') {
+          geminiContents.push({
+            role: 'user',
+            parts: [{ text: msg.text }]
+          });
+        } else if (msg.sender === 'bot') {
+          geminiContents.push({
+            role: 'model',
+            parts: [{ text: msg.text }]
+          });
         }
-      ]
+      });
+    }
+
+    // Add the current user message
+    geminiContents.push({
+      role: 'user',
+      parts: [{ text: message }]
+    });
+
+    // Process health-related questions with Gemini (with full context)
+    const geminiPayload = {
+      contents: geminiContents
     };
 
     const geminiRes = await fetch(GEMINI_API_URL, {
@@ -71,7 +171,8 @@ Format responses in clear, readable paragraphs. Be empathetic and supportive whi
     }
 
     const geminiData = await geminiRes.json();
-    const botText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not answer that. Please try rephrasing your question or consult with a healthcare professional.';
+    const botText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || 
+      'I apologize, but I encountered an issue processing your health question. Please try rephrasing your question or consult with a healthcare professional.';
 
     const userMsg: IMessage = {
       id: Date.now().toString(),

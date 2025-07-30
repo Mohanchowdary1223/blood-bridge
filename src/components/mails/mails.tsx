@@ -53,6 +53,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Move interfaces outside of component
 interface BackendNotification {
@@ -217,23 +218,24 @@ const NotificationsPage: React.FC = () => {
       });
     } catch {}
   };
+
   // Handler functions
   const handleView = (item: NotificationItem) => {
     setSelectedItem(item);
     setIsDialogOpen(true);
-    // Mark as read in database if not already read and not admin-warning (admin warning is handled as unread always visually)
+    
+    // Only mark as read if it's not an admin warning and currently unread
     if (item.status === 'unread' && item.type !== 'admin-warning') {
       markAsRead(item.id);
+      // Update local state immediately
+      setNotifications(prev => 
+        prev.map(n => 
+          n.id === item.id ? { ...n, status: 'read' } : n
+        )
+      );
     }
-    // Update local state
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === item.id
-          ? { ...n, status: n.type === 'admin-warning' ? 'unread' : 'read' }
-          : n
-      )
-    );
   };
+
   const handleStar = (id: string) => {
     const notification = notifications.find(n => n.id === id);
     if (notification) {
@@ -243,10 +245,12 @@ const NotificationsPage: React.FC = () => {
       prev.map(n => n.id === id ? { ...n, isStarred: !n.isStarred } : n)
     );
   };
+
   const handleDelete = (id: string) => {
     deleteNotification(id);
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
+
   // Type filter function
   const handleTypeFilter = (type: string) => {
     setSelectedTypeFilter(type);
@@ -264,6 +268,7 @@ const NotificationsPage: React.FC = () => {
       table.setGlobalFilter("");
     }
   };
+
   // Get display text and icon for selected filter
   const getSelectedFilterDisplay = () => {
     switch (selectedTypeFilter) {
@@ -443,18 +448,30 @@ const NotificationsPage: React.FC = () => {
       return (
         <TableRow>
           <TableCell colSpan={columns.length} className="h-24 text-center">
-            <div className="flex items-center justify-center">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
+            <motion.div 
+              className="flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div 
+                className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
               <span>Loading notifications...</span>
-            </div>
+            </motion.div>
           </TableCell>
         </TableRow>
       );
     }
     if (table.getRowModel().rows?.length) {
-      return table.getRowModel().rows.map((row) => (
-        <TableRow
+      return table.getRowModel().rows.map((row, index) => (
+        <motion.tr
           key={row.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: index * 0.05 }}
           className={
             row.original.type === 'admin-warning'
               ? 'bg-red-50/60 font-semibold'
@@ -471,16 +488,22 @@ const NotificationsPage: React.FC = () => {
               )}
             </TableCell>
           ))}
-        </TableRow>
+        </motion.tr>
       ));
     }
     return (
       <TableRow>
         <TableCell colSpan={columns.length} className="h-24 text-center">
-          <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">
-            {userId ? 'No notifications found' : 'Please log in to view notifications'}
-          </p>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">
+              {userId ? 'No notifications found' : 'Please log in to view notifications'}
+            </p>
+          </motion.div>
         </TableCell>
       </TableRow>
     );
@@ -489,21 +512,37 @@ const NotificationsPage: React.FC = () => {
   const selectedDisplay = getSelectedFilterDisplay();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <motion.div 
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-8">
         {/* Back Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/home')}
-          className="fixed top-16 md:top-24 left-2 md:left-2 h-10 md:h-10 w-10 md:w-10 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
-          aria-label="Back to Home"
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push('/home')}
+            className="fixed top-16 md:top-24 left-2 md:left-2 h-10 md:h-10 w-10 md:w-10 bg-white/90 backdrop-blur-sm border border-white/20 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 z-50"
+            aria-label="Back to Home"
+          >
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+          </Button>
+        </motion.div>
 
         {/* Header */}
-        <div className="text-center mb-8">
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">
             <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">Notifications</span>{" "}
             <span className="text-foreground">Center</span>
@@ -511,178 +550,228 @@ const NotificationsPage: React.FC = () => {
           <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto">
             Stay updated with votes and reports from your BloodBridge community
           </p>
-        </div>
+        </motion.div>
 
         {/* Data Table Card */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Filter className="w-5 h-5 text-red-500" />
-              All Notifications
-              <Badge variant="secondary">{notifications.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Table Controls */}
-            <div className="flex items-center gap-4 py-4">
-              <Input
-                placeholder="Filter by title..."
-                value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-                onChange={(event) =>
-                  table.getColumn("title")?.setFilterValue(event.target.value)
-                }
-                className="max-w-sm"
-              />
-              
-              {/* Enhanced Type Filter Dropdown with Starred and Unread */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto cursor-pointer">
-                    {selectedDisplay.icon}
-                    <span className="ml-2">{selectedDisplay.text}</span>
-                    <ChevronDown className="ml-2 h-4 w-4" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Filter className="w-5 h-5 text-red-500" />
+                All Notifications
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                >
+                  <Badge variant="secondary">{notifications.length}</Badge>
+                </motion.div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Table Controls */}
+              <motion.div 
+                className="flex items-center gap-4 py-4"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+              >
+                <Input
+                  placeholder="Filter by title..."
+                  value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+                  onChange={(event) =>
+                    table.getColumn("title")?.setFilterValue(event.target.value)
+                  }
+                  className="max-w-sm"
+                />
+                
+                {/* Enhanced Type Filter Dropdown with Starred and Unread */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="ml-auto cursor-pointer">
+                      {selectedDisplay.icon}
+                      <span className="ml-2">{selectedDisplay.text}</span>
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleTypeFilter('all')} className='cursor-pointer'>
+                      <Filter className="mr-2 h-4 w-4" />
+                      All Types
+                      {selectedTypeFilter === 'all' && (
+                        <Badge variant="secondary" className="ml-auto">Selected</Badge>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleTypeFilter('vote')} className='cursor-pointer'>
+                      <ThumbsUp className="mr-2 h-4 w-4 text-blue-600" />
+                      Vote of Thanks
+                      {selectedTypeFilter === 'vote' && (
+                        <Badge variant="secondary" className="ml-auto">Selected</Badge>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleTypeFilter('report')} className='cursor-pointer'>
+                      <Bell className="mr-2 h-4 w-4 text-red-600" />
+                      Reports
+                      {selectedTypeFilter === 'report' && (
+                        <Badge variant="secondary" className="ml-auto">Selected</Badge>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleTypeFilter('starred')} className='cursor-pointer'>
+                      <Star className="mr-2 h-4 w-4 text-yellow-500" />
+                      Starred Messages
+                      {selectedTypeFilter === 'starred' && (
+                        <Badge variant="secondary" className="ml-auto">Selected</Badge>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleTypeFilter('unread')} className='cursor-pointer'>
+                      <div className="mr-2 w-4 h-4 bg-red-500 rounded-full" />
+                      Unread Messages
+                      {selectedTypeFilter === 'unread' && (
+                        <Badge variant="secondary" className="ml-auto">Selected</Badge>
+                      )}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </motion.div>
+
+              {/* Table */}
+              <motion.div 
+                className="rounded-md border"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.5 }}
+              >
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup, index) => (
+                      <motion.tr 
+                        key={headerGroup.id}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.6 + index * 0.1 }}
+                      >
+                        {headerGroup.headers.map((header) => {
+                          return (
+                            <TableHead key={header.id}>
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                            </TableHead>
+                          )
+                        })}
+                      </motion.tr>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    <AnimatePresence mode="wait">
+                      {renderTableBody()}
+                    </AnimatePresence>
+                  </TableBody>
+                </Table>
+              </motion.div>
+
+              {/* Pagination */}
+              <motion.div 
+                className="flex items-center justify-end space-x-2 py-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.7 }}
+              >
+                <div className="text-muted-foreground flex-1 text-sm">
+                  Showing {table.getRowModel().rows.length} of {table.getFilteredRowModel().rows.length} notification(s)
+                </div>
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    className="cursor-pointer"
+                  >
+                    Previous
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleTypeFilter('all')} className='cursor-pointer'>
-                    <Filter className="mr-2 h-4 w-4" />
-                    All Types
-                    {selectedTypeFilter === 'all' && (
-                      <Badge variant="secondary" className="ml-auto">Selected</Badge>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => handleTypeFilter('vote')} className='cursor-pointer'>
-                    <ThumbsUp className="mr-2 h-4 w-4 text-blue-600" />
-                    Vote of Thanks
-                    {selectedTypeFilter === 'vote' && (
-                      <Badge variant="secondary" className="ml-auto">Selected</Badge>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleTypeFilter('report')} className='cursor-pointer'>
-                    <Bell className="mr-2 h-4 w-4 text-red-600" />
-                    Reports
-                    {selectedTypeFilter === 'report' && (
-                      <Badge variant="secondary" className="ml-auto">Selected</Badge>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleTypeFilter('starred')} className='cursor-pointer'>
-                    <Star className="mr-2 h-4 w-4 text-yellow-500" />
-                    Starred Messages
-                    {selectedTypeFilter === 'starred' && (
-                      <Badge variant="secondary" className="ml-auto">Selected</Badge>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleTypeFilter('unread')} className='cursor-pointer'>
-                    <div className="mr-2 w-4 h-4 bg-red-500 rounded-full" />
-                    Unread Messages
-                    {selectedTypeFilter === 'unread' && (
-                      <Badge variant="secondary" className="ml-auto">Selected</Badge>
-                    )}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Table */}
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => {
-                        return (
-                          <TableHead key={header.id}>
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                          </TableHead>
-                        )
-                      })}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {renderTableBody()}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pagination */}
-            <div className="flex items-center justify-end space-x-2 py-4">
-              <div className="text-muted-foreground flex-1 text-sm">
-                Showing {table.getRowModel().rows.length} of {table.getFilteredRowModel().rows.length} notification(s)
-              </div>
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                  className="cursor-pointer"
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                  className="cursor-pointer"
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    className="cursor-pointer"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* View Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                {selectedItem?.type === 'vote' ? (
-                  <ThumbsUp className="w-5 h-5 text-blue-600" />
-                ) : (
-                  <Bell className={`w-5 h-5 ${selectedItem?.type === 'admin-warning' ? 'text-red-600 animate-shake' : 'text-red-600'}`} />
-                )}
-                <span className={selectedItem?.type === 'admin-warning' ? "text-red-700 font-bold" : ""}>
-                  {selectedItem?.title}
-                </span>
-                {selectedItem?.isStarred && (
-                  <Star className="w-4 h-4 text-yellow-500 fill-current ml-2" />
-                )}
-              </DialogTitle>
-              <DialogDescription>
-                From {selectedItem?.sender} • {selectedItem && formatTimestamp(selectedItem.timestamp)}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Badge 
-                  className={`text-xs capitalize ${
-                    selectedItem?.type === 'report' 
-                      ? 'bg-red-100 text-red-700 border-red-200' 
-                      : selectedItem?.type === 'admin-warning'
-                        ? 'bg-red-100 text-red-700 border-red-200'
-                        : 'bg-blue-100 text-blue-700 border-blue-200'
-                  }`}
+        <AnimatePresence>
+          {isDialogOpen && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogContent className="sm:max-w-2xl">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  {selectedItem?.type === 'admin-warning' ? 'admin' : selectedItem?.type}
-                </Badge>
-              </div>
-              <p className={`leading-relaxed ${selectedItem?.type === 'admin-warning' ? "text-red-800 font-bold" : "text-gray-700"}`}>
-                {selectedItem?.content || selectedItem?.description}
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      {selectedItem?.type === 'vote' ? (
+                        <ThumbsUp className="w-5 h-5 text-blue-600" />
+                      ) : (
+                        <Bell className={`w-5 h-5 ${selectedItem?.type === 'admin-warning' ? 'text-red-600 animate-shake' : 'text-red-600'}`} />
+                      )}
+                      <span className={selectedItem?.type === 'admin-warning' ? "text-red-700 font-bold" : ""}>
+                        {selectedItem?.title}
+                      </span>
+                      {selectedItem?.isStarred && (
+                        <Star className="w-4 h-4 text-yellow-500 fill-current ml-2" />
+                      )}
+                    </DialogTitle>
+                    <DialogDescription>
+                      From {selectedItem?.sender} • {selectedItem && formatTimestamp(selectedItem.timestamp)}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <motion.div 
+                    className="mt-4"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <Badge 
+                        className={`text-xs capitalize ${
+                          selectedItem?.type === 'report' 
+                            ? 'bg-red-100 text-red-700 border-red-200' 
+                            : selectedItem?.type === 'admin-warning'
+                              ? 'bg-red-100 text-red-700 border-red-200'
+                              : 'bg-blue-100 text-blue-700 border-blue-200'
+                        }`}
+                      >
+                        {selectedItem?.type === 'admin-warning' ? 'admin' : selectedItem?.type}
+                      </Badge>
+                    </div>
+                    <p className={`leading-relaxed ${selectedItem?.type === 'admin-warning' ? "text-red-800 font-bold" : "text-gray-700"}`}>
+                      {selectedItem?.content || selectedItem?.description}
+                    </p>
+                  </motion.div>
+                </motion.div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

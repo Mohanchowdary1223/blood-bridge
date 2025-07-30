@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea" // Changed from Input to Textarea
+import { Textarea } from "@/components/ui/textarea"
 import {
   ArrowLeft,
   Plus,
@@ -24,6 +24,7 @@ import {
   Trash2,
   History,
   MoreVertical,
+  Droplets,
   MessageCircle,
 } from "lucide-react"
 import {
@@ -52,7 +53,6 @@ interface ChatSession {
   messages: Message[]
   createdAt: Date
 }
-
 
 // Get userId from localStorage (client-side only)
 function getUserIdFromLocalStorage(): string | null {
@@ -83,7 +83,7 @@ const HealthcareChatBotContent: React.FC = () => {
   // Ref for auto-scrolling to bottom
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null) // Added for textarea auto-resize
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -421,7 +421,7 @@ const HealthcareChatBotContent: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-                              <Bot className="h-4 w-4 text-secondary-foreground" />
+                              <Droplets className="h-4 w-4 text-primary" />
                             </div>
                           )}
                         </div>
