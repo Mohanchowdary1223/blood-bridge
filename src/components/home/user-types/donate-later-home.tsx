@@ -52,7 +52,7 @@ export default function DonateLaterHome() {
           const userData = JSON.parse(userStr)
           if (userData?.name) setUserName(userData.name)
           if (userData?.bloodType) setBloodGroup(userData.bloodType)
-        } catch {}
+        } catch { }
       }
     }
   }, [])
@@ -69,11 +69,10 @@ export default function DonateLaterHome() {
 
   // Share utilities
   const shareData = {
-    title: 'BloodBridge - Save Lives Through Blood Donation',
-    text:
-      "Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone's story. You can also find donors near you when needed.",
-    url: typeof window !== 'undefined' ? window.location.href : ''
-  }
+   title: 'BloodBridge - Save Lives Through Blood Donation',
+    text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story. You can also find donors near you when needed.',
+    url: typeof window !== 'undefined' ? window.location.href : '',
+   }
   const handleCopyLink = async () => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
@@ -253,7 +252,20 @@ export default function DonateLaterHome() {
                 <Card className="group border-0 hover:-translate-y-2 transition-all">
                   <CardHeader className="text-center pb-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                      <Heart className="w-8 h-8 text-white" />
+                      <motion.div
+                        animate={{
+                          scale: [1, 1.1, 1]
+                        }}
+                        transition={{
+                          duration: 1.2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                        className="flex items-center"
+                      >
+                        <Heart className="w-8 h-8 text-white" />
+
+                      </motion.div>
                     </div>
                     <CardTitle className="text-xl">Donate Blood</CardTitle>
                     <CardDescription>

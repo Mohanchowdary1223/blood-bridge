@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -14,10 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
-interface Notification {
-  status: string;
-}
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface UserData {
   _id?: string;
@@ -49,96 +48,48 @@ const DonorNavbar: React.FC = () => {
     }
   }, []);
 
-  // Fetch unread notifications count - FIXED VERSION
+  // Fetch unread notifications count (only user notifications, not admin messages)
   useEffect(() => {
     const fetchUnreadCount = async (): Promise<void> => {
-      // Prevent multiple simultaneous requests
       if (isLoading) return;
-      
       setIsLoading(true);
-      
       try {
         let userId = '';
-        
         if (typeof window !== 'undefined') {
           const userStr = localStorage.getItem('user');
           if (userStr) {
             try {
               const userData: UserData = JSON.parse(userStr);
               userId = userData._id || userData.id || '';
-            } catch (parseError) {
-              console.error('Failed to parse user data for notifications:', parseError);
-              setIsLoading(false);
-              return;
-            }
+            } catch {}
           }
         }
-        
         if (!userId) {
-          console.warn('No user ID found, skipping notification fetch');
           setIsLoading(false);
           return;
         }
-
-        console.log('Fetching notifications for user:', userId);
-        
-        const res = await fetch(`/api/reportvotedata?userId=${userId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
+        // Fetch user notifications
+        const res = await fetch(`/api/reportvotedata?userId=${userId}`);
+        let userUnread = 0;
+        if (res.ok) {
+          const data = await res.json();
+          if (data.notifications && Array.isArray(data.notifications)) {
+            userUnread = data.notifications.filter((n: any) => n.status === 'unread').length;
+          }
         }
-        
-        const data = await res.json();
-        console.log('Notification data received:', data);
-        
-        if (data.notifications && Array.isArray(data.notifications)) {
-          const unreadNotifications = data.notifications.filter(
-            (notification: Notification) => notification.status === 'unread'
-          );
-          setUnreadCount(unreadNotifications.length);
-          console.log('Unread count updated:', unreadNotifications.length);
-        } else {
-          console.warn('No notifications array found in response:', data);
-          setUnreadCount(0);
-        }
-        
+        setUnreadCount(userUnread);
       } catch (error) {
-        console.error('Failed to fetch unread count:', error);
-        
-        // More detailed error logging
-        if (error instanceof TypeError && error.message.includes('fetch')) {
-          console.error('Network error - check if the API endpoint is accessible');
-        } else if (error instanceof Error) {
-          console.error('Error details:', {
-            message: error.message,
-            name: error.name,
-            stack: error.stack
-          });
-        }
-        
-        // Don't update count on error, keep previous value
+        // error handling
       } finally {
         setIsLoading(false);
       }
     };
-
-    // Initial fetch
     fetchUnreadCount();
-    
-    // Set up polling - only if not already loading
     const interval = setInterval(() => {
-      if (!isLoading) {
-        fetchUnreadCount();
-      }
+      if (!isLoading) fetchUnreadCount();
     }, 30000);
-    
     return () => clearInterval(interval);
-  }, []); // Empty dependency array is correct here
+  }, []);
 
   const handleLogout = async (): Promise<void> => {
     try {
@@ -164,88 +115,150 @@ const DonorNavbar: React.FC = () => {
 
   return (
     <>
-      <nav className="bg-background sticky top-0 z-50 border-b border-border">
+      <motion.nav 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="bg-background sticky top-0 z-50 border-b border-border"
+      >
         <div className="container mx-auto px-6 py-3">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <div className='flex items-center gap-2'>
-              <div className="w-7 h-7 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+            <motion.div 
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className='flex items-center gap-2'
+            >
+              <motion.div 
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-7 h-7 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center"
+              >
                 <Droplets className="w-5 h-5 text-white" />
-              </div>
-              <button 
+              </motion.div>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => handleNavigation('/home')}
                 className="text-xl cursor-pointer font-bold text-foreground hover:text-red-600 transition-colors"
               >
                 BloodBridge
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
 
             {/* Right Side Navigation */}
-            <div className="flex items-center space-x-4">
+            <motion.div 
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex items-center space-x-4"
+            >
               {/* Desktop Navigation */}
               <div className="hidden md:flex space-x-2">
-                <Button 
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Info className="w-4 h-4 mr-1" />
-                  <a 
-                    href="https://mohansunkara.vercel.app/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="no-underline"
+                  <Button 
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
                   >
-                    About
-                  </a>
-                </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => handleNavigation('/finddonor')}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
+                    <Info className="w-4 h-4 mr-1" />
+                    <a 
+                      href="https://mohansunkara.vercel.app/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="no-underline"
+                    >
+                      About
+                    </a>
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Search className="w-4 h-4 mr-1" />
-                  Find Donor
-                </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => handleNavigation('/trackimpact')}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
+                  <Button 
+                    variant="ghost"
+                    onClick={() => handleNavigation('/finddonor')}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
+                  >
+                    <Search className="w-4 h-4 mr-1" />
+                    Find Donor
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <BarChart3 className="w-4 h-4 mr-1" />
-                  Track Impact
-                </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => handleNavigation('/healthaibot')}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
+                  <Button 
+                    variant="ghost"
+                    onClick={() => handleNavigation('/trackimpact')}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-1" />
+                    Track Impact
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Bot className="w-4 h-4 mr-1" />
-                  Health Assistant
-                </Button>
+                  <Button 
+                    variant="ghost"
+                    onClick={() => handleNavigation('/healthaibot')}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
+                  >
+                    <Bot className="w-4 h-4 mr-1" />
+                    Health Assistant
+                  </Button>
+                </motion.div>
               </div>
 
               {/* Profile Dropdown with Badge */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="relative h-10 w-10 rounded-full cursor-pointer"
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {userName.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    {/* Unread Count Badge on Avatar */}
-                    {unreadCount > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        className="absolute -top-1 -right-1 h-5 max-w-5 text-xs px-1.5 rounded-full bg-red-500 text-white font-bold shadow-sm border-2 border-white"
-                      >
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </Badge>
-                    )}
-                  </Button>
+                    <Button 
+                      variant="ghost" 
+                      className="relative h-10 w-10 rounded-full cursor-pointer"
+                    >
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {userName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      {/* Unread Count Badge on Avatar */}
+                      <AnimatePresence>
+                        {unreadCount > 0 && (
+                          <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                          >
+                            <Badge 
+                              variant="destructive" 
+                              className="absolute -top-1 -right-1 h-5 max-w-5 text-xs px-1.5 rounded-full bg-red-500 text-white font-bold shadow-sm border-2 border-white"
+                            >
+                              <motion.span
+                                key={unreadCount}
+                                initial={{ scale: 1.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                              </motion.span>
+                            </Badge>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </Button>
+                  </motion.div>
                 </DropdownMenuTrigger>
                 
                 <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -256,11 +269,18 @@ const DonorNavbar: React.FC = () => {
                         {userName.charAt(0).toUpperCase() + userName.slice(1)}
                       </p>
                     </div>
-                    {unreadCount > 0 && (
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
-                      </p>
-                    )}
+                    <AnimatePresence>
+                      {unreadCount > 0 && (
+                        <motion.p 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="text-xs leading-none text-muted-foreground"
+                        >
+                          {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
                   </div>
                   
                   <DropdownMenuSeparator />
@@ -280,14 +300,31 @@ const DonorNavbar: React.FC = () => {
                   >
                     <Mail className="mr-2 h-4 w-4" />
                     Mails
-                    {unreadCount > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        className="ml-auto h-4 min-w-4 text-[10px] px-1 rounded-full bg-red-500 hover:bg-red-500 text-white font-bold"
-                      >
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </Badge>
-                    )}
+                    <AnimatePresence>
+                      {unreadCount > 0 && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                          className="ml-auto"
+                        >
+                          <Badge 
+                            variant="destructive" 
+                            className="h-4 min-w-4 text-[10px] px-1 rounded-full bg-red-500 hover:bg-red-500 text-white font-bold"
+                          >
+                            <motion.span
+                              key={unreadCount}
+                              initial={{ scale: 1.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              {unreadCount > 99 ? '99+' : unreadCount}
+                            </motion.span>
+                          </Badge>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </DropdownMenuItem>
                   
                   {/* Mobile Navigation Items */}
@@ -338,31 +375,71 @@ const DonorNavbar: React.FC = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </motion.div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
       
       {/* Logout Success Popup */}
-      {showLogoutSuccess && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/50 backdrop-blur-sm">
-          <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4 shadow-lg">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <LogOut className="w-4 h-4 text-white" />
+      <AnimatePresence>
+        {showLogoutSuccess && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 flex items-center justify-center z-[100] bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: -20 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 20,
+                duration: 0.4 
+              }}
+            >
+              <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4 shadow-lg">
+                <div className="text-center">
+                  <motion.div 
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
+                      className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+                    >
+                      <LogOut className="w-4 h-4 text-white" />
+                    </motion.div>
+                  </motion.div>
+                  <motion.h3 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-lg font-semibold text-gray-900 mb-2"
+                  >
+                    Logged Out Successfully!
+                  </motion.h3>
+                  <motion.p 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-sm text-muted-foreground"
+                  >
+                    Thank you for using BloodBridge. Stay safe!
+                  </motion.p>
                 </div>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Logged Out Successfully!
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Thank you for using BloodBridge. Stay safe!
-              </p>
-            </div>
-          </Card>
-        </div>
-      )}
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

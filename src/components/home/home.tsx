@@ -104,7 +104,7 @@ const HomeComponent: React.FC<HomeComponentProps> = () => {
 
   // Share data
   const shareData = {
-    title: 'BloodBridge - Save Lives Through Blood Donation',
+  title: 'BloodBridge - Save Lives Through Blood Donation',
     text: 'Join BloodBridge and help save lives! Every donation can save up to 3 lives. Be a hero in someone\'s story. You can also find donors near you when needed.',
     url: typeof window !== 'undefined' ? window.location.href : '',
   };

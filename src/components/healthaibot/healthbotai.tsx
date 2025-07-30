@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Plus,
   Send,
+  Droplets,
   Bot,
   User,
   History,
@@ -328,7 +329,7 @@ const PublicHealthChatBotContent: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-                              <Bot className="h-4 w-4 text-secondary-foreground" />
+                              <Droplets className="h-4 w-4 text-primary" />
                             </div>
                           )}
                         </div>

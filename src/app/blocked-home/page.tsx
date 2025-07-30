@@ -171,7 +171,7 @@ const BlockedUserHome: React.FC = () => {
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
                 <Button 
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-red-600 cursor-pointer hover:bg-red-700 text-white"
                   onClick={resetModal}
                   disabled={isLoggingOut}
                 >
@@ -226,14 +226,14 @@ const BlockedUserHome: React.FC = () => {
                           type="button"
                           variant="outline"
                           onClick={() => setIsModalOpen(false)}
-                          className="flex-1"
+                          className="flex-1 cursor-pointer"
                           disabled={isSubmitting}
                         >
                           Cancel
                         </Button>
                         <Button
                           type="submit"
-                          className="flex-1 bg-red-600 hover:bg-red-700"
+                          className="flex-1 bg-red-600 cursor-pointer hover:bg-red-700"
                           disabled={isSubmitting}
                         >
                           {isSubmitting ? (
@@ -260,7 +260,7 @@ const BlockedUserHome: React.FC = () => {
               variant="outline"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="w-full border-gray-300 cursor-pointer text-gray-700 hover:bg-gray-50"
             >
               {isLoggingOut ? (
                 <>

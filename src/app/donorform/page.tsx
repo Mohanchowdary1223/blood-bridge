@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
-import { User, Mail, Phone, Heart, Droplet, CalendarIcon, Weight, Ruler, MapPin, CheckCircle } from 'lucide-react';
+import { User, Mail, Phone, Heart, Droplet, CalendarIcon, Weight, Ruler, MapPin, CheckCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,7 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function formatDate(date: Date | undefined) {
   if (!date) return "";
@@ -27,6 +30,16 @@ const DonorFormPage: React.FC = () => {
 
   // Add access control state
   const [accessAllowed, setAccessAllowed] = useState<boolean | null>(null);
+
+  // Search states for location
+  const [countrySearch, setCountrySearch] = useState('');
+  const [stateSearch, setStateSearch] = useState('');
+  const [citySearch, setCitySearch] = useState('');
+  
+  // Popover states
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [stateOpen, setStateOpen] = useState(false);
+  const [cityOpen, setCityOpen] = useState(false);
 
   const [donorFormData, setDonorFormData] = useState<{
     name: string;
@@ -61,6 +74,30 @@ const DonorFormPage: React.FC = () => {
   const [cities, setCities] = useState<ICity[]>([]);
 
   const router = useRouter();
+
+  // Filter functions for search
+  const filteredCountries = countries.filter(country => 
+    country.name.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
+  const filteredStates = states.filter(state => 
+    state.name.toLowerCase().includes(stateSearch.toLowerCase())
+  );
+
+  const filteredCities = cities.filter(city => 
+    city.name.toLowerCase().includes(citySearch.toLowerCase())
+  );
+
+  // Get display names
+  const getSelectedCountryName = () => {
+    const country = countries.find(c => c.isoCode === donorFormData.country);
+    return country?.name || '';
+  };
+
+  const getSelectedStateName = () => {
+    const state = states.find(s => s.isoCode === donorFormData.state);
+    return state?.name || '';
+  };
 
   // Load countries and user details on mount, restrict access to donateLater users
   useEffect(() => {
@@ -109,7 +146,7 @@ const DonorFormPage: React.FC = () => {
       setAccessAllowed(false);
       setTimeout(() => router.replace('/home'), 1500);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (donorFormData.country) {
@@ -228,47 +265,122 @@ const DonorFormPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-12">
+    <motion.div 
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-12"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Success Modal */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 text-center shadow-2xl transform animate-pulse">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-10 h-10 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-green-700 mb-2">Registration Successful!</h2>
-            <p className="text-gray-600">Welcome to the BloodBridge donor community!</p>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <motion.div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="bg-white rounded-xl p-8 text-center shadow-2xl"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div 
+                className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </motion.div>
+              <h2 className="text-2xl font-bold text-green-700 mb-2">Registration Successful!</h2>
+              <p className="text-gray-600">Welcome to the BloodBridge donor community!</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="container mx-auto max-w-4xl">
-        <div className="mb-8">
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
           <h1 className="text-3xl font-bold flex items-center gap-2 text-green-700 mb-2">
-            <Heart className="w-8 h-8" /> Become a Blood Donor
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [1, 0.7, 1]
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <Heart className="w-8 h-8" />
+            </motion.div>
+            Become a Blood Donor
           </h1>
           <p className="max-w-2xl text-gray-500 text-lg">
             Fill out this form to register as a blood donor and start saving lives today.
           </p>
-        </div>
+        </motion.div>
 
-        {msg && (
-          <Alert className="border-green-200 bg-green-50 mb-4">
-            <AlertDescription className="text-green-700">{msg}</AlertDescription>
-          </Alert>
-        )}
-        {err && (
-          <Alert variant="destructive" className="border-red-200 bg-red-50 mb-4">
-            <AlertDescription className="text-red-700">{err}</AlertDescription>
-          </Alert>
-        )}
+        {/* Success/Error Messages */}
+        <AnimatePresence>
+          {msg && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Alert className="border-green-200 bg-green-50 mb-4">
+                <AlertDescription className="text-green-700">{msg}</AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {err && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Alert variant="destructive" className="border-red-200 bg-red-50 mb-4">
+                <AlertDescription className="text-red-700">{err}</AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <div className="space-y-8 bg-white pt-8 pb-10 px-6 rounded-xl mb-8 border border-gray-100">
+        <motion.div 
+          className="space-y-8 bg-white pt-8 pb-10 px-6 rounded-xl mb-8 border border-gray-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           {/* ------ Personal Info ------ */}
-          <div className="space-y-4">
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+          >
             <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-green-500 pl-3">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+              >
                 <Label className="flex items-center gap-2">
                   <User className="w-4 h-4" /> Full Name
                 </Label>
@@ -284,8 +396,13 @@ const DonorFormPage: React.FC = () => {
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.name}
                 </p>}
-              </div>
-              <div className="space-y-2">
+              </motion.div>
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.5 }}
+              >
                 <Label className="flex items-center gap-2">
                   <Mail className="w-4 h-4" /> Email
                 </Label>
@@ -302,15 +419,25 @@ const DonorFormPage: React.FC = () => {
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.email}
                 </p>}
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* ------ Contact & Medical ------ */}
-          <div className="space-y-4">
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.6 }}
+          >
             <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-500 pl-3">Contact & Medical</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.7 }}
+              >
                 <Label className="flex items-center gap-2"><Phone className="w-4 h-4" /> Phone Number</Label>
                 <div className="relative">
                   <div className="absolute left-3 top-3 text-xs text-blue-600 font-medium">
@@ -330,8 +457,13 @@ const DonorFormPage: React.FC = () => {
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.phone}
                 </p>}
-              </div>
-              <div className="space-y-2">
+              </motion.div>
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.8 }}
+              >
                 <Label className="flex items-center gap-2"><Droplet className="w-4 h-4" /> Blood Type</Label>
                 <Select value={donorFormData.bloodType} onValueChange={(value) => handleSelectChange('bloodType', value)}>
                   <SelectTrigger className={`h-12 min-w-full cursor-pointer ${donorFormErrors.bloodType ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
@@ -347,15 +479,25 @@ const DonorFormPage: React.FC = () => {
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.bloodType}
                 </p>}
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* ------ Physical Details ------ */}
-          <div className="space-y-4">
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.9 }}
+          >
             <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-purple-500 pl-3">Physical Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 1.0 }}
+              >
                 <Label className="text-sm font-medium text-gray-700">Date of Birth</Label>
                 <div className="relative">
                   <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
@@ -377,28 +519,41 @@ const DonorFormPage: React.FC = () => {
                       "Select date of birth"
                     )}
                   </Button>
-                  {showCalendar && (
-                    <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg  border border-gray-200 p-4">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={handleDateSelect}
-                        className="rounded-md bg-white border-0"
-                        captionLayout="dropdown"
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {showCalendar && (
+                      <motion.div 
+                        className="absolute top-full left-0 mt-2 z-50 bg-white rounded-lg  border border-gray-200 p-4"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={handleDateSelect}
+                          className="rounded-md bg-white border-0"
+                          captionLayout="dropdown"
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 {donorFormErrors.dob && <p className="text-xs text-red-500 flex items-center gap-1">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.dob}
                 </p>}
-              </div>
-              <div className="space-y-2">
+              </motion.div>
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 1.1 }}
+              >
                 <Label className="flex items-center gap-2"><Weight className="w-4 h-4" /> Weight (kg)</Label>
                 <Input
                   name="weight"
@@ -415,8 +570,13 @@ const DonorFormPage: React.FC = () => {
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.weight}
                 </p>}
-              </div>
-              <div className="space-y-2">
+              </motion.div>
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 1.2 }}
+              >
                 <Label className="flex items-center gap-2"><Ruler className="w-4 h-4" /> Height (cm)</Label>
                 <Input
                   name="height"
@@ -433,9 +593,14 @@ const DonorFormPage: React.FC = () => {
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.height}
                 </p>}
-              </div>
+              </motion.div>
             </div>
-            <div className="space-y-2">
+            <motion.div 
+              className="space-y-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 1.3 }}
+            >
               <Label>Gender</Label>
               <Select value={donorFormData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
                 <SelectTrigger className={`h-12 min-w-1/2 cursor-pointer ${donorFormErrors.gender ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
@@ -453,75 +618,188 @@ const DonorFormPage: React.FC = () => {
                 <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                 {donorFormErrors.gender}
               </p>}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* ------ Location ------ */}
-          <div className="space-y-4">
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 1.4 }}
+          >
             <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-orange-500 pl-3">Location</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Country</Label>
-                <Select value={donorFormData.country} onValueChange={(value) => handleSelectChange('country', value)}>
-                  <SelectTrigger className={`h-12 min-w-full cursor-pointer ${donorFormErrors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    {countries.map(country => (
-                      <SelectItem key={country.isoCode} value={country.isoCode} className="cursor-pointer">
-                        {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Country with Search */}
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 1.5 }}
+              >
+                <Label className="flex items-center gap-2"><MapPin className="w-4 h-4 text-green-500" /> Country</Label>
+                <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={countryOpen}
+                      className={`w-full justify-between h-12 cursor-pointer ${donorFormErrors.country ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-green-500'}`}
+                    >
+                      {getSelectedCountryName() || "Select Country"}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search country..." 
+                        value={countrySearch}
+                        onValueChange={setCountrySearch}
+                      />
+                      <CommandEmpty>No country found.</CommandEmpty>
+                      <CommandGroup className="max-h-60 overflow-y-auto">
+                        {filteredCountries.map((country) => (
+                          <CommandItem
+                            key={country.isoCode}
+                            value={country.name}
+                            onSelect={() => {
+                              handleSelectChange('country', country.isoCode);
+                              setCountryOpen(false);
+                              setCountrySearch('');
+                            }}
+                            className="cursor-pointer"
+                          >
+                            {country.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 {donorFormErrors.country && <p className="text-xs text-red-500 flex items-center gap-1">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.country}
                 </p>}
-              </div>
-              <div className="space-y-2">
+              </motion.div>
+
+              {/* State with Search */}
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 1.6 }}
+              >
                 <Label>State</Label>
-                <Select value={donorFormData.state} onValueChange={(value) => handleSelectChange('state', value)} disabled={!donorFormData.country}>
-                  <SelectTrigger className={`h-12 min-w-full cursor-pointer ${donorFormErrors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
-                    <SelectValue placeholder="Select state" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    {states.map(state => (
-                      <SelectItem key={state.isoCode} value={state.isoCode} className="cursor-pointer">
-                        {state.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={stateOpen} onOpenChange={setStateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={stateOpen}
+                      disabled={!donorFormData.country}
+                      className={`w-full justify-between h-12 cursor-pointer disabled:cursor-not-allowed ${donorFormErrors.state ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-green-500'}`}
+                    >
+                      {getSelectedStateName() || "Select State"}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search state..." 
+                        value={stateSearch}
+                        onValueChange={setStateSearch}
+                      />
+                      <CommandEmpty>No state found.</CommandEmpty>
+                      <CommandGroup className="max-h-60 overflow-y-auto">
+                        {filteredStates.map((state) => (
+                          <CommandItem
+                            key={state.isoCode}
+                            value={state.name}
+                            onSelect={() => {
+                              handleSelectChange('state', state.isoCode);
+                              setStateOpen(false);
+                              setStateSearch('');
+                            }}
+                            className="cursor-pointer"
+                          >
+                            {state.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 {donorFormErrors.state && <p className="text-xs text-red-500 flex items-center gap-1">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.state}
                 </p>}
-              </div>
-              <div className="space-y-2">
+              </motion.div>
+
+              {/* City with Search */}
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 1.7 }}
+              >
                 <Label>City</Label>
-                <Select value={donorFormData.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={!donorFormData.state}>
-                  <SelectTrigger className={`h-12 min-w-full cursor-pointer ${donorFormErrors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200'}`}>
-                    <SelectValue placeholder="Select city" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    {cities.map(city => (
-                      <SelectItem key={city.name} value={city.name} className="cursor-pointer">
-                        {city.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={cityOpen} onOpenChange={setCityOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={cityOpen}
+                      disabled={!donorFormData.state}
+                      className={`w-full justify-between h-12 cursor-pointer disabled:cursor-not-allowed ${donorFormErrors.city ? 'border-red-500 bg-red-50/50' : 'border-gray-200 focus:border-green-500'}`}
+                    >
+                      {donorFormData.city || "Select City"}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search city..." 
+                        value={citySearch}
+                        onValueChange={setCitySearch}
+                      />
+                      <CommandEmpty>No city found.</CommandEmpty>
+                      <CommandGroup className="max-h-60 overflow-y-auto">
+                        {filteredCities.map((city) => (
+                          <CommandItem
+                            key={city.name}
+                            value={city.name}
+                            onSelect={() => {
+                              handleSelectChange('city', city.name);
+                              setCityOpen(false);
+                              setCitySearch('');
+                            }}
+                            className="cursor-pointer"
+                          >
+                            {city.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 {donorFormErrors.city && <p className="text-xs text-red-500 flex items-center gap-1">
                   <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                   {donorFormErrors.city}
                 </p>}
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* ------ Availability ------ */}
-          <div className="space-y-4">
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 1.8 }}
+          >
             <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-indigo-500 pl-3">Donation Availability</h3>
             <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-4">
               <Label className="text-sm font-medium text-gray-700 mb-4 block">Are you currently available to donate blood?</Label>
@@ -530,44 +808,78 @@ const DonorFormPage: React.FC = () => {
                 onValueChange={(value) => setDonorFormData({...donorFormData, isAvailable: value === 'true'})}
                 className="flex gap-6"
               >
-                <div className="flex items-center space-x-2">
+                <motion.div 
+                  className="flex items-center space-x-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
                   <RadioGroupItem value="true" id="yes" className="cursor-pointer" />
                   <Label htmlFor="yes" className="cursor-pointer">Yes, I'm available</Label>
-                </div>
-                <div className="flex items-center space-x-2">
+                </motion.div>
+                <motion.div 
+                  className="flex items-center space-x-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
                   <RadioGroupItem value="false" id="no" className="cursor-pointer" />
                   <Label htmlFor="no" className="cursor-pointer">Not available now</Label>
-                </div>
+                </motion.div>
               </RadioGroup>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Submit Buttons */}
-        <div className="flex flex-col justify-center items-center sm:flex-row gap-4 pt-6">
-          <Button
-            onClick={handleDonorSubmit}
-            disabled={loading}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold cursor-pointer"
+        <motion.div 
+          className="flex flex-col justify-center items-center sm:flex-row gap-4 pt-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 1.9 }}
+        >
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                <span>Registering...</span>
-              </div>
-            ) : (
-              <>
-                <Heart className="w-4 h-4 mr-2" />
-                Register as Donor
-              </>
-            )}
-          </Button>
-          <Button onClick={() => router.back()} type="button" variant="outline" className="cursor-pointer">
-            Cancel
-          </Button>
-        </div>
+            <Button
+              onClick={handleDonorSubmit}
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold cursor-pointer"
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <span>Registering...</span>
+                </div>
+              ) : (
+                <>
+                  <motion.div
+                    animate={{ 
+                      scale: [1, 1.1, 1]
+                    }}
+                    transition={{
+                      duration: 1.2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <Heart className="w-4 h-4 mr-2" />
+                  </motion.div>
+                  Register as Donor
+                </>
+              )}
+            </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button onClick={() => router.back()} type="button" variant="outline" className="cursor-pointer">
+              Cancel
+            </Button>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

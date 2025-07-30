@@ -20,7 +20,6 @@ import {
   Plus,
   Send,
   Bot,
-  User,
   Trash2,
   History,
   MoreVertical,
@@ -39,12 +38,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface Message {
   id: string
   text: string
   sender: "user" | "bot"
   timestamp: Date
+  isTyping?: boolean
 }
 
 interface ChatSession {
@@ -52,6 +53,54 @@ interface ChatSession {
   title: string
   messages: Message[]
   createdAt: Date
+}
+
+// Typewriter component for bot messages
+const TypewriterText: React.FC<{ 
+  text: string
+  onComplete?: () => void
+  isActive?: boolean
+}> = ({ text, onComplete, isActive = true }) => {
+  const [displayedText, setDisplayedText] = useState("")
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  useEffect(() => {
+    if (!isActive) {
+      setDisplayedText(text)
+      return
+    }
+
+    if (currentIndex < text.length) {
+      const timer = setTimeout(() => {
+        setDisplayedText(prev => prev + text[currentIndex])
+        setCurrentIndex(prev => prev + 1)
+      }, 20) // Adjust speed here (lower = faster)
+
+      return () => clearTimeout(timer)
+    } else if (onComplete) {
+      onComplete()
+    }
+  }, [currentIndex, text, onComplete, isActive])
+
+  useEffect(() => {
+    if (isActive) {
+      setDisplayedText("")
+      setCurrentIndex(0)
+    }
+  }, [text, isActive])
+
+  return (
+    <span className="whitespace-pre-wrap text-sm leading-relaxed break-words hyphens-auto">
+      {displayedText}
+      {isActive && currentIndex < text.length && (
+        <motion.span
+          animate={{ opacity: [1, 0] }}
+          transition={{ repeat: Infinity, duration: 0.8 }}
+          className="inline-block w-2 h-4 bg-current ml-1"
+        />
+      )}
+    </span>
+  )
 }
 
 // Get userId from localStorage (client-side only)
@@ -77,6 +126,7 @@ const HealthcareChatBotContent: React.FC = () => {
   const [inputMessage, setInputMessage] = useState("")
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false)
   const [userId, setUserId] = useState<string | null>(null);
+  const [typingMessageId, setTypingMessageId] = useState<string | null>(null)
   const { open, openMobile, isMobile, setOpen, setOpenMobile } = useSidebar()
   const router = useRouter()
   
@@ -142,6 +192,15 @@ const HealthcareChatBotContent: React.FC = () => {
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
+      
+      // Set the latest bot message as typing
+      if (data.chat?.messages) {
+        const latestMessage = data.chat.messages[data.chat.messages.length - 1];
+        if (latestMessage?.sender === 'bot') {
+          setTypingMessageId(latestMessage.id);
+        }
+      }
+
       if (chatId) {
         setChatHistory((prev) => prev.map((c) => (c._id === chatId ? data.chat : c)));
         setCurrentChat(data.chat);
@@ -188,12 +247,14 @@ const HealthcareChatBotContent: React.FC = () => {
   // New Chat handler with sidebar close
   const handleNewChat = () => {
     setCurrentChat(null)
+    setTypingMessageId(null)
     closeSidebar()
   }
 
   // Continue Chat handler with sidebar close
   const handleContinueChat = (chat: ChatSession) => {
     setCurrentChat(chat)
+    setTypingMessageId(null)
     closeSidebar()
   }
 
@@ -221,170 +282,240 @@ const HealthcareChatBotContent: React.FC = () => {
     <TooltipProvider>
       <div className="flex h-screen w-full overflow-hidden">
         {/* success toast */}
-        {showDeleteSuccess && (
-          <div className="fixed top-20 right-4 z-[60] rounded-md bg-green-500 px-4 py-2 text-white shadow-lg">
-            Chat deleted successfully!
-          </div>
-        )}
+        <AnimatePresence>
+          {showDeleteSuccess && (
+            <motion.div 
+              initial={{ opacity: 0, y: -50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -50, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className="fixed top-20 right-4 z-[60] rounded-md bg-green-500 px-4 py-2 text-white shadow-lg"
+            >
+              Chat deleted successfully!
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* mobile sidebar trigger (below navbar) */}
         {isMobile && !openMobile && (
-          <div className="fixed top-20 left-4 z-[60]">
-            <SidebarTrigger className="h-10 w-10 cursor-pointer border bg-background shadow-md" />
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="fixed top-20 left-4 z-[60]"
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <SidebarTrigger className="h-10 w-10 cursor-pointer border bg-background shadow-md" />
+            </motion.div>
+          </motion.div>
         )}
 
         {/* sidebar */}
-        <Sidebar
-          side="left"
-          variant="sidebar"
-          collapsible="icon"
-          className="fixed left-0 top-16 bottom-0 z-50 w-[280px] border-r bg-background"
+        <motion.div
+          initial={{ x: -280 }}
+          animate={{ x: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          <SidebarHeader className="border-b">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <div className="flex w-full items-center justify-center p-2">
-                  <SidebarTrigger className="h-8 w-8 cursor-pointer" />
-                </div>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarHeader>
-
-          <SidebarContent className="flex-1 overflow-hidden">
-            <SidebarMenu className="px-2">
-              {/* Back Button with Tooltip - Navigate to /home */}
-              <SidebarMenuItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton
-                      onClick={handleBackToHome}
-                      className="w-full cursor-pointer"
+          <Sidebar
+            side="left"
+            variant="sidebar"
+            collapsible="icon"
+            className="fixed left-0 top-16 bottom-0 z-50 w-[280px] border-r bg-background"
+          >
+            <SidebarHeader className="border-b">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <div className="flex w-full items-center justify-center p-2">
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <ArrowLeft className="size-4" />
-                      <span>Home</span>
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  {!open && !isMobile && (
-                    <TooltipContent side="right">
-                      <p>Home</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </SidebarMenuItem>
+                      <SidebarTrigger className="h-8 w-8 cursor-pointer" />
+                    </motion.div>
+                  </div>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarHeader>
 
-              {/* New Chat Button with Tooltip */}
-              <SidebarMenuItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton
-                      onClick={handleNewChat}
-                      className="w-full cursor-pointer"
-                    >
-                      <Plus className="size-4" />
-                      <span>New Chat</span>
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  {!open && !isMobile && (
-                    <TooltipContent side="right">
-                      <p>New Chat</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </SidebarMenuItem>
-
-              {/* History Header with Tooltip - Clickable when collapsed */}
-              <SidebarMenuItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton 
-                      className={`w-full ${!open && !isMobile ? 'cursor-pointer' : 'cursor-default'}`}
-                      onClick={!open && !isMobile ? handleHistoryClick : undefined}
-                      disabled={open || isMobile}
-                    >
-                      <History className="size-4" />
-                      <span>Recent Chats</span>
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  {!open && !isMobile && (
-                    <TooltipContent side="right">
-                      <p>Chat History</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </SidebarMenuItem>
-            </SidebarMenu>
-
-            {/* Chat History List - Only show when sidebar is open */}
-            {(isMobile ? openMobile : open) && (
-              <div className="flex-1 overflow-y-auto px-2 pb-20">
-                <SidebarMenu>
-                  {chatHistory.map((chat) => (
-                    <SidebarMenuItem key={chat._id}>
-                      <div className="group flex w-full items-center">
-                        {/* chat title press */}
+            <SidebarContent className="flex-1 overflow-hidden">
+              <SidebarMenu className="px-2">
+                {/* Back Button with Tooltip - Navigate to /home */}
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <motion.div
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
                         <SidebarMenuButton
-                          onClick={() => handleContinueChat(chat)}
-                          className="flex-1 min-h-[44px] justify-start pr-2 cursor-pointer"
+                          onClick={handleBackToHome}
+                          className="w-full cursor-pointer"
                         >
-                          <div className="flex w-full min-w-0 flex-col items-start">
-                            <span className="truncate text-sm font-medium">
-                              {chat.title}
-                            </span>
-                            <span className="truncate text-xs text-muted-foreground">
-                              {chat.messages?.length || 0} messages
-                            </span>
-                          </div>
+                          <ArrowLeft className="size-4" />
+                          <span>Home</span>
                         </SidebarMenuButton>
+                      </motion.div>
+                    </TooltipTrigger>
+                    {!open && !isMobile && (
+                      <TooltipContent side="right">
+                        <p>Home</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
 
-                        {/* three-dots dropdown */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 flex-shrink-0 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreVertical className="h-3 w-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                {/* New Chat Button with Tooltip */}
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <motion.div
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <SidebarMenuButton
+                          onClick={handleNewChat}
+                          className="w-full cursor-pointer"
+                        >
+                          <Plus className="size-4" />
+                          <span>New Chat</span>
+                        </SidebarMenuButton>
+                      </motion.div>
+                    </TooltipTrigger>
+                    {!open && !isMobile && (
+                      <TooltipContent side="right">
+                        <p>New Chat</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
 
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleContinueChat(chat)
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <MessageCircle className="mr-2 h-4 w-4" />
-                              Continue Chat
-                            </DropdownMenuItem>
+                {/* History Header with Tooltip - Clickable when collapsed */}
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <motion.div
+                        whileHover={!open && !isMobile ? { scale: 1.02, x: 4 } : {}}
+                        whileTap={!open && !isMobile ? { scale: 0.98 } : {}}
+                      >
+                        <SidebarMenuButton 
+                          className={`w-full ${!open && !isMobile ? 'cursor-pointer' : 'cursor-default'}`}
+                          onClick={!open && !isMobile ? handleHistoryClick : undefined}
+                          disabled={open || isMobile}
+                        >
+                          <History className="size-4" />
+                          <span>Recent Chats</span>
+                        </SidebarMenuButton>
+                      </motion.div>
+                    </TooltipTrigger>
+                    {!open && !isMobile && (
+                      <TooltipContent side="right">
+                        <p>Chat History</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+              </SidebarMenu>
 
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                deleteChat(chat._id!)
-                              }}
-                              className="cursor-pointer text-destructive focus:text-destructive"
+              {/* Chat History List - Only show when sidebar is open */}
+              {(isMobile ? openMobile : open) && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex-1 overflow-y-auto px-2 pb-20"
+                >
+                  <SidebarMenu>
+                    {chatHistory.map((chat, index) => (
+                      <motion.div
+                        key={chat._id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <SidebarMenuItem>
+                          <div className="group flex w-full items-center">
+                            {/* chat title press */}
+                            <motion.div
+                              whileHover={{ x: 4 }}
+                              whileTap={{ scale: 0.98 }}
+                              className="flex-1"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Chat
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </div>
-            )}
-          </SidebarContent>
-        </Sidebar>
+                              <SidebarMenuButton
+                                onClick={() => handleContinueChat(chat)}
+                                className="flex-1 min-h-[44px] justify-start pr-2 cursor-pointer"
+                              >
+                                <div className="flex w-full min-w-0 flex-col items-start">
+                                  <span className="truncate text-sm font-medium">
+                                    {chat.title}
+                                  </span>
+                                  <span className="truncate text-xs text-muted-foreground">
+                                    {chat.messages?.length || 0} messages
+                                  </span>
+                                </div>
+                              </SidebarMenuButton>
+                            </motion.div>
+
+                            {/* three-dots dropdown */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <motion.div
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 flex-shrink-0 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreVertical className="h-3 w-3" />
+                                  </Button>
+                                </motion.div>
+                              </DropdownMenuTrigger>
+
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleContinueChat(chat)
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <MessageCircle className="mr-2 h-4 w-4" />
+                                  Continue Chat
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    deleteChat(chat._id!)
+                                  }}
+                                  className="cursor-pointer text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete Chat
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </SidebarMenuItem>
+                      </motion.div>
+                    ))}
+                  </SidebarMenu>
+                </motion.div>
+              )}
+            </SidebarContent>
+          </Sidebar>
+        </motion.div>
 
         {/* Fixed Chat Container - Like sidebar positioning */}
-        <div 
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
           className="fixed top-16 bottom-0 right-0 z-40 flex flex-col border-l bg-background"
           style={{ 
             left: isMobile ? (openMobile ? '280px' : '0') : (open ? '280px' : '64px'),
@@ -396,9 +527,12 @@ const HealthcareChatBotContent: React.FC = () => {
             <div className="p-4 h-full">
               {currentChat ? (
                 <div className="space-y-4 max-w-4xl mx-auto pb-5 pt-5">
-                  {currentChat.messages?.map((msg) => (
-                    <div
+                  {currentChat.messages?.map((msg, index) => (
+                    <motion.div
                       key={msg.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
                       className={`flex w-full ${
                         msg.sender === "user" ? "justify-end" : "justify-start"
                       }`}
@@ -410,67 +544,133 @@ const HealthcareChatBotContent: React.FC = () => {
                             : "flex-row lg:max-w-md xl:max-w-lg"
                         }`}
                       >
-                        <div
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: index * 0.1 + 0.2, type: "spring", stiffness: 300 }}
                           className={`flex-shrink-0 ${
                             msg.sender === "user" ? "ml-3" : "mr-3"
                           }`}
                         >
                           {msg.sender === "user" ? (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-                              <User className="h-4 w-4 text-primary-foreground" />
+                              {/* Show first letter of user name in uppercase */}
+                              <span className="text-lg font-bold text-primary-foreground">
+                                {(() => {
+                                  if (typeof window !== 'undefined') {
+                                    const userStr = localStorage.getItem('user');
+                                    if (userStr) {
+                                      try {
+                                        const user = JSON.parse(userStr);
+                                        const name = user.name || '';
+                                        return name.charAt(0).toUpperCase() || 'U';
+                                      } catch {}
+                                    }
+                                  }
+                                  return 'U';
+                                })()}
+                              </span>
                             </div>
                           ) : (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
                               <Droplets className="h-4 w-4 text-primary" />
                             </div>
                           )}
-                        </div>
+                        </motion.div>
 
-                        <div
+                        <motion.div
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: index * 0.1 + 0.3 }}
                           className={`rounded-lg px-4 py-3 ${
                             msg.sender === "user"
                               ? "bg-primary text-primary-foreground"
                               : "bg-muted text-muted-foreground"
                           }`}
                         >
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed break-words hyphens-auto">
-                            {msg.text}
-                          </p>
+                          {msg.sender === "bot" && typingMessageId === msg.id ? (
+                            <TypewriterText 
+                              text={msg.text}
+                              onComplete={() => setTypingMessageId(null)}
+                              isActive={true}
+                            />
+                          ) : (
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed break-words hyphens-auto">
+                              {msg.text}
+                            </p>
+                          )}
                           <p className="mt-2 text-xs opacity-70">
                             {(() => {
                               const t = typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp;
                               return t && typeof t.toLocaleTimeString === 'function' ? t.toLocaleTimeString() : '';
                             })()}
                           </p>
-                        </div>
+                        </motion.div>
                       </div>
-                    </div>
+                    </motion.div>
                   )) || []}
                   {/* Invisible div to scroll to */}
                   <div ref={messagesEndRef} />
                 </div>
               ) : (
-                <div className="flex h-full items-center justify-center">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex h-full items-center justify-center"
+                >
                   <div className="max-w-md text-center">
-                    <Bot className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-                    <h2 className="mb-2 text-xl font-semibold">
+                    <motion.div
+                      animate={{ 
+                        rotate: [0, 10, -10, 0],
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{ 
+                        repeat: Infinity,
+                        duration: 4,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Bot className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+                    </motion.div>
+                    <motion.h2 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="mb-2 text-xl font-semibold"
+                    >
                       Welcome to Healthcare Assistant
-                    </h2>
-                    <p className="mb-4 text-muted-foreground">
+                    </motion.h2>
+                    <motion.p 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="mb-4 text-muted-foreground"
+                    >
                       Start a conversation to get help with your health
                       questions
-                    </p>
-                    <p className="text-sm text-muted-foreground">
+                    </motion.p>
+                    <motion.p 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}
+                      className="text-sm text-muted-foreground"
+                    >
                       Ask about blood pressure, exercise, diet and more
-                    </p>
+                    </motion.p>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
 
           {/* Fixed Input Bar with Textarea */}
-          <div className="border-t bg-background p-4">
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="border-t bg-background p-4"
+          >
             <div className="flex space-x-2 max-w-4xl mx-auto items-end">
               <div className="flex-1">
                 <Textarea
@@ -492,20 +692,29 @@ const HealthcareChatBotContent: React.FC = () => {
                   rows={1}
                 />
               </div>
-              <Button
-                onClick={sendMessage}
-                disabled={loading || !inputMessage.trim()}
-                className="cursor-pointer h-10 w-10 p-0 flex-shrink-0"
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {loading ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
+                <Button
+                  onClick={sendMessage}
+                  disabled={loading || !inputMessage.trim()}
+                  className="cursor-pointer h-10 w-10 p-0 flex-shrink-0"
+                >
+                  {loading ? (
+                    <motion.div 
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1 }}
+                      className="h-4 w-4 rounded-full border-2 border-muted border-t-primary"
+                    />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </motion.div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </TooltipProvider>
   )

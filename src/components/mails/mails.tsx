@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 import React, { useState, useEffect } from 'react';
+import SimpleBloodLoader from '../ui/SimpleBloodLoader';
 import { useRouter } from 'next/navigation';
 import {
   ColumnDef,
@@ -94,6 +95,8 @@ const NotificationsPage: React.FC = () => {
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Track read status for admin messages from backend
+  const [readAdminIds, setReadAdminIds] = useState<string[]>([]);
 
   // Get userId from localStorage
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
@@ -125,14 +128,16 @@ const NotificationsPage: React.FC = () => {
             isStarred: n.isStarred || false
           }));
         }
-        // Fetch admin sent reports for this user
+        // Fetch admin sent reports for this user (with read state)
         const adminRes = await fetch(`/api/admin/sendreports?userId=${userId}`);
         const adminData = await adminRes.json();
+        let adminReadIds: string[] = [];
         if (adminRes.ok && adminData.reports && Array.isArray(adminData.reports)) {
           interface AdminReport {
             _id: string;
             message: string;
             sentAt: string;
+            read?: boolean;
           }
           const adminNotifications = adminData.reports.map((r: AdminReport) => ({
             id: r._id,
@@ -142,16 +147,18 @@ const NotificationsPage: React.FC = () => {
             sender: 'Admin',
             senderAvatar: '',
             timestamp: r.sentAt,
-            status: 'unread', // always unread for admin messages
+            status: r.read ? 'read' : 'unread',
             priority: 'high',
             content: r.message,
             isStarred: false
           }));
           notifications = [...notifications, ...adminNotifications];
+          adminReadIds = adminData.reports.filter((r: AdminReport) => r.read).map((r: AdminReport) => r._id);
         }
         // sort in chronological order descending
         notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setNotifications(notifications);
+        setReadAdminIds(adminReadIds);
       } catch (error) {
         setNotifications([]);
       } finally {
@@ -223,16 +230,25 @@ const NotificationsPage: React.FC = () => {
   const handleView = (item: NotificationItem) => {
     setSelectedItem(item);
     setIsDialogOpen(true);
-    
-    // Only mark as read if it's not an admin warning and currently unread
-    if (item.status === 'unread' && item.type !== 'admin-warning') {
-      markAsRead(item.id);
-      // Update local state immediately
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === item.id ? { ...n, status: 'read' } : n
-        )
-      );
+    if (item.status === 'unread') {
+      if (item.type !== 'admin-warning') {
+        markAsRead(item.id);
+        setNotifications(prev =>
+          prev.map(n => n.id === item.id ? { ...n, status: 'read' } : n)
+        );
+      } else {
+        // Mark admin-warning as read in backend
+        fetch('/api/admin/readadmin', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, adminReportId: item.id })
+        }).then(() => {
+          setReadAdminIds(prev => prev.includes(item.id) ? prev : [...prev, item.id]);
+          setNotifications(prev => prev.map(n =>
+            n.id === item.id ? { ...n, status: 'read' } : n
+          ));
+        });
+      }
     }
   };
 
@@ -285,6 +301,11 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
+  // Count unread messages (only user notifications, not admin-warning)
+  const unreadCount = notifications.filter(n =>
+    n.type !== 'admin-warning' && n.status === 'unread'
+  ).length;
+
   // Define columns for the data table
   const columns: ColumnDef<NotificationItem>[] = [
     {
@@ -294,14 +315,17 @@ const NotificationsPage: React.FC = () => {
         <div className="flex items-center justify-center">
           <div 
             className={`w-3 h-3 rounded-full ${
-              // admin-warning is always red dot, like unread
               row.original.type === 'admin-warning'
-                ? 'bg-red-500'
+                ? (!readAdminIds.includes(row.original.id) ? 'bg-red-500' : 'bg-gray-300')
                 : row.getValue("status") === 'unread' 
                   ? 'bg-red-500' 
                   : 'bg-gray-300'
             }`}
-            title={row.getValue("status") === 'unread' || row.original.type === 'admin-warning' ? 'Unread' : 'Read'}
+            title={
+              row.original.type === 'admin-warning'
+                ? (!readAdminIds.includes(row.original.id) ? 'Unread' : 'Read')
+                : row.getValue("status") === 'unread' ? 'Unread' : 'Read'
+            }
           />
         </div>
       ),
@@ -331,7 +355,7 @@ const NotificationsPage: React.FC = () => {
       header: "Notification",
       cell: ({ row }) => {
         const item = row.original;
-        const isUnreadAdmin = item.type === 'admin-warning';
+        const isUnreadAdmin = item.type === 'admin-warning' && !readAdminIds.includes(item.id);
         const isRead = item.status === 'read' && item.type !== 'admin-warning';
         return (
           <div 
@@ -339,7 +363,13 @@ const NotificationsPage: React.FC = () => {
             onClick={() => handleView(item)}
           >
             <div className="flex items-center gap-2">
-              <span className={`text-sm font-medium ${isRead ? 'text-muted-foreground' : isUnreadAdmin ? 'font-bold text-red-700' : 'font-semibold text-foreground'}`}>
+              <span className={`text-sm font-medium ${
+                item.type === 'admin-warning'
+                  ? (!readAdminIds.includes(item.id) ? 'font-bold text-red-700' : 'text-muted-foreground')
+                  : isRead
+                    ? 'text-muted-foreground'
+                    : 'font-semibold text-foreground'
+              }`}>
                 {formatNotificationSummary(item)}
               </span>
               {item.isStarred && (
@@ -429,8 +459,8 @@ const NotificationsPage: React.FC = () => {
         return row.original.isStarred === true;
       }
       if (filterValue === 'unread') {
-        // admin-warning is always considered unread
-        return row.original.status === 'unread' || row.original.type === 'admin-warning';
+        // admin-warning is unread if not in readAdminIds
+        return (row.original.type === 'admin-warning' ? !readAdminIds.includes(row.original.id) : row.original.status === 'unread');
       }
       return true;
     },
@@ -439,6 +469,16 @@ const NotificationsPage: React.FC = () => {
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination: {
+        pageIndex: 0,
+        pageSize: 50,
+      },
+    },
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 50,
+      },
     },
   });
 
@@ -448,48 +488,39 @@ const NotificationsPage: React.FC = () => {
       return (
         <TableRow>
           <TableCell colSpan={columns.length} className="h-24 text-center">
-            <motion.div 
-              className="flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <motion.div 
-                className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              />
-              <span>Loading notifications...</span>
-            </motion.div>
+            <SimpleBloodLoader message="Loading notifications..." duration={2000} />
           </TableCell>
         </TableRow>
       );
     }
     if (table.getRowModel().rows?.length) {
-      return table.getRowModel().rows.map((row, index) => (
-        <motion.tr
-          key={row.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-          className={
-            row.original.type === 'admin-warning'
-              ? 'bg-red-50/60 font-semibold'
-              : row.original.status === 'unread'
-                ? 'bg-red-50/30'
-                : 'hover:bg-gray-50'
-          }
-        >
-          {row.getVisibleCells().map((cell) => (
-            <TableCell key={cell.id}>
-              {flexRender(
-                cell.column.columnDef.cell,
-                cell.getContext()
-              )}
-            </TableCell>
-          ))}
-        </motion.tr>
-      ));
+      return table.getRowModel().rows.map((row, index) => {
+        const isUnreadAdmin = row.original.type === 'admin-warning' && !readAdminIds.includes(row.original.id);
+        return (
+          <motion.tr
+            key={row.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
+            className={
+              row.original.type === 'admin-warning'
+                ? (isUnreadAdmin ? 'bg-red-50/60 font-semibold' : 'hover:bg-gray-50')
+                : row.original.status === 'unread'
+                  ? 'bg-red-50/30'
+                  : 'hover:bg-gray-50'
+            }
+          >
+            {row.getVisibleCells().map((cell) => (
+              <TableCell key={cell.id}>
+                {flexRender(
+                  cell.column.columnDef.cell,
+                  cell.getContext()
+                )}
+              </TableCell>
+            ))}
+          </motion.tr>
+        );
+      });
     }
     return (
       <TableRow>
@@ -569,6 +600,9 @@ const NotificationsPage: React.FC = () => {
                   transition={{ duration: 0.3, delay: 0.3 }}
                 >
                   <Badge variant="secondary">{notifications.length}</Badge>
+                  {unreadCount > 0 && (
+                    <Badge variant="destructive" className="ml-2">Unread: {unreadCount}</Badge>
+                  )}
                 </motion.div>
               </CardTitle>
             </CardHeader>

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { easeInOut, motion } from 'framer-motion'
 import { Heart, Search, BarChart3, ArrowUp, Droplets, Activity, Share2, LucideIcon, Copy, Instagram, Mail, Check, Bot, Users, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -57,6 +57,31 @@ const scaleOnHover = {
   hover: { 
     scale: 1.05,
     transition: { duration: 0.2 }
+  }
+}
+
+// Blinking Heart Animation Variants
+const heartBlinkAnimation = {
+  animate: {
+    scale: [1, 1.2, 1],
+    opacity: [1, 0.7, 1]
+  },
+  transition: {
+    duration: 1.5,
+    repeat: Infinity,
+    ease: "easeInOut"
+  }
+}
+
+const smallHeartBlinkAnimation = {
+  animate: {
+    scale: [1, 1.1, 1],
+    opacity: [1, 0.8, 1]
+  },
+  transition: {
+    duration: 1.2,
+    repeat: Infinity,
+    ease: "easeInOut"
   }
 }
 
@@ -202,7 +227,7 @@ const BloodBridgeLanding: React.FC = () => {
     {
       icon: BarChart3,
       title: "Track Your Impact",
-      description: "Monitor donations and see your life-saving impact in real-time"
+      description: "Record and monitor your donation history with detailed analytics and impact metrics"
     },
     {
       icon: Bot,
@@ -269,7 +294,12 @@ const BloodBridgeLanding: React.FC = () => {
               className="bg-red-500 hover:bg-red-600 px-8 py-3 transition-all cursor-pointer"
               onClick={handleRegisterClick}
             >
-              <Heart className="w-5 h-5 mr-2" />
+              <motion.div
+                animate={smallHeartBlinkAnimation.animate}
+                transition={{ ...smallHeartBlinkAnimation.transition, ease: easeInOut }}
+              >
+                <Heart className="w-5 h-5 mr-2" />
+              </motion.div>
               Start Saving Lives
             </Button>
             <Button 
@@ -303,44 +333,46 @@ const BloodBridgeLanding: React.FC = () => {
       </motion.section>
 
       {/* Features Section */}
-      <motion.section 
-        className="py-16 bg-gray-50"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: false, amount: 0.2 }}
-        variants={fadeInUpVariant}
-      >
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div 
-            className="text-center mb-12"
-            variants={fadeInUpVariant}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
-            <p className="text-lg text-gray-600">Simple steps to make a difference</p>
-          </motion.div>
+{/* Features Section */}
+<motion.section 
+  className="py-16 bg-gray-50"
+  initial="hidden"
+  whileInView="visible"
+  viewport={{ once: false, amount: 0.2 }}
+  variants={fadeInUpVariant}
+>
+  <div className="max-w-6xl mx-auto px-6">
+    <motion.div 
+      className="text-center mb-12"
+      variants={fadeInUpVariant}
+    >
+      <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
+      <p className="text-lg text-gray-600">Simple steps to make a difference</p>
+    </motion.div>
 
-          <motion.div 
-            className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.2 }}
-          >
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                variants={fadeInUpVariant}
-              >
-                <FeatureCard 
-                  icon={feature.icon} 
-                  title={feature.title} 
-                  description={feature.description} 
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </motion.section>
+    <motion.div 
+      className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, amount: 0.2 }}
+    >
+      {features.map((feature, index) => (
+        <motion.div
+          key={index}
+          variants={fadeInUpVariant}
+        >
+          <FeatureCard 
+            icon={feature.icon} 
+            title={feature.title} 
+            description={feature.description} 
+          />
+        </motion.div>
+      ))}
+    </motion.div>
+  </div>
+</motion.section>
+
 
       {/* Blood Importance & Statistics Section */}
       <motion.section 
@@ -354,7 +386,12 @@ const BloodBridgeLanding: React.FC = () => {
           <Card className="border-0 bg-gradient-to-br from-red-50 to-orange-50">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center justify-center gap-2">
-                <Heart className="w-8 h-8 text-red-500" />
+                <motion.div
+                  animate={heartBlinkAnimation.animate}
+                  transition={{ ...heartBlinkAnimation.transition, ease: easeInOut }}
+                >
+                  <Heart className="w-8 h-8 text-red-500" />
+                </motion.div>
                 Blood Donation Impact
               </CardTitle>
               <CardDescription className="text-lg text-gray-600">
@@ -424,7 +461,12 @@ const BloodBridgeLanding: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <Heart className="w-6 h-6 text-red-600" />
+                  <motion.div
+                    animate={smallHeartBlinkAnimation.animate}
+                    transition={{ ...smallHeartBlinkAnimation.transition, ease: easeInOut }}
+                  >
+                    <Heart className="w-6 h-6 text-red-600" />
+                  </motion.div>
                   <h4 className="text-xl font-bold text-gray-800">Why Your Blood Matters</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
@@ -561,7 +603,12 @@ const BloodBridgeLanding: React.FC = () => {
             className="bg-white text-red-500 hover:bg-gray-100 px-8 py-3 transition-all cursor-pointer"
             onClick={handleRegisterClick}
           >
-            <Heart className="w-5 h-5 mr-2" />
+            <motion.div
+              animate={smallHeartBlinkAnimation.animate}
+              transition={{ ...smallHeartBlinkAnimation.transition, ease: easeInOut }}
+            >
+              <Heart className="w-5 h-5 mr-2" />
+            </motion.div>
             Become a Donor
           </Button>
         </div>

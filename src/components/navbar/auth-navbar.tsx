@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const AuthNavbar = () => {
   const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
@@ -60,64 +61,105 @@ const AuthNavbar = () => {
 
   return (
     <>
-      <nav className="bg-background sticky top-0 z-50 border-b border-border">
+      <motion.nav 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="bg-background sticky top-0 z-50 border-b border-border"
+      >
         <div className="container mx-auto px-6 py-3">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <div className='flex items-center gap-2'>
-              <div className="w-7 h-7 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+            <motion.div 
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className='flex items-center gap-2'
+            >
+              <motion.div 
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-7 h-7 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center"
+              >
                 <Droplets className="w-5 h-5 text-white" />
-              </div>
-              <button 
+              </motion.div>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/home')}
                 className="text-xl cursor-pointer font-bold text-foreground hover:text-red-600 transition-colors"
               >
                 BloodBridge
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
 
             {/* Right Side Navigation */}
-            <div className="flex items-center space-x-4">
+            <motion.div 
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex items-center space-x-4"
+            >
               {/* Desktop Navigation */}
               <div className="hidden md:flex space-x-2">
-                <Button 
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Info className="w-4 h-4 mr-2" />
-                  <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
-                </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => router.push('/finddonor')}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  <Button 
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Info className="w-4 h-4 mr-2" />
+                    <a href="https://mohansunkara.vercel.app/" target="_blank" rel="noopener noreferrer">About</a>
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Search className="w-4 h-4 mr-2" />
-                  Find Donor
-                </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => router.push('/healthaibot')}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  <Button 
+                    variant="ghost"
+                    onClick={() => router.push('/finddonor')}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    Find Donor
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Bot className="w-4 h-4 mr-2" />
-                  Health Assistant
-                </Button>
+                  <Button 
+                    variant="ghost"
+                    onClick={() => router.push('/healthaibot')}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Bot className="w-4 h-4 mr-2" />
+                    Health Assistant
+                  </Button>
+                </motion.div>
               </div>
 
               {/* Profile Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="relative h-10 w-10 rounded-full cursor-pointer"
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {userName.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
+                    <Button 
+                      variant="ghost" 
+                      className="relative h-10 w-10 rounded-full cursor-pointer"
+                    >
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {userName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </motion.div>
                 </DropdownMenuTrigger>
                 
                 <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -172,27 +214,71 @@ const AuthNavbar = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </motion.div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Logout Success Popup - Enhanced */}
-      {showLogoutSuccess && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/50 backdrop-blur-sm">
-          <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4 shadow-lg">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <LogOut className="w-4 h-4 text-white" />
+      <AnimatePresence>
+        {showLogoutSuccess && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 flex items-center justify-center z-[100] bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: -20 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 20,
+                duration: 0.4 
+              }}
+            >
+              <Card className="p-6 border-0 bg-white max-w-sm w-full mx-4 shadow-lg">
+                <div className="text-center">
+                  <motion.div 
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
+                      className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+                    >
+                      <LogOut className="w-4 h-4 text-white" />
+                    </motion.div>
+                  </motion.div>
+                  <motion.h3 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-lg font-semibold text-gray-900 mb-2"
+                  >
+                    Logged Out Successfully!
+                  </motion.h3>
+                  <motion.p 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-sm text-muted-foreground"
+                  >
+                    Thank you for using BloodBridge. Stay safe!
+                  </motion.p>
                 </div>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Logged Out Successfully!</h3>
-              <p className="text-sm text-muted-foreground">Thank you for using BloodBridge. Stay safe!</p>
-            </div>
-          </Card>
-        </div>
-      )}
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
