@@ -16,7 +16,7 @@ const dancingScript = Dancing_Script({
 });
 
 export const metadata: Metadata = {
-  title: "Blood Bridge - Connect Blood Donors",
+  title: "Blood Bridge",
   description: "A platform connecting blood donors with those in need",
 };
 
