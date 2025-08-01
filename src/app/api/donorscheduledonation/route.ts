@@ -1,3 +1,16 @@
+export async function DELETE(req: NextRequest) {
+  try {
+    await connectMongo();
+    const { userId } = await req.json();
+    if (!userId) {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+    }
+    await DonorScheduleDonation.deleteOne({ userId });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+  }
+}
 import { NextRequest, NextResponse } from 'next/server';
 import { connectMongo } from '../../../lib/mongodb';
 import DonorScheduleDonation from '../../../models/donorscheduledonation/DonorScheduleDonation';

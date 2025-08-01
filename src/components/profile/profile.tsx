@@ -199,7 +199,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
           // Update main user object with backend bloodType if different
           if (data.donor.bloodType && data.donor.bloodType !== user.bloodType) {
             const updatedUser = { ...user, bloodType: data.donor.bloodType } as IUser;
-            onUserUpdate(updatedUser);
+            onUserUpdate(updatedUser as IUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
           }
         }
@@ -341,11 +341,48 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
     if (!dateStr) return false;
     const selected = new Date(dateStr);
     const now = new Date();
+    selected.setHours(0,0,0,0);
+    now.setHours(0,0,0,0);
     // Only true if strictly greater than today
-    return selected.setHours(0,0,0,0) > now.setHours(0,0,0,0);
+    return selected > now;
   };
 
-  // Fetch scheduled date from new backend on mount
+  // Watch for manual change to unavailable and clear past scheduled date
+  // Remove scheduled date ONLY when user is auto-updated to available (i.e., scheduled date reached)
+  // Scheduled date is only used for auto-updating ONCE, then removed so user can set a new date
+  useEffect(() => {
+    if (scheduledDateFromDb) {
+      const today = new Date();
+      const scheduled = new Date(scheduledDateFromDb);
+      today.setHours(0,0,0,0);
+      scheduled.setHours(0,0,0,0);
+      // If scheduled date is today or in the past and user is NOT available, auto-update to available and remove scheduled date
+      if (scheduled <= today && donorData?.isAvailable !== true) {
+        // Auto-update availability in backend
+        fetch('/api/profile/edit-donate-later', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user._id, isAvailable: true, role: 'donor' })
+        }).then(() => {
+          setDonorData(prev => prev ? { ...prev, isAvailable: true } : prev);
+          setEditData(prev => ({ ...prev, isAvailable: true }));
+          const updatedUser = { ...user, isAvailable: true };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          onUserUpdate(updatedUser as IUser);
+          // Remove scheduled date in backend
+          fetch('/api/donorscheduledonation', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user._id })
+          }).then(() => {
+            setScheduledDateFromDb(null);
+          });
+        });
+      }
+    }
+  }, [scheduledDateFromDb, donorData?.isAvailable, user._id, onUserUpdate]);
+
+  // Fetch scheduled date from new backend on mount and auto-update availability
   useEffect(() => {
     const fetchScheduled = async () => {
       if (!user._id) return;
@@ -354,7 +391,27 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
         if (res.ok) {
           const data = await res.json();
           if (data.schedule && data.schedule.scheduledDate) {
-            setScheduledDateFromDb(data.schedule.scheduledDate.split('T')[0]);
+            const scheduledDateStr = data.schedule.scheduledDate.split('T')[0];
+            setScheduledDateFromDb(scheduledDateStr);
+            // Check if scheduled date is today or in the past
+            const today = new Date();
+            const scheduled = new Date(scheduledDateStr);
+            today.setHours(0,0,0,0);
+            scheduled.setHours(0,0,0,0);
+            if (scheduled <= today && donorData?.isAvailable !== true) {
+              // Auto-update availability in backend
+              await fetch('/api/profile/edit-donate-later', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user._id, isAvailable: true, role: 'donor' })
+              });
+              setDonorData(prev => prev ? { ...prev, isAvailable: true } : prev);
+              setEditData(prev => ({ ...prev, isAvailable: true }));
+              // Optionally update user object in localStorage
+              const updatedUser = { ...user, isAvailable: true };
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              onUserUpdate(updatedUser as IUser);
+            }
           } else {
             setScheduledDateFromDb(null);
           }
@@ -362,7 +419,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
       } catch {}
     };
     fetchScheduled();
-  }, [user._id]);
+  }, [user._id, donorData?.isAvailable, onUserUpdate]);
 
   const handleSchedule = async () => {
     setScheduleErr('');
@@ -372,6 +429,15 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
       return;
     }
     try {
+      // Double-check in backend: do not allow past or today
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const selected = new Date(scheduledDate);
+      selected.setHours(0,0,0,0);
+      if (selected <= today) {
+        setScheduleErr('Cannot schedule for today or past date.');
+        return;
+      }
       const res = await fetch('/api/donorscheduledonation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
