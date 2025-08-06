@@ -11,8 +11,6 @@ async function getUserId(req: NextRequest): Promise<string> {
 
 function isHealthRelated(message: string): boolean {
   const messageLower = message.toLowerCase().trim();
-  
-  // DEFINITE NON-HEALTH TOPICS - Only block these obvious ones
   const absoluteNonHealth = [
     'programming', 'coding', 'javascript', 'python', 'software', 'website development',
     'business profit', 'stock trading', 'cryptocurrency', 'bitcoin', 'marketing strategy',
@@ -22,23 +20,27 @@ function isHealthRelated(message: string): boolean {
     'fashion trends', 'makeup tutorial', 'clothing style', 'beauty products',
     'political election', 'government policy', 'voting', 'legal advice'
   ];
-
-  // If it contains obvious non-health keywords, block it
   const isDefinitelyNonHealth = absoluteNonHealth.some(term => 
     messageLower.includes(term)
   );
-  
   if (isDefinitelyNonHealth) {
     return false;
   }
-
-  // Everything else is potentially health-related (inclusive approach)
   return true;
 }
 
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    const shared = searchParams.get('shared');
+    if (id && shared) {
+      // Fetch a single chat by id for shared chat view (no userId check)
+      const chat = await UsersChatHistory.findById(id);
+      if (!chat) return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
+      return NextResponse.json({ chat });
+    }
     const userId = await getUserId(req);
     const history = await UsersChatHistory.find({ userId }).sort({ createdAt: -1 });
     return NextResponse.json({ history });
@@ -52,9 +54,24 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const userId = await getUserId(req);
-    const { chatId, message, title } = await req.json();
+    const body = await req.json();
 
-    // ENHANCED HEALTHCARE-ONLY SYSTEM PROMPT
+    // If copying a chat from shared view
+    if (body.copyFrom) {
+      const original = await UsersChatHistory.findById(body.copyFrom);
+      if (!original) return NextResponse.json({ error: 'Original chat not found' }, { status: 404 });
+      // Copy chat to user
+      const newChat = await UsersChatHistory.create({
+        userId,
+        title: original.title,
+        messages: original.messages,
+        createdAt: new Date(),
+      });
+      return NextResponse.json({ chat: newChat });
+    }
+
+    const { chatId, message, title } = body;
+
     const systemPrompt = `You are a comprehensive healthcare assistant that ONLY answers health, medical, and wellness-related questions.
 
 YOU MUST ANSWER questions about:
@@ -74,28 +91,27 @@ RESPONSE LENGTH:
 - Moderate questions: 8-12 detailed lines  
 - Complex questions: 15-25 comprehensive lines
 
+When providing lists or key points, use markdown formatting like this for highlighting:
+- **Bold Title:** Description here.
+
 STRICT RULE: If asked about non-health topics (technology, business, entertainment, politics, etc.), respond EXACTLY: "I'm a healthcare assistant and can only help with health, medical, wellness, fitness, nutrition, and healthcare-related questions. Please ask me about your health concerns or medical topics."
 
 Always provide accurate health information and recommend consulting healthcare professionals for serious medical concerns.`;
 
-    // Use inclusive health detection (only block obvious non-health topics)
     if (!isHealthRelated(message)) {
       const botText = "I'm a healthcare assistant and can only help with health, medical, wellness, fitness, nutrition, and healthcare-related questions. Please ask me about your health concerns or medical topics.";
-      
       const userMsg: IMessage = {
         id: Date.now().toString(),
         text: message,
         sender: 'user',
         timestamp: new Date(),
       };
-
       const botMsg: IMessage = {
         id: (Date.now() + 1).toString(),
         text: botText,
         sender: 'bot',
         timestamp: new Date(),
       };
-
       let chat;
       if (chatId) {
         chat = await UsersChatHistory.findOneAndUpdate(
@@ -111,17 +127,14 @@ Always provide accurate health information and recommend consulting healthcare p
           createdAt: new Date(),
         });
       }
-
       return NextResponse.json({ chat, botMsg });
     }
 
-    // Get existing chat history if continuing a conversation
     let existingChat = null;
     if (chatId) {
       existingChat = await UsersChatHistory.findOne({ _id: chatId, userId });
     }
 
-    // Build conversation history for Gemini
     const geminiContents = [
       {
         role: 'user',
@@ -129,7 +142,6 @@ Always provide accurate health information and recommend consulting healthcare p
       }
     ];
 
-    // Add previous conversation history (limit to last 20 messages for performance)
     if (existingChat && existingChat.messages) {
       const recentMessages = existingChat.messages.slice(-20);
       recentMessages.forEach((msg: IMessage) => {
@@ -147,13 +159,11 @@ Always provide accurate health information and recommend consulting healthcare p
       });
     }
 
-    // Add the current user message
     geminiContents.push({
       role: 'user',
       parts: [{ text: message }]
     });
 
-    // Process health-related questions with Gemini (with full context)
     const geminiPayload = {
       contents: geminiContents
     };
@@ -217,17 +227,13 @@ export async function DELETE(req: NextRequest) {
     const userId = await getUserId(req);
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-    
     if (!id) {
       return NextResponse.json({ error: 'Missing chat ID' }, { status: 400 });
     }
-    
     const result = await UsersChatHistory.deleteOne({ _id: id, userId });
-    
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: 'Chat not found or unauthorized' }, { status: 404 });
     }
-    
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete chat:', error);

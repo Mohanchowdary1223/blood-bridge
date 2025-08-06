@@ -21,11 +21,11 @@ import {
   Plus,
   Send,
   Droplets,
-  Bot,
   User,
   History,
   AlertCircle,
   Lock,
+  Share2,
 } from "lucide-react"
 import {
   Tooltip,
@@ -34,6 +34,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 
 interface Message {
   id: string
@@ -83,6 +90,7 @@ const PublicHealthChatBotContent: React.FC = () => {
   const [inputMessage, setInputMessage] = useState("")
   const [questionsUsed, setQuestionsUsed] = useState(0)
   const [isLimitReached, setIsLimitReached] = useState(false)
+  const [isShareOpen, setIsShareOpen] = useState(false)
   const { open, openMobile, isMobile, setOpen, setOpenMobile } = useSidebar()
   const router = useRouter()
   
@@ -204,6 +212,10 @@ const PublicHealthChatBotContent: React.FC = () => {
 
   const handleSignupClick = () => {
     router.push("/signup")
+  }
+
+  const handleSigninClick = () => {
+    router.push("/signin")
   }
 
   return (
@@ -471,7 +483,7 @@ const PublicHealthChatBotContent: React.FC = () => {
                         repeatType: "reverse" 
                       }}
                     >
-                      <Bot className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+                      <Droplets className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
                     </motion.div>
                     <h2 className="mb-2 text-xl font-semibold">
                       Welcome to Healthcare Assistant
@@ -590,6 +602,45 @@ const PublicHealthChatBotContent: React.FC = () => {
               </motion.div>
             )}
           </motion.div>
+        </div>
+
+        {/* Fixed bottom-right share button */}
+        <div className="fixed bottom-20 right-4 z-50">
+          <DropdownMenu open={isShareOpen} onOpenChange={setIsShareOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon"
+                className="rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold w-10 h-10  transition-all duration-200 cursor-pointer flex items-center justify-center"
+              >
+                <Share2 className="w-8 h-8" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 p-4 bg-white border border-gray-200 rounded-lg shadow-lg">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Share This Chat</h3>
+                <p className="text-sm text-gray-600">To share conversations, please register or sign in for full access.</p>
+              </div>
+              <DropdownMenuSeparator className="my-2" />
+              <DropdownMenuItem 
+                onClick={handleRegisterClick}
+                className="py-2 px-4 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2 text-gray-700 font-medium"
+              >
+                Register as Donor
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleSignupClick}
+                className="py-2 px-4 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2 text-gray-700 font-medium"
+              >
+                Sign Up
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleSigninClick}
+                className="py-2 px-4 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2 text-gray-700 font-medium"
+              >
+                Already a user? Sign In
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </TooltipProvider>

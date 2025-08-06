@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
@@ -19,18 +20,23 @@ import {
   ArrowLeft,
   Plus,
   Send,
-  Bot,
   Trash2,
   History,
   MoreVertical,
   Droplets,
   MessageCircle,
+  Share2,
+  Mail,
+  Copy,
+  Check,
+  Instagram,
 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import {
   Tooltip,
@@ -39,6 +45,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { motion, AnimatePresence } from "framer-motion"
+import ReactMarkdown from 'react-markdown'
+import { FaWhatsapp } from 'react-icons/fa'
 
 interface Message {
   id: string
@@ -55,7 +63,7 @@ interface ChatSession {
   createdAt: Date
 }
 
-// Typewriter component for bot messages
+// Typewriter component for bot messages with increased speed (10ms per character) and markdown support
 const TypewriterText: React.FC<{ 
   text: string
   onComplete?: () => void
@@ -74,7 +82,7 @@ const TypewriterText: React.FC<{
       const timer = setTimeout(() => {
         setDisplayedText(prev => prev + text[currentIndex])
         setCurrentIndex(prev => prev + 1)
-      }, 20) // Adjust speed here (lower = faster)
+      }, 10) // Increased speed (lower delay = faster)
 
       return () => clearTimeout(timer)
     } else if (onComplete) {
@@ -90,8 +98,18 @@ const TypewriterText: React.FC<{
   }, [text, isActive])
 
   return (
-    <span className="whitespace-pre-wrap text-sm leading-relaxed break-words hyphens-auto">
-      {displayedText}
+    <div className="whitespace-pre-wrap text-sm leading-relaxed break-words hyphens-auto">
+      <ReactMarkdown 
+        components={{
+          strong: ({ children }) => <strong className="font-bold text-primary">{children}</strong>,
+          em: ({ children }) => <em className="italic text-amber-600">{children}</em>,
+          p: ({ children }) => <p className="mb-2">{children}</p>,
+          ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+          li: ({ children }) => <li className="mb-1">{children}</li>,
+        }}
+      >
+        {displayedText}
+      </ReactMarkdown>
       {isActive && currentIndex < text.length && (
         <motion.span
           animate={{ opacity: [1, 0] }}
@@ -99,7 +117,7 @@ const TypewriterText: React.FC<{
           className="inline-block w-2 h-4 bg-current ml-1"
         />
       )}
-    </span>
+    </div>
   )
 }
 
@@ -127,6 +145,8 @@ const HealthcareChatBotContent: React.FC = () => {
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false)
   const [userId, setUserId] = useState<string | null>(null);
   const [typingMessageId, setTypingMessageId] = useState<string | null>(null)
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
+  const [shareDropdownOpen, setShareDropdownOpen] = useState(false)
   const { open, openMobile, isMobile, setOpen, setOpenMobile } = useSidebar()
   const router = useRouter()
   
@@ -147,7 +167,7 @@ const HealthcareChatBotContent: React.FC = () => {
     scrollToBottom()
   }, [currentChat?.messages])
 
-  // On mount, get userId and fetch chat history
+  // On mount, get userId and fetch chat history or continue chat if ?continue= param is present
   useEffect(() => {
     const id = getUserIdFromLocalStorage();
     setUserId(id);
@@ -156,26 +176,154 @@ const HealthcareChatBotContent: React.FC = () => {
       setCurrentChat(null);
       return;
     }
-    const fetchHistory = async () => {
+
+    // Check for ?continue= param in URL
+    let continueChatId: string | null = null;
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      continueChatId = url.searchParams.get('continue');
+    }
+
+    const fetchHistoryAndMaybeContinue = async () => {
       try {
         const res = await fetch("/api/healthaibot", {
           headers: { "x-user-id": id },
         });
         const data = await res.json();
         setChatHistory(data.history || []);
-        setCurrentChat(null);
+
+        if (continueChatId) {
+          // Try to find the chat in history first
+          const found = data.history?.find((c: any) => c._id === continueChatId);
+          if (found) {
+            setCurrentChat(found);
+          } else {
+            // If not found, fetch from shared endpoint and set as currentChat (read-only)
+            const sharedRes = await fetch(`/api/healthaibot?id=${continueChatId}&shared=1`);
+            const sharedData = await sharedRes.json();
+            if (sharedData.chat) {
+              setCurrentChat(sharedData.chat);
+            } else {
+              setCurrentChat(null);
+            }
+          }
+        } else {
+          setCurrentChat(null);
+        }
       } catch (error) {
         console.error("Failed to fetch chat history:", error);
         setCurrentChat(null);
       }
     };
-    fetchHistory();
+    fetchHistoryAndMaybeContinue();
   }, []);
 
-  // Send message to backend
+  // Share functionality
+
+  // Generate a shareable link for the chat
+  const generateShareLink = (chat: ChatSession) => {
+    if (!chat._id) return window.location.origin
+    return `${window.location.origin}/shared-chat/${chat._id}`
+  }
+
+  const generateShareContent = (chat: ChatSession) => {
+    const title = chat.title
+    const messageCount = chat.messages?.length || 0
+    const link = generateShareLink(chat)
+    return `Check out this healthcare conversation: "${title}" - ${messageCount} messages exchanged about health topics.\n\nView the chat: ${link}`
+  }
+
+  const handleWhatsAppShare = (chat: ChatSession) => {
+    const shareText = generateShareContent(chat)
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
+    window.open(whatsappUrl, '_blank')
+  }
+
+  const handleEmailShare = (chat: ChatSession) => {
+    const shareText = generateShareContent(chat)
+    const subject = `Healthcare Chat: ${chat.title}`
+    const emailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(shareText)}`
+    window.location.href = emailUrl
+  }
+
+  const handleInstagramShare = (chat: ChatSession) => {
+    const shareText = generateShareContent(chat)
+    // Instagram doesn't support direct sharing via URL, so we'll copy to clipboard
+    navigator.clipboard.writeText(shareText).then(() => {
+      alert('Content copied! You can now paste it on Instagram.')
+    })
+  }
+
+  const handleCopyLink = (chat: ChatSession) => {
+    const link = generateShareLink(chat)
+    navigator.clipboard.writeText(link).then(() => {
+      setCopyStatus('copied')
+      setTimeout(() => setCopyStatus('idle'), 2000)
+    })
+  }
+
+  // Current chat share functionality
+  const handleCurrentChatShare = (type: 'whatsapp' | 'email' | 'instagram' | 'copy') => {
+    if (!currentChat) return
+    
+    switch (type) {
+      case 'whatsapp':
+        handleWhatsAppShare(currentChat)
+        break
+      case 'email':
+        handleEmailShare(currentChat)
+        break
+      case 'instagram':
+        handleInstagramShare(currentChat)
+        break
+      case 'copy':
+        handleCopyLink(currentChat)
+        break
+    }
+    setShareDropdownOpen(false)
+  }
+
+  // Send message to backend with typing loading indicator
   const sendMessage = async () => {
     if (!inputMessage.trim() || !userId) return;
     setLoading(true);
+
+    // Create a temporary typing message for loading
+    const tempTypingId = `temp-${Date.now()}`;
+    const tempTypingMsg: Message = {
+      id: tempTypingId,
+      text: "Typing...",
+      sender: "bot",
+      timestamp: new Date(),
+      isTyping: true,
+    };
+
+    // Add user message and temp typing message to current chat
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      text: inputMessage,
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    if (currentChat) {
+      setCurrentChat({
+        ...currentChat,
+        messages: [...currentChat.messages, userMsg, tempTypingMsg],
+      });
+    } else {
+      setCurrentChat({
+        title: inputMessage.slice(0, 30) + (inputMessage.length > 30 ? "…" : ""),
+        messages: [userMsg, tempTypingMsg],
+        createdAt: new Date(),
+      });
+    }
+
+    setInputMessage("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+
     try {
       const chatId = currentChat?._id;
       const title = currentChat?.title || inputMessage.slice(0, 30) + (inputMessage.length > 30 ? "…" : "");
@@ -188,17 +336,15 @@ const HealthcareChatBotContent: React.FC = () => {
         body: JSON.stringify({ chatId, message: inputMessage, title }),
       });
       const data = await res.json();
-      setInputMessage("");
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
-      
-      // Set the latest bot message as typing
+
+      // Remove temp typing message and add actual response
       if (data.chat?.messages) {
-        const latestMessage = data.chat.messages[data.chat.messages.length - 1];
+        const updatedMessages = data.chat.messages.filter((msg: Message) => msg.id !== tempTypingId);
+        const latestMessage = updatedMessages[updatedMessages.length - 1];
         if (latestMessage?.sender === 'bot') {
           setTypingMessageId(latestMessage.id);
         }
+        data.chat.messages = updatedMessages;
       }
 
       if (chatId) {
@@ -210,6 +356,13 @@ const HealthcareChatBotContent: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to send message:", error);
+      // Remove temp typing on error
+      if (currentChat) {
+        setCurrentChat({
+          ...currentChat,
+          messages: currentChat.messages.filter((msg) => msg.id !== tempTypingId),
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -295,6 +448,81 @@ const HealthcareChatBotContent: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Fixed Share Button - Bottom Right */}
+        {currentChat && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+            className="fixed bottom-20 right-6 z-50"
+          >
+            <DropdownMenu open={shareDropdownOpen} onOpenChange={setShareDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold rounded-full h-10 w-10 cursor-pointer shadow-lg"
+                  >
+                    <Share2 className="w-8 h-8" />
+                  </Button>
+                </motion.div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-auto p-2">
+                {/* Social Media Icons Row */}
+                <div className='flex flex-row gap-2'>
+                  {/* WhatsApp */}
+                  <DropdownMenuItem 
+                    onClick={() => handleCurrentChatShare('whatsapp')} 
+                    className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                    aria-label="Share via WhatsApp"
+                  >
+                    <FaWhatsapp className="w-5 h-5 text-green-600" />
+                  </DropdownMenuItem>
+                  
+                  {/* Instagram */}
+                  <DropdownMenuItem 
+                    onClick={() => handleCurrentChatShare('instagram')} 
+                    className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                    aria-label="Share via Instagram"
+                  >
+                    <Instagram className="w-5 h-5 text-pink-600" />
+                  </DropdownMenuItem>
+                  
+                  {/* Email */}
+                  <DropdownMenuItem 
+                    onClick={() => handleCurrentChatShare('email')} 
+                    className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                    aria-label="Share via Email"
+                  >
+                    <Mail className="w-5 h-5 text-blue-600" />
+                  </DropdownMenuItem>
+                </div>
+           
+                <DropdownMenuSeparator />
+                
+                {/* Copy Link */}
+                <DropdownMenuItem 
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    handleCurrentChatShare('copy');
+                  }}
+                  className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2 justify-center"
+                >
+                  {copyStatus === 'copied' ? (
+                    <Check className="w-5 h-5 text-green-600" /> 
+                  ) : (
+                    <Copy className="w-5 h-5" />
+                  )}
+                  <span>{copyStatus === 'copied' ? 'Copied!' : 'Copy Link'}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </motion.div>
+        )}
 
         {/* mobile sidebar trigger (below navbar) */}
         {isMobile && !openMobile && (
@@ -392,7 +620,7 @@ const HealthcareChatBotContent: React.FC = () => {
                   </Tooltip>
                 </SidebarMenuItem>
 
-                {/* History Header with Tooltip - Clickable when collapsed */}
+                {/* History Header with Tooltip - Clickable when collapsed - Changed to black */}
                 <SidebarMenuItem>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -401,12 +629,12 @@ const HealthcareChatBotContent: React.FC = () => {
                         whileTap={!open && !isMobile ? { scale: 0.98 } : {}}
                       >
                         <SidebarMenuButton 
-                          className={`w-full ${!open && !isMobile ? 'cursor-pointer' : 'cursor-default'}`}
+                          className={`w-full text-black ${!open && !isMobile ? 'cursor-pointer' : 'cursor-default'}`}
                           onClick={!open && !isMobile ? handleHistoryClick : undefined}
                           disabled={open || isMobile}
                         >
-                          <History className="size-4" />
-                          <span>Recent Chats</span>
+                          <History className="size-4 text-black" />
+                          <span className="text-black">Recent Chats</span>
                         </SidebarMenuButton>
                       </motion.div>
                     </TooltipTrigger>
@@ -419,7 +647,7 @@ const HealthcareChatBotContent: React.FC = () => {
                 </SidebarMenuItem>
               </SidebarMenu>
 
-              {/* Chat History List - Only show when sidebar is open */}
+              {/* Chat History List - Only show when sidebar is open, with highlighted titles */}
               {(isMobile ? openMobile : open) && (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
@@ -437,7 +665,7 @@ const HealthcareChatBotContent: React.FC = () => {
                       >
                         <SidebarMenuItem>
                           <div className="group flex w-full items-center">
-                            {/* chat title press */}
+                            {/* chat title press with highlight */}
                             <motion.div
                               whileHover={{ x: 4 }}
                               whileTap={{ scale: 0.98 }}
@@ -445,10 +673,10 @@ const HealthcareChatBotContent: React.FC = () => {
                             >
                               <SidebarMenuButton
                                 onClick={() => handleContinueChat(chat)}
-                                className="flex-1 min-h-[44px] justify-start pr-2 cursor-pointer"
+                                className="flex-1 min-h-[44px] justify-start pr-2 cursor-pointer "
                               >
                                 <div className="flex w-full min-w-0 flex-col items-start">
-                                  <span className="truncate text-sm font-medium">
+                                  <span className="truncate text-sm font-bold text-muted-foreground"> {/* Highlighted title */}
                                     {chat.title}
                                   </span>
                                   <span className="truncate text-xs text-muted-foreground">
@@ -458,7 +686,7 @@ const HealthcareChatBotContent: React.FC = () => {
                               </SidebarMenuButton>
                             </motion.div>
 
-                            {/* three-dots dropdown */}
+                            {/* three-dots dropdown with share option */}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <motion.div
@@ -487,6 +715,79 @@ const HealthcareChatBotContent: React.FC = () => {
                                   <MessageCircle className="mr-2 h-4 w-4" />
                                   Continue Chat
                                 </DropdownMenuItem>
+
+                                {/* Share submenu */}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => e.preventDefault()}
+                                      className="cursor-pointer flex items-center justify-between"
+                                    >
+                                      <div className="flex items-center">
+                                        <Share2 className="mr-2 h-4 w-4" />
+                                        Share Chat
+                                      </div>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent side="right" className="w-auto p-2">
+                                    {/* Social Media Icons Row */}
+                                    <div className='flex flex-row gap-2'>
+                                      {/* WhatsApp */}
+                                      <DropdownMenuItem 
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleWhatsAppShare(chat)
+                                        }} 
+                                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                                        aria-label="Share via WhatsApp"
+                                      >
+                                        <FaWhatsapp className="w-5 h-5 text-green-600" />
+                                      </DropdownMenuItem>
+                                      
+                                      {/* Instagram */}
+                                      <DropdownMenuItem 
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleInstagramShare(chat)
+                                        }} 
+                                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                                        aria-label="Share via Instagram"
+                                      >
+                                        <Instagram className="w-5 h-5 text-pink-600" />
+                                      </DropdownMenuItem>
+                                      
+                                      {/* Email */}
+                                      <DropdownMenuItem 
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleEmailShare(chat)
+                                        }} 
+                                        className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center justify-center"
+                                        aria-label="Share via Email"
+                                      >
+                                        <Mail className="w-5 h-5 text-blue-600" />
+                                      </DropdownMenuItem>
+                                    </div>
+                               
+                                    <DropdownMenuSeparator />
+                                    
+                                    {/* Copy Link */}
+                                    <DropdownMenuItem 
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleCopyLink(chat);
+                                      }}
+                                      className="p-3 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2 justify-center"
+                                    >
+                                      {copyStatus === 'copied' ? (
+                                        <Check className="w-5 h-5 text-green-600" /> 
+                                      ) : (
+                                        <Copy className="w-5 h-5" />
+                                      )}
+                                      <span>{copyStatus === 'copied' ? 'Copied!' : 'Copy Link'}</span>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
 
                                 <DropdownMenuItem
                                   onClick={(e) => {
@@ -573,7 +874,20 @@ const HealthcareChatBotContent: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-                              <Droplets className="h-4 w-4 text-primary" />
+                              {/* Animated droplet icon replacing bot icon */}
+                              <motion.div
+                                animate={{ 
+                                  y: [0, -2, 0],
+                                  scale: [1, 1.1, 1]
+                                }}
+                                transition={{ 
+                                  repeat: Infinity,
+                                  duration: 2,
+                                  ease: "easeInOut"
+                                }}
+                              >
+                                <Droplets className="h-4 w-4 text-primary" />
+                              </motion.div>
                             </div>
                           )}
                         </motion.div>
@@ -588,16 +902,32 @@ const HealthcareChatBotContent: React.FC = () => {
                               : "bg-muted text-muted-foreground"
                           }`}
                         >
-                          {msg.sender === "bot" && typingMessageId === msg.id ? (
+                          {msg.sender === "bot" && (typingMessageId === msg.id || msg.isTyping) ? (
                             <TypewriterText 
-                              text={msg.text}
-                              onComplete={() => setTypingMessageId(null)}
-                              isActive={true}
+                              text={msg.isTyping ? "Typing..." : msg.text}
+                              onComplete={() => {
+                                if (!msg.isTyping) setTypingMessageId(null)
+                              }}
+                              isActive={!msg.isTyping}
                             />
-                          ) : (
+                          ) : msg.sender === "user" ? (
                             <p className="whitespace-pre-wrap text-sm leading-relaxed break-words hyphens-auto">
                               {msg.text}
                             </p>
+                          ) : (
+                            <div className="text-sm leading-relaxed">
+                              <ReactMarkdown 
+                                components={{
+                                  strong: ({ children }) => <strong className="font-bold text-primary">{children}</strong>,
+                                  em: ({ children }) => <em className="italic text-amber-600">{children}</em>,
+                                  p: ({ children }) => <p className="mb-2">{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+                                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                                }}
+                              >
+                                {msg.text}
+                              </ReactMarkdown>
+                            </div>
                           )}
                           <p className="mt-2 text-xs opacity-70">
                             {(() => {
@@ -622,16 +952,16 @@ const HealthcareChatBotContent: React.FC = () => {
                   <div className="max-w-md text-center">
                     <motion.div
                       animate={{ 
-                        rotate: [0, 10, -10, 0],
+                        y: [0, -10, 0],
                         scale: [1, 1.1, 1]
                       }}
                       transition={{ 
                         repeat: Infinity,
-                        duration: 4,
+                        duration: 3,
                         ease: "easeInOut"
                       }}
                     >
-                      <Bot className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+                      <Droplets className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
                     </motion.div>
                     <motion.h2 
                       initial={{ opacity: 0, y: 20 }}

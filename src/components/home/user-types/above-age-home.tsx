@@ -5,7 +5,7 @@ import { easeOut, motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Share2, Droplets, User, CalendarClock, Heart, ArrowLeft, Copy, Users, TrendingUp, Instagram, Mail, Check, Bot, ArrowUp } from 'lucide-react';
+import { Search, Share2, Droplets, User, CalendarClock, Heart, ArrowLeft, Copy, Users, TrendingUp, Instagram, Mail, Check, ArrowUp } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -287,7 +287,7 @@ export default function AboveAgeHome() {
                 <Card className="group transition-all duration-300 border-0 hover:-translate-y-2">
                   <CardHeader className="text-center pb-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                      <Bot className="w-8 h-8 text-white" />
+                      <Droplets className="w-8 h-8 text-white" />
                     </div>
                     <CardTitle className="text-xl text-foreground">Health Assistant</CardTitle>
                     <CardDescription className="text-muted-foreground">
@@ -754,10 +754,10 @@ export default function AboveAgeHome() {
         <Button
           onClick={handleGuideClick}
           size="icon"
-          className="fixed bottom-16 right-4 w-12 h-12 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
+          className="fixed bottom-16 right-4 w-10 h-10 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
           title="Health Assistant"
         >
-          <Bot className="w-6 h-6 text-white" />
+          <Droplets className="w-6 h-6 text-white" />
         </Button>
       </motion.div>
 

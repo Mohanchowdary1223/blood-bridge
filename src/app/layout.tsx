@@ -5,6 +5,8 @@ import NavbarWrapper from "@/components/navbar/navbar-wrapper";
 import { Suspense } from "react";
 import Loading from "./loading";
 
+// export const dynamic = 'force-static'
+
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
@@ -32,7 +34,7 @@ export default function RootLayout({
     isBlockedPage = window.location.pathname.startsWith('/blocked-home');
   }
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
           className={`${outfit.variable} ${dancingScript.variable} font-outfit antialiased`}
       >

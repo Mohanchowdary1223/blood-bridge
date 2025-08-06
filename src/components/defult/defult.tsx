@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { easeInOut, motion } from 'framer-motion'
-import { Heart, Search, BarChart3, ArrowUp, Droplets, Activity, Share2, LucideIcon, Copy, Instagram, Mail, Check, Bot, Users, TrendingUp } from 'lucide-react'
+import { Heart, Search, BarChart3, ArrowUp, Droplets, Activity, Share2, LucideIcon, Copy, Instagram, Mail, Check, HeartPlus, Users, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -230,7 +230,7 @@ const BloodBridgeLanding: React.FC = () => {
       description: "Record and monitor your donation history with detailed analytics and impact metrics"
     },
     {
-      icon: Bot,
+      icon: HeartPlus,
       title: "AI Health Assistant",
       description: "Get personalized health guidance and donation recovery tips from our smart chatbot"
     }
@@ -699,10 +699,10 @@ const BloodBridgeLanding: React.FC = () => {
         <Button
           onClick={handleGuideClick}
           size="icon"
-          className="fixed bottom-24 right-8 w-14 h-14 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/70 cursor-pointer shadow-lg border-2 border-white"
+          className="fixed bottom-20 right-8 w-10 h-10 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/70 cursor-pointer shadow-lg "
           title="Health Guide"
         >
-          <Bot className="w-6 h-6 text-white" />
+          <Droplets className="w-8 h-8 text-white" />
         </Button>
       </motion.div>
 

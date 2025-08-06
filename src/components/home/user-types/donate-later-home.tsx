@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Search, Heart, Share2, Droplets, ArrowRight, ArrowLeft, User,
-  Copy, Instagram, Mail, Check, Bot, Users, TrendingUp, ArrowUp
+  Copy, Instagram, Mail, Check, Users, TrendingUp, ArrowUp
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -290,7 +290,7 @@ export default function DonateLaterHome() {
                 <Card className="group border-0 hover:-translate-y-2 transition-all">
                   <CardHeader className="text-center pb-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                      <Bot className="w-8 h-8 text-white" />
+                      <Droplets className="w-8 h-8 text-white" />
                     </div>
                     <CardTitle className="text-xl">Health Assistant</CardTitle>
                     <CardDescription>
@@ -694,10 +694,10 @@ export default function DonateLaterHome() {
         <Button
           onClick={handleGuideClick}
           size="icon"
-          className="fixed bottom-16 right-4 w-12 h-12 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
+          className="fixed bottom-16 right-4 w-10 h-10 rounded-full hover:scale-110 transition-all duration-300 z-50 bg-primary hover:bg-primary/80 cursor-pointer border-2 border-white"
           title="Health Assistant"
         >
-          <Bot className="w-10 h-10 text-white" />
+          <Droplets className="w-10 h-10 text-white" />
         </Button>
       </motion.div>
       {/* Scroll to Top */}

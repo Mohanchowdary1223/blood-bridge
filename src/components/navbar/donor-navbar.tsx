@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Info, Search, Mail, Bot, BarChart3, User, LogOut } from 'lucide-react';
+import { Droplets, Info, Search, Mail, BarChart3, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -210,7 +210,7 @@ const DonorNavbar: React.FC = () => {
                     onClick={() => handleNavigation('/healthaibot')}
                     className="text-muted-foreground hover:text-foreground cursor-pointer gap-0"
                   >
-                    <Bot className="w-4 h-4 mr-1" />
+                    <Droplets className="w-4 h-4 mr-1" />
                     Health Assistant
                   </Button>
                 </motion.div>
@@ -360,7 +360,7 @@ const DonorNavbar: React.FC = () => {
                     onClick={() => handleNavigation('/healthaibot')}
                     className="cursor-pointer md:hidden"
                   >
-                    <Bot className="mr-2 h-4 w-4" />
+                    <Droplets className="mr-2 h-4 w-4" />
                     Health Assistant
                   </DropdownMenuItem>
                   

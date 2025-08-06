@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Menu, X, Info, Bot } from 'lucide-react';
+import { Droplets, Menu, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -125,7 +125,7 @@ const DefaultNavbar = () => {
                         external: true
                       },
                       {
-                        icon: Bot,
+                        icon: Droplets,
                         label: 'Health Assistant',
                         action: () => {
                           router.push('/healthbotai');
@@ -230,7 +230,7 @@ const DefaultNavbar = () => {
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
                 onClick={() => router.push('/healthbotai')}
               >
-                <Bot className="w-4 h-4 mr-2" />
+                <Droplets className="w-4 h-4 mr-2" />
                 Health Assistant
               </Button>
             </motion.div>

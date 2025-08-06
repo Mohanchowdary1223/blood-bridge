@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Droplets, Info, Search, Bot, User, LogOut } from 'lucide-react';
+import { Droplets, Info, Search, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
@@ -136,7 +136,7 @@ const AuthNavbar = () => {
                     onClick={() => router.push('/healthaibot')}
                     className="text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    <Bot className="w-4 h-4 mr-2" />
+                    <Droplets className="w-4 h-4 mr-2" />
                     Health Assistant
                   </Button>
                 </motion.div>
@@ -199,7 +199,7 @@ const AuthNavbar = () => {
                     onClick={() => router.push('/healthaibot')}
                     className="cursor-pointer md:hidden"
                   >
-                    <Bot className="mr-2 h-4 w-4" />
+                    <Droplets className="mr-2 h-4 w-4" />
                     Health Assistant
                   </DropdownMenuItem>
                   
