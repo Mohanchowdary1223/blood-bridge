@@ -190,22 +190,51 @@ const HealthcareChatBotContent: React.FC = () => {
           headers: { "x-user-id": id },
         });
         const data = await res.json();
-        setChatHistory(data.history || []);
+        // Filter out duplicate chats by _id
+        const uniqueHistory = (data.history || []).filter((chat: any, idx: number, arr: any[]) =>
+          arr.findIndex((c) => c._id === chat._id) === idx
+        );
+        setChatHistory(uniqueHistory);
 
         if (continueChatId) {
-          // Try to find the chat in history first
-          const found = data.history?.find((c: any) => c._id === continueChatId);
+          // Always prefer user's own copy (originalSharedId)
+          const userCopy = uniqueHistory.find((c: any) => c.originalSharedId === continueChatId);
+          if (userCopy) {
+            setCurrentChat(userCopy);
+            return;
+          }
+          // Try to find the chat in history by _id (legacy)
+          const found = uniqueHistory.find((c: any) => c._id === continueChatId);
           if (found) {
             setCurrentChat(found);
-          } else {
-            // If not found, fetch from shared endpoint and set as currentChat (read-only)
-            const sharedRes = await fetch(`/api/healthaibot?id=${continueChatId}&shared=1`);
-            const sharedData = await sharedRes.json();
-            if (sharedData.chat) {
-              setCurrentChat(sharedData.chat);
+            return;
+          }
+          // If not found, fetch from shared endpoint and copy
+          const sharedRes = await fetch(`/api/healthaibot?id=${continueChatId}&shared=1`);
+          const sharedData = await sharedRes.json();
+          if (sharedData.chat) {
+            // Copy shared chat to this user so it can be continued and stored
+            const copyRes = await fetch('/api/healthaibot/copy', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': id,
+              },
+              body: JSON.stringify({ chatId: continueChatId })
+            });
+            const copyData = await copyRes.json();
+            if (copyData.chat) {
+              setCurrentChat(copyData.chat);
+              setChatHistory((prev) => {
+                // Filter out duplicates by _id
+                const chats = [copyData.chat, ...prev];
+                return chats.filter((chat, idx, arr) => arr.findIndex((c) => c._id === chat._id) === idx);
+              });
             } else {
-              setCurrentChat(null);
+              setCurrentChat(sharedData.chat); // fallback: show read-only
             }
+          } else {
+            setCurrentChat(null);
           }
         } else {
           setCurrentChat(null);
@@ -406,8 +435,10 @@ const HealthcareChatBotContent: React.FC = () => {
 
   // Continue Chat handler with sidebar close
   const handleContinueChat = (chat: ChatSession) => {
+    // Only open the chat, never copy or duplicate, and never update chatHistory
     setCurrentChat(chat)
     setTypingMessageId(null)
+    // Do NOT update chatHistory here
     closeSidebar()
   }
 

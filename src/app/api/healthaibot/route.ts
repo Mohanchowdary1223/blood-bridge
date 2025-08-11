@@ -42,7 +42,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ chat });
     }
     const userId = await getUserId(req);
-    const history = await UsersChatHistory.find({ userId }).sort({ createdAt: -1 });
+    // Always include originalSharedId in results for duplicate detection
+    const history = await UsersChatHistory.find({ userId }).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ history });
   } catch (error) {
     console.error('Failed to fetch chat history:', error);

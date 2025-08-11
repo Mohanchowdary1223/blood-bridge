@@ -438,6 +438,7 @@ export const DonorProfileDetails: React.FC<ProfileDetailsProps> = ({ user, onUse
         setScheduleErr('Cannot schedule for today or past date.');
         return;
       }
+      // Only schedule the donation date; do not update isAvailable immediately
       const res = await fetch('/api/donorscheduledonation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

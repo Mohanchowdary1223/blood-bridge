@@ -12,6 +12,7 @@ export interface IChatSession extends Document {
   title: string;
   messages: IMessage[];
   createdAt: Date;
+  originalSharedId?: string | null;
 }
 
 const MessageSchema = new Schema<IMessage>({
@@ -26,6 +27,7 @@ const ChatSessionSchema = new Schema<IChatSession>({
   title: { type: String, required: true },
   messages: { type: [MessageSchema], default: [] },
   createdAt: { type: Date, default: Date.now },
+  originalSharedId: { type: String, default: null, index: true },
 });
 
 export default mongoose.models.UsersChatHistory || mongoose.model<IChatSession>('UsersChatHistory', ChatSessionSchema); 
